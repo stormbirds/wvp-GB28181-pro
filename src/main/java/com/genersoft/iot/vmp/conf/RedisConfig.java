@@ -3,15 +3,20 @@ package com.genersoft.iot.vmp.conf;
 import com.alibaba.fastjson.parser.ParserConfig;
 import com.genersoft.iot.vmp.common.VideoManagerConstants;
 import com.genersoft.iot.vmp.service.impl.*;
+import com.genersoft.iot.vmp.skyeye.redis.listener.RedisKeyDeleteEventMessageListener;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CachingConfigurerSupport;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.connection.Message;
+import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.PatternTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
@@ -25,6 +30,7 @@ import com.genersoft.iot.vmp.utils.redis.FastJsonRedisSerializer;
  * @date: 2019年5月30日 上午10:58:25
  * 
  */
+@Slf4j
 @Configuration
 public class RedisConfig extends CachingConfigurerSupport {
 
@@ -42,6 +48,9 @@ public class RedisConfig extends CachingConfigurerSupport {
 
 	@Autowired
 	private RedisPushStreamStatusMsgListener redisPushStreamStatusMsgListener;
+
+	@Autowired
+	private RedisKeyDeleteEventMessageListener redisKeyDeleteEventMessageListener;
 
 	@Bean
 	public RedisTemplate<Object, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
@@ -80,6 +89,26 @@ public class RedisConfig extends CachingConfigurerSupport {
 		container.addMessageListener(redisStreamMsgListener, new PatternTopic(VideoManagerConstants.WVP_MSG_STREAM_CHANGE_PREFIX + "PUSH"));
 		container.addMessageListener(redisGbPlayMsgListener, new PatternTopic(RedisGbPlayMsgListener.WVP_PUSH_STREAM_KEY));
 		container.addMessageListener(redisPushStreamStatusMsgListener, new PatternTopic(VideoManagerConstants.VM_MSG_PUSH_STREAM_STATUS_CHANGE));
+
+		container.addMessageListener(redisKeyDeleteEventMessageListener,new PatternTopic("__keyevent@*__:del"));
+		container.addMessageListener(new MessageListener() {
+			@Override
+			public void onMessage(Message message, byte[] bytes) {
+				log.info("device {}",message.toString());
+			}
+		}, new ChannelTopic("device"));
+		container.addMessageListener(new MessageListener() {
+			@Override
+			public void onMessage(Message message, byte[] bytes) {
+				log.info("alarm {}",message.toString());
+			}
+		}, new ChannelTopic( "alarm" ));
+		container.addMessageListener(new MessageListener() {
+			@Override
+			public void onMessage(Message message, byte[] bytes) {
+				log.info("mobileposition {}",message.toString());
+			}
+		}, new ChannelTopic( "mobileposition" ));
         return container;
     }
 

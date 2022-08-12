@@ -300,6 +300,11 @@ public interface DeviceChannelMapper {
     @Select("SELECT * FROM device_channel WHERE length(trim(streamId)) > 0")
     List<DeviceChannel> getAllChannelInPlay();
 
+    @Select("SELECT * FROM device_channel "+
+            " where deviceId = #{deviceId} " +
+            " and channelId = #{channelId}")
+    DeviceChannel getChannelById(String deviceId, String channelId);
+
     @Select("select * from device_channel where longitude*latitude > 0 and deviceId = #{deviceId}")
     List<DeviceChannel> getAllChannelWithCoordinate(String deviceId);
 

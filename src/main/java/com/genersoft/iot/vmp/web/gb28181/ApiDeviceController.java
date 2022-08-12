@@ -9,6 +9,7 @@ import com.github.pagehelper.PageInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,6 +27,13 @@ public class ApiDeviceController {
 
     @Autowired
     private IVideoManagerStorage storager;
+
+    @Value("${sip.ip}")
+    private String sipIp;
+    @Value(value = "${snap.path}")
+    private String snapPath;
+    @Value("${server.port}")
+    private int serverPort;
 
     // @Autowired
     // private SIPCommander cmder;
@@ -59,7 +67,7 @@ public class ApiDeviceController {
             devices = storager.queryVideoDeviceList();
             result.put("DeviceCount", devices.size());
         }else {
-            PageInfo<Device> deviceList = storager.queryVideoDeviceList(start/limit, limit);
+            PageInfo<Device> deviceList = storager.queryVideoDeviceList(start/limit+1, limit);
             result.put("DeviceCount", deviceList.getTotal());
             devices = deviceList.getList();
         }
@@ -132,7 +140,7 @@ public class ApiDeviceController {
             deviceJOSNChannel.put("Custom", false);
             deviceJOSNChannel.put("CustomName", "");
             deviceJOSNChannel.put("SubCount", deviceChannel.getSubCount()); // TODO ? 子节点数, SubCount > 0 表示该通道为子目录
-            deviceJOSNChannel.put("SnapURL", "");
+            deviceJOSNChannel.put("SnapURL", String.format("http://%s:%s/snap/%s.jpg", sipIp, serverPort, deviceChannel.getDeviceId()+"_"+deviceChannel.getChannelId()));
             deviceJOSNChannel.put("Manufacturer ", deviceChannel.getManufacture());
             deviceJOSNChannel.put("Model", deviceChannel.getModel());
             deviceJOSNChannel.put("Owner", deviceChannel.getOwner());
@@ -145,7 +153,7 @@ public class ApiDeviceController {
                                                      // 1-IETF RFC3261,
                                                      // 2-基于口令的双向认证,
                                                      // 3-基于数字证书的双向认证
-            deviceJOSNChannel.put("Status", deviceChannel.getStatus());
+            deviceJOSNChannel.put("Status", deviceChannel.getStatus()==1?"ON":"OFF");
             deviceJOSNChannel.put("Longitude", deviceChannel.getLongitudeWgs84());
             deviceJOSNChannel.put("Latitude", deviceChannel.getLatitudeWgs84());
             deviceJOSNChannel.put("PTZType ", deviceChannel.getPTZType()); // 云台类型, 0 - 未知, 1 - 球机, 2 - 半球,

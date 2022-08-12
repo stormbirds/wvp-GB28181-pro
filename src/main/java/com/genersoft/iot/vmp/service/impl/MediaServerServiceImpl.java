@@ -516,7 +516,7 @@ public class MediaServerServiceImpl implements IMediaServerService {
         param.put("hook.on_play",String.format("%s/on_play", hookPrex));
         param.put("hook.on_http_access",String.format("%s/on_http_access", hookPrex));
         param.put("hook.on_publish", String.format("%s/on_publish", hookPrex));
-        param.put("hook.on_record_mp4",recordHookPrex != null? String.format("%s/on_record_mp4", recordHookPrex): "");
+        param.put("hook.on_record_mp4",recordHookPrex != null? String.format("%s/on_record_mp4", recordHookPrex): String.format("%s/on_record_mp4", hookPrex));
         param.put("hook.on_record_ts",String.format("%s/on_record_ts", hookPrex));
         param.put("hook.on_rtsp_auth",String.format("%s/on_rtsp_auth", hookPrex));
         param.put("hook.on_rtsp_realm",String.format("%s/on_rtsp_realm", hookPrex));

@@ -3,6 +3,7 @@ package com.genersoft.iot.vmp;
 import java.util.logging.LogManager;
 
 import com.genersoft.iot.vmp.conf.druid.EnableDruidSupport;
+import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.servlet.ServletComponentScan;
@@ -13,8 +14,9 @@ import springfox.documentation.oas.annotations.EnableOpenApi;
 /**
  * 启动类
  */
-@ServletComponentScan("com.genersoft.iot.vmp.conf")
-@SpringBootApplication
+@ServletComponentScan({"com.genersoft.iot.vmp.conf","com.genersoft.iot.vmp.skyeye.controller"})
+@SpringBootApplication(scanBasePackages = {"com.genersoft.iot.vmp","cn.stormbirds.wvp"})
+@MapperScan(basePackages = {"com.genersoft.iot.vmp.storager.dao","com.genersoft.iot.vmp.skyeye.mapper"})
 @EnableScheduling
 @EnableOpenApi
 @EnableDruidSupport

@@ -177,7 +177,11 @@
 			<version>4.9.0</version>
 		</dependency>
 
-
+		<dependency>
+			<groupId>cn.stormbirds.wvp</groupId>
+			<artifactId>skyeye</artifactId>
+			<version>1.0-SNAPSHOT</version>
+		</dependency>
 
 		<!-- okhttp-digest -->
 		<dependency>

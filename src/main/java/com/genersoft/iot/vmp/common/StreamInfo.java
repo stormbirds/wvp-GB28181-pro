@@ -37,6 +37,15 @@ public class StreamInfo {
     private String startTime;
     private String endTime;
     private double progress;
+    private String RecordStartAt="";
+
+    public String getRecordStartAt() {
+        return RecordStartAt;
+    }
+
+    public void setRecordStartAt(String recordStartAt) {
+        RecordStartAt = recordStartAt;
+    }
 
     public static class TransactionInfo{
         public String callId;

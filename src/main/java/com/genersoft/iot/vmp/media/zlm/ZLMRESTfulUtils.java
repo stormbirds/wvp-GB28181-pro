@@ -277,6 +277,14 @@ public class ZLMRESTfulUtils {
         return sendPost(mediaServerItem, "startSendRtp",param, null);
     }
 
+    public JSONObject startRecord(MediaServerItem mediaServerItem, Map<String, Object> param) {
+        return sendPost(mediaServerItem, "startRecord",param, null);
+    }
+
+    public JSONObject stopRecord(MediaServerItem mediaServerItem, Map<String, Object> param) {
+        return sendPost(mediaServerItem, "stopRecord",param, null);
+    }
+
     public JSONObject stopSendRtp(MediaServerItem mediaServerItem, Map<String, Object> param) {
         return sendPost(mediaServerItem, "stopSendRtp",param, null);
     }

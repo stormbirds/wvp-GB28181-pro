@@ -124,9 +124,9 @@ public class ZLMHttpHookListener {
 	@PostMapping(value = "/on_flow_report", produces = "application/json;charset=UTF-8")
 	public ResponseEntity<String> onFlowReport(@RequestBody JSONObject json){
 		
-		if (logger.isDebugEnabled()) {
-			logger.debug("[ ZLM HOOK ]on_flow_report API调用，参数：" + json.toString());
-		}
+//		if (logger.isDebugEnabled()) {
+			logger.info("[ ZLM HOOK ]on_flow_report API调用，参数：" + json.toString());
+//		}
 		String mediaServerId = json.getString("mediaServerId");
 		JSONObject ret = new JSONObject();
 		ret.put("code", 0);
@@ -300,8 +300,8 @@ public class ZLMHttpHookListener {
 	@PostMapping(value = "/on_record_mp4", produces = "application/json;charset=UTF-8")
 	public ResponseEntity<String> onRecordMp4(@RequestBody JSONObject json){
 		
-		if (logger.isDebugEnabled()) {
-			logger.debug("[ ZLM HOOK ]on_record_mp4 API调用，参数：" + json.toString());
+		if (logger.isInfoEnabled()) {
+			logger.info("[ ZLM HOOK ]on_record_mp4 API调用，参数：" + json.toString());
 		}
 		String mediaServerId = json.getString("mediaServerId");
 		JSONObject ret = new JSONObject();

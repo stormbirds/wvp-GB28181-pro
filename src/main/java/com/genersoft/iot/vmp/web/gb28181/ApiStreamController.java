@@ -6,16 +6,26 @@ import com.genersoft.iot.vmp.conf.UserSetting;
 import com.genersoft.iot.vmp.gb28181.bean.Device;
 import com.genersoft.iot.vmp.gb28181.bean.DeviceChannel;
 import com.genersoft.iot.vmp.gb28181.transmit.cmd.impl.SIPCommander;
+import com.genersoft.iot.vmp.media.zlm.ZLMRESTfulUtils;
 import com.genersoft.iot.vmp.media.zlm.dto.MediaServerItem;
+import com.genersoft.iot.vmp.service.IMediaServerService;
 import com.genersoft.iot.vmp.service.IPlayService;
 import com.genersoft.iot.vmp.storager.IRedisCatchStorage;
 import com.genersoft.iot.vmp.storager.IVideoManagerStorage;
+import com.genersoft.iot.vmp.vmanager.bean.WVPResult;
 import com.genersoft.iot.vmp.vmanager.gb28181.play.bean.PlayResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.async.DeferredResult;
+
+import java.util.Objects;
 
 /**
  * API兼容：实时直播
@@ -37,11 +47,26 @@ public class ApiStreamController {
     @Autowired
     private UserSetting userSetting;
 
+    @Value("${sip.ip}")
+    private String sipIp;
+    @Value(value = "${snap.path}")
+    private String snapPath;
+    @Value("${server.port}")
+    private int serverPort;
+
     @Autowired
     private IRedisCatchStorage redisCatchStorage;
 
     @Autowired
     private IPlayService playService;
+
+    @Qualifier("taskExecutor")
+    @Autowired
+    private ThreadPoolTaskExecutor taskExecutor;
+    @Autowired
+    private ZLMRESTfulUtils zlmresTfulUtils;
+    @Autowired
+    private IMediaServerService mediaServerService;
 
     /**
      * 实时直播 - 开始直播
@@ -113,9 +138,10 @@ public class ApiStreamController {
             result.put("HLS", streamInfo.getHls());
             result.put("RTSP", streamInfo.getRtsp());
             result.put("CDN", "");
-            result.put("SnapURL", "");
+            result.put("SnapURL", String.format("http://%s:%s/snap/%s.jpg", sipIp, serverPort, streamInfo.getStream()));
             result.put("Transport", device.getTransport());
             result.put("StartAt", "");
+            result.put("RecordStartAt", streamInfo.getRecordStartAt());
             result.put("Duration", "");
             result.put("SourceVideoCodecName", "");
             result.put("SourceVideoWidth", "");
@@ -133,6 +159,19 @@ public class ApiStreamController {
             result.put("RelaySize", "");
             result.put("ChannelPTZType", "0");
             resultDeferredResult.setResult(result);
+
+            // 点播结束时调用截图接口
+            taskExecutor.execute(()->{
+                // TODO 应该在上流时调用更好，结束也可能是错误结束
+                String path =  snapPath;
+                String fileName =  streamInfo.getStream() + ".jpg";
+
+                MediaServerItem mediaInfo = mediaServerService.getOne(streamInfo.getMediaServerId());
+                String streamUrl = streamInfo.getFmp4();
+                // 请求截图
+                logger.info("[请求截图]: " + fileName);
+                zlmresTfulUtils.getSnap(mediaInfo, streamUrl, 15, 1, path, fileName);
+            });
 //            Class<?> aClass = responseEntity.getClass().getSuperclass();
 //            Field body = null;
 //            try {
