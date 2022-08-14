@@ -21,22 +21,26 @@ services:
       - "5060:5060/udp"
       - "18080:18080"
       - "80:80"
-      - "10000:10000/tcp"
-      - "10000:10000/udp"
-      - "30000-30500:30000-30500/tcp"
-      - "30000-30500:30000-30500/udp"
+      - "11000:10000/tcp"
+      - "11000:10000/udp"
+      - "40000-40500:30000-30500/tcp"
+      - "40000-40500:30000-30500/udp"
     volumes:
       - ./video:/opt/media/www/record/
       - ./logs/wvp:/opt/wvp/logs/
       - ./logs/assist:/opt/assist/logs/
       - ./logs/media:/opt/media/log/
+      - ./zlm/config.ini:/opt/media/config.ini
+      - ./zlm/snap/:/opt/media/www/snap/
+      - ./wvp/application.yml:/opt/wvp/config/application.yml
     environment:
       TZ: "Asia/Shanghai"
       # [必须修改] 本机的IP
-      WVP_HOST: 172.18.0.61
+      WVP_HOST: 192.168.50.50
       WVP_PWD: aseqw_+hiy123
       WVP_DOMAIN: 6101130049
       WVP_ID: 61011300490000000001
+      ZLM_HOST: 192.168.50.50
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_DB: 6
@@ -44,6 +48,6 @@ services:
       ASSIST_JVM_CONFIG: -Xms128m -Xmx256m
       WVP_JVM_CONFIG: -Xms128m -Xmx256m
       ASSIST_CONFIG:
-      WVP_CONFIG:
+      WVP_CONFIG: --media.id=AIi7b9Hyz3i925jg --media.ip=192.168.50.50 --spring.datasource.password=root123456 --spring.datasource.url=jdbc:mysql://192.168.50.50:3306/wvp?useUnicode=true&serverTimezone=Asia/Shanghai&characterEncoding=UTF8&rewriteBatchedStatements=true&allowMultiQueries=true&useSSL=false&allowPublicKeyRetrieval=true
     depends_on:
       - redis

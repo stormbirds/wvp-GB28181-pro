@@ -1,8 +1,10 @@
 package com.genersoft.iot.vmp.service;
 
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.genersoft.iot.vmp.gb28181.bean.Device;
 import com.genersoft.iot.vmp.gb28181.bean.DeviceChannel;
 import com.genersoft.iot.vmp.gb28181.bean.SyncStatus;
+import com.genersoft.iot.vmp.skyeye.vo.DeviceTree;
 import com.genersoft.iot.vmp.vmanager.bean.BaseTree;
 
 import java.util.List;
@@ -11,7 +13,7 @@ import java.util.List;
  * 设备相关业务处理
  * @author lin
  */
-public interface IDeviceService {
+public interface IDeviceService extends IService<Device> {
 
     /**
      * 设备上线
@@ -24,6 +26,13 @@ public interface IDeviceService {
      * @param deviceId 设备编号
      */
     void offline(String deviceId);
+
+    /**
+     * 设备下线
+     * @param deviceId 设备编号
+     * @param positive 是否主动下线
+     */
+    void offline(String deviceId,boolean positive);
 
     /**
      * 添加目录订阅
@@ -129,4 +138,6 @@ public interface IDeviceService {
      * @return
      */
     List<DeviceChannel> queryVideoDeviceInTreeNode(String deviceId, String parentId);
+
+    List<DeviceTree> channeltree(String serial, Boolean subfetch, String pcode, Integer limit);
 }

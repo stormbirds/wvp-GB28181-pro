@@ -4,7 +4,6 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.genersoft.iot.vmp.gb28181.bean.Device;
 import com.genersoft.iot.vmp.gb28181.bean.DeviceChannel;
-import com.genersoft.iot.vmp.gb28181.bean.TreeType;
 import com.genersoft.iot.vmp.gb28181.event.subscribe.catalog.CatalogEvent;
 import com.genersoft.iot.vmp.utils.DateUtil;
 import org.dom4j.Attribute;
@@ -67,6 +66,12 @@ public class XmlUtil {
         Element e = em.element(tag);
         //
         return null == e ? null : e.getText().trim();
+    }
+
+    public static Integer getInteger(Element em, String tag){
+        String result = getText(em,tag);
+        if(StringUtils.hasText(result)) return Integer.parseInt(result);
+        return 0;
     }
 
     /**
@@ -360,7 +365,7 @@ public class XmlUtil {
         }
 
         deviceChannel.setEndTime(XmlUtil.getText(itemDevice, "EndTime"));
-        deviceChannel.setSecrecy(XmlUtil.getText(itemDevice, "Secrecy"));
+        deviceChannel.setSecrecy(XmlUtil.getInteger(itemDevice, "Secrecy"));
         deviceChannel.setIpAddress(XmlUtil.getText(itemDevice, "IPAddress"));
         if (XmlUtil.getText(itemDevice, "Port") == null || XmlUtil.getText(itemDevice, "Port") == "") {
             deviceChannel.setPort(0);
@@ -388,12 +393,12 @@ public class XmlUtil {
             //兼容INFO中的信息
             Element info = itemDevice.element("Info");
             if(XmlUtil.getText(info, "PTZType") == null || "".equals(XmlUtil.getText(info, "PTZType"))){
-                deviceChannel.setPTZType(0);
+                deviceChannel.setPtzType(0);
             }else{
-                deviceChannel.setPTZType(Integer.parseInt(XmlUtil.getText(info, "PTZType")));
+                deviceChannel.setPtzType(Integer.parseInt(XmlUtil.getText(info, "PTZType")));
             }
         } else {
-            deviceChannel.setPTZType(Integer.parseInt(XmlUtil.getText(itemDevice, "PTZType")));
+            deviceChannel.setPtzType(Integer.parseInt(XmlUtil.getText(itemDevice, "PTZType")));
         }
         deviceChannel.setHasAudio(true); // 默认含有音频，播放时再检查是否有音频及是否AAC
         return deviceChannel;

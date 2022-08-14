@@ -121,7 +121,16 @@
 			<version>3.0.2</version>
 		</dependency>
 
-
+		<dependency>
+			<groupId>com.baomidou</groupId>
+			<artifactId>mybatis-plus-boot-starter</artifactId>
+			<version>3.5.2</version>
+		</dependency>
+		<dependency>
+			<groupId>io.lindstrom</groupId>
+			<artifactId>m3u8-parser</artifactId>
+			<version>0.22</version>
+		</dependency>
 		<!--参数校验 -->
 		<dependency>
 			<groupId>javax.validation</groupId>
@@ -162,7 +171,6 @@
 			<version>1.2.83</version>
 		</dependency>
 
-
 		<!-- okhttp -->
 		<dependency>
 			<groupId>com.squareup.okhttp3</groupId>
@@ -175,12 +183,6 @@
 			<groupId>com.squareup.okhttp3</groupId>
 			<artifactId>logging-interceptor</artifactId>
 			<version>4.9.0</version>
-		</dependency>
-
-		<dependency>
-			<groupId>cn.stormbirds.wvp</groupId>
-			<artifactId>skyeye</artifactId>
-			<version>1.0-SNAPSHOT</version>
 		</dependency>
 
 		<!-- okhttp-digest -->
@@ -243,6 +245,16 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 <!--			<scope>test</scope>-->
+		</dependency>
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<version>1.18.24</version>
+		</dependency>
+		<dependency>
+			<groupId>cn.hutool</groupId>
+			<artifactId>hutool-all</artifactId>
+			<version>5.8.5</version>
 		</dependency>
 	</dependencies>
 

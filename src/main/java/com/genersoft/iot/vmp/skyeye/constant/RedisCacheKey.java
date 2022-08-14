@@ -11,6 +11,11 @@ public class RedisCacheKey {
     public static String SIP_BASECONFIG_REDIS_PREFIX = "sipbaseconfig";
 
     /**
+     * 通道流云端录像
+     */
+    public static final String KEY_RECORD_STREAM_HASH = "RECORD_STREAM:%s:%s";
+
+    /**
      * 当前正在推流的流信息 HASH数据结构
      * start_time 开始时间
      */

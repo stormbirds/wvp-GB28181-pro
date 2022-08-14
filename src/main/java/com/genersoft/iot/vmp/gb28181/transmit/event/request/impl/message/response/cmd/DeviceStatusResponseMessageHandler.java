@@ -79,7 +79,7 @@ public class DeviceStatusResponseMessageHandler extends SIPRequestProcessorParen
         if (Objects.equals(text.trim().toUpperCase(), "ONLINE")) {
             deviceService.online(device);
         }else {
-            deviceService.offline(device.getDeviceId());
+            deviceService.offline(device.getDeviceId(),true);
         }
         RequestMessage msg = new RequestMessage();
         msg.setKey(DeferredResultHolder.CALLBACK_CMD_DEVICESTATUS + device.getDeviceId());

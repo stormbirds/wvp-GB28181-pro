@@ -871,7 +871,7 @@ public class VideoManagerStorageImpl implements IVideoManagerStorage {
 
 		deviceChannel.setModel("live");
 		deviceChannel.setOwner("wvp-pro");
-		deviceChannel.setSecrecy("0");
+		deviceChannel.setSecrecy(0);
 		return deviceChannel;
 	}
 

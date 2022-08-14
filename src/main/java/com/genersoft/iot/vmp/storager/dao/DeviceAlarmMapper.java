@@ -1,5 +1,6 @@
 package com.genersoft.iot.vmp.storager.dao;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.genersoft.iot.vmp.gb28181.bean.DeviceAlarm;
 import com.genersoft.iot.vmp.gb28181.bean.DeviceChannel;
 import com.genersoft.iot.vmp.vmanager.gb28181.platform.bean.ChannelReduce;
@@ -13,7 +14,7 @@ import java.util.List;
  */
 @Mapper
 @Repository
-public interface DeviceAlarmMapper {
+public interface DeviceAlarmMapper extends BaseMapper<DeviceAlarm> {
 
     @Insert("INSERT INTO device_alarm (deviceId, channelId, alarmPriority, alarmMethod, alarmTime, alarmDescription, longitude, latitude, alarmType , createTime ) " +
             "VALUES ('${deviceId}', '${channelId}', '${alarmPriority}', '${alarmMethod}', '${alarmTime}', '${alarmDescription}', ${longitude}, ${latitude}, '${alarmType}', '${createTime}')")
@@ -45,4 +46,7 @@ public interface DeviceAlarmMapper {
             " </script>"
             )
     int clearAlarmBeforeTime(Integer id, List<String> deviceIdList, String time);
+
+    @Update("truncate table device_alarm")
+    void truncate();
 }

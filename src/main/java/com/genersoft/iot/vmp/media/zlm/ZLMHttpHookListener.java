@@ -1,9 +1,13 @@
 package com.genersoft.iot.vmp.media.zlm;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
 import com.alibaba.fastjson.JSON;
 import com.genersoft.iot.vmp.common.StreamInfo;
 import com.genersoft.iot.vmp.conf.UserSetting;
@@ -15,11 +19,18 @@ import com.genersoft.iot.vmp.gb28181.event.EventPublisher;
 import com.genersoft.iot.vmp.gb28181.session.VideoStreamSessionManager;
 import com.genersoft.iot.vmp.media.zlm.dto.*;
 import com.genersoft.iot.vmp.service.*;
+import com.genersoft.iot.vmp.skyeye.constant.RealTimeRecordTask;
+import com.genersoft.iot.vmp.skyeye.enttity.RecordChannels;
+import com.genersoft.iot.vmp.skyeye.service.IRecordChannelsService;
+import com.genersoft.iot.vmp.skyeye.service.IRecordService;
+import com.genersoft.iot.vmp.skyeye.vo.RealtimeRecord;
+import com.genersoft.iot.vmp.skyeye.vo.RecordListVo;
 import com.genersoft.iot.vmp.storager.IRedisCatchStorage;
 import com.genersoft.iot.vmp.storager.IVideoManagerStorage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
@@ -32,7 +43,10 @@ import org.springframework.web.bind.annotation.RestController;
 import com.alibaba.fastjson.JSONObject;
 import com.genersoft.iot.vmp.gb28181.transmit.cmd.impl.SIPCommander;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+
+import static cn.hutool.core.date.DatePattern.NORM_DATETIME_FORMATTER;
 
 /**    
  * @description:针对 ZLMediaServer的hook事件监听
@@ -83,6 +97,9 @@ public class ZLMHttpHookListener {
 
 	@Autowired
 	private IUserService userService;
+
+	@Resource
+	private IRecordService recordService;
 
 	@Autowired
 	private VideoStreamSessionManager sessionManager;
@@ -303,6 +320,7 @@ public class ZLMHttpHookListener {
 		if (logger.isInfoEnabled()) {
 			logger.info("[ ZLM HOOK ]on_record_mp4 API调用，参数：" + json.toString());
 		}
+		recordService.onRecordMp4(json);
 		String mediaServerId = json.getString("mediaServerId");
 		JSONObject ret = new JSONObject();
 		ret.put("code", 0);
@@ -317,9 +335,10 @@ public class ZLMHttpHookListener {
 	@PostMapping(value = "/on_record_ts", produces = "application/json;charset=UTF-8")
 	public ResponseEntity<String> onRecordTs(@RequestBody JSONObject json){
 
-		if (logger.isDebugEnabled()) {
-			logger.debug("[ ZLM HOOK ]on_record_ts API调用，参数：" + json.toString());
+		if (logger.isInfoEnabled()) {
+			logger.info("[ ZLM HOOK ]on_record_ts API调用，参数：" + json.toString());
 		}
+		recordService.onRecordTs(json);
 		String mediaServerId = json.getString("mediaServerId");
 		JSONObject ret = new JSONObject();
 		ret.put("code", 0);

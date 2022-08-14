@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.genersoft.iot.vmp.storager.dao.DeviceMapper">
+
+    <select id="deviceTree" resultType="com.genersoft.iot.vmp.skyeye.vo.DeviceTree">
+        SELECT
+        <choose>
+            <when test="serial != null and serial != ''">
+                A.channel_id AS CODE,
+                0 AS custom,
+                A.NAME
+                AS customName,
+                (A.device_id || A.channel_id) AS id,
+                0 AS parental,
+            </when>
+            <otherwise>
+                '' AS CODE,
+                0 AS custom,
+                B.NAME
+                AS customName,
+                A.device_id AS id,
+                1 AS parental,
+            </otherwise>
+        </choose>
+        SUM( A.`status`) AS onlineSubCount,
+        A.latitude AS latitude,
+        A.longitude AS longitude,
+        A.manufacture AS manufacturer,
+        0 AS ptzType,
+        A.device_id AS serial,
+        <choose>
+            <when test="serial != null and serial != ''">
+                CASE A.status WHEN 1 THEN 'ON' ELSE 'OFF' END AS STATUS,
+                SUM( A.sub_count ) AS subCount,
+            </when>
+            <otherwise>
+                CASE B.`online` WHEN 1 THEN 'ON' ELSE 'OFF' END AS STATUS,
+                COUNT(A.id) AS subCount,
+            </otherwise>
+        </choose>
+        SUM( CASE WHEN A.sub_count>0 THEN 0 ELSE 1 END ) AS subCountDevice
+        FROM
+        device_channel A
+        <if test="serial == null or serial == ''">
+            LEFT JOIN device B ON A.device_id = B.deviceId
+        </if>
+        <where>
+            <if test="serial != null and serial != ''">
+                AND A.device_id = #{serial}
+            </if>
+        </where>
+        <if test="serial == null or serial == ''">
+            GROUP BY
+            A.device_id
+        </if>
+    </select>
+
+
+</mapper>

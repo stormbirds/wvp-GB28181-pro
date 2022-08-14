@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.genersoft.iot.vmp.skyeye.mapper.RecordChannelsMapper">
+
+    <select id="querychannels"  resultType="com.genersoft.iot.vmp.skyeye.vo.CloudRecord" >
+        SELECT A.device_id AS serial,A.channel_id AS code,A.created_at, A.updated_at ,
+               B.name,B.custom_name
+        FROM t_record_channels A
+            LEFT JOIN device_channel B ON A.channel_id=B.channel_id
+        <where>
+            <if test="q != null and q != ''">
+                AND (name LIKE '%'#{q}'%' or custom_name LIKE '%'#{q}'%' )
+            </if>
+        </where>
+        <if test="order != null and order != ''">
+            ORDER BY #{order}
+        </if>
+        LIMIT #{start},#{limit}
+    </select>
+    <select id="querychannelsCount" resultType="java.lang.Integer">
+        SELECT COUNT(1)
+        FROM t_record_channels A
+        LEFT JOIN device_channel B ON A.channel_id=B.channel_id
+        <where>
+            <if test="q != null and q != ''">
+                AND (name LIKE '%'#{q}'%' or custom_name LIKE '%'#{q}'%' )
+            </if>
+        </where>
+    </select>
+</mapper>

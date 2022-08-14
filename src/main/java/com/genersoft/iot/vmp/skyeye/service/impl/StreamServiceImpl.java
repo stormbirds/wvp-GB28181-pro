@@ -2,7 +2,6 @@ package com.genersoft.iot.vmp.skyeye.service.impl;
 
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.DateUtil;
-import cn.hutool.core.date.LocalDateTimeUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.genersoft.iot.vmp.common.StreamInfo;
@@ -11,7 +10,6 @@ import com.genersoft.iot.vmp.gb28181.bean.DeviceChannel;
 import com.genersoft.iot.vmp.media.zlm.ZLMRESTfulUtils;
 import com.genersoft.iot.vmp.media.zlm.dto.MediaServerItem;
 import com.genersoft.iot.vmp.service.IMediaServerService;
-import com.genersoft.iot.vmp.skyeye.constant.RedisCacheKey;
 import com.genersoft.iot.vmp.skyeye.domain.SkyEyeStreamInfo;
 import com.genersoft.iot.vmp.skyeye.service.IStreamService;
 import com.alibaba.fastjson.JSONObject;
@@ -26,8 +24,6 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.Resource;
-
-import static com.genersoft.iot.vmp.skyeye.constant.RedisCacheKey.KEY_STREAM_INFO_HASH;
 
 /**
  * @ Description cn.stormbirds.skyeye.service.impl
@@ -110,7 +106,7 @@ public class StreamServiceImpl implements IStreamService {
                         .numOutputs(mediaJSON.getInteger("totalReaderCount"))
                         .cascadeSize(0)
                         .relaysize(0)
-                        .channelPTZType(channel.getPTZType());
+                        .channelPTZType(channel.getPtzType());
                 tracks.forEach(o -> {if(((JSONObject) o).getIntValue("codec_type")==1){
                     skyEyeStreamInfo.audioEnable(1);
                     skyEyeStreamInfo.sourceAudioCodecName(((JSONObject) o).getString("codec_id_name"));

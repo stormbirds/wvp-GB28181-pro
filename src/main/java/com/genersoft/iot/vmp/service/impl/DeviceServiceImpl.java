@@ -1,5 +1,6 @@
 package com.genersoft.iot.vmp.service.impl;
 
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.genersoft.iot.vmp.conf.DynamicTask;
 import com.genersoft.iot.vmp.gb28181.bean.*;
 import com.genersoft.iot.vmp.gb28181.session.VideoStreamSessionManager;
@@ -12,6 +13,10 @@ import com.genersoft.iot.vmp.service.IDeviceService;
 import com.genersoft.iot.vmp.gb28181.task.impl.CatalogSubscribeTask;
 import com.genersoft.iot.vmp.gb28181.task.impl.MobilePositionSubscribeTask;
 import com.genersoft.iot.vmp.service.IMediaServerService;
+import com.genersoft.iot.vmp.skyeye.redis.RedisMsgPublisher;
+import com.genersoft.iot.vmp.skyeye.redis.RedisTopicEnums;
+import com.genersoft.iot.vmp.skyeye.service.IStatusLogsService;
+import com.genersoft.iot.vmp.skyeye.vo.DeviceTree;
 import com.genersoft.iot.vmp.storager.IRedisCatchStorage;
 import com.genersoft.iot.vmp.storager.IVideoManagerStorage;
 import com.genersoft.iot.vmp.storager.dao.DeviceChannelMapper;
@@ -25,6 +30,7 @@ import org.springframework.jdbc.support.incrementer.AbstractIdentityColumnMaxVal
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import javax.annotation.Resource;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,7 +41,7 @@ import java.util.concurrent.TimeUnit;
  * 设备业务（目录订阅）
  */
 @Service
-public class DeviceServiceImpl implements IDeviceService {
+public class DeviceServiceImpl extends ServiceImpl<DeviceMapper, Device> implements IDeviceService {
 
     private final static Logger logger = LoggerFactory.getLogger(DeviceServiceImpl.class);
 
@@ -73,6 +79,10 @@ public class DeviceServiceImpl implements IDeviceService {
 
     @Autowired
     private IMediaServerService mediaServerService;
+    @Resource
+    private RedisMsgPublisher redisMsgPublisher;
+    @Resource
+    private IStatusLogsService statusLogsService;
 
     @Override
     public void online(Device device) {
@@ -94,6 +104,10 @@ public class DeviceServiceImpl implements IDeviceService {
             logger.info("[设备上线,首次注册]: {}，查询设备信息以及通道信息", device.getDeviceId());
             deviceMapper.add(device);
             redisCatchStorage.updateDevice(device);
+
+            redisMsgPublisher.sendMsg(RedisTopicEnums.TOPIC_DEVICE, device.getDeviceId().concat(" ").concat("ON"));
+            statusLogsService.deviceOnRegister(device.getDeviceId());
+
             commander.deviceInfoQuery(device);
             sync(device);
         }else {
@@ -103,6 +117,10 @@ public class DeviceServiceImpl implements IDeviceService {
                 logger.info("[设备上线,离线状态下重新注册]: {}，查询设备信息以及通道信息", device.getDeviceId());
                 deviceMapper.update(device);
                 redisCatchStorage.updateDevice(device);
+
+                redisMsgPublisher.sendMsg(RedisTopicEnums.TOPIC_DEVICE, device.getDeviceId().concat(" ").concat("ON"));
+                statusLogsService.deviceHeartbeatOnline(device.getDeviceId());
+
                 commander.deviceInfoQuery(device);
                 sync(device);
             }else {
@@ -127,10 +145,22 @@ public class DeviceServiceImpl implements IDeviceService {
 
     @Override
     public void offline(String deviceId) {
+        offline(deviceId,false);
+    }
+
+    @Override
+    public void offline(String deviceId, boolean positive) {
         Device device = deviceMapper.getDeviceByDeviceId(deviceId);
         if (device == null) {
             return;
         }
+        if(positive){
+            statusLogsService.doUnRegister(deviceId);
+        }else {
+            statusLogsService.deviceTimeoutOffline(deviceId);
+        }
+        redisMsgPublisher.sendMsg(RedisTopicEnums.TOPIC_DEVICE, deviceId.concat(" ").concat("OFF"));
+
         String registerExpireTaskKey = registerExpireTaskKeyPrefix + deviceId;
         dynamicTask.stop(registerExpireTaskKey);
         device.setOnline(0);
@@ -446,6 +476,11 @@ public class DeviceServiceImpl implements IDeviceService {
         }
 
         return null;
+    }
+
+    @Override
+    public List<DeviceTree> channeltree(String serial, Boolean subfetch, String pcode, Integer limit) {
+        return baseMapper.deviceTree(serial);
     }
 
     private List<BaseTree<DeviceChannel>> transportChannelsToTree(List<DeviceChannel> channels, String parentId) {

@@ -96,7 +96,7 @@ public class DeviceChannel {
 	/**
 	 * 保密属性 缺省为0; 0:不涉密, 1:涉密
 	 */
-	private String secrecy;
+	private Integer secrecy = 0;
 	
 	/**
 	 * IP地址
@@ -116,7 +116,7 @@ public class DeviceChannel {
 	/**
 	 * 云台类型
 	 */
-	private int PTZType;
+	private int ptzType;
 
 	/**
 	 * 云台类型描述字符串
@@ -220,9 +220,9 @@ public class DeviceChannel {
 		this.deviceId = deviceId;
 	}
 
-	public void setPTZType(int PTZType) {
-		this.PTZType = PTZType;
-		switch (PTZType) {
+	public void setPtzType(int ptzType) {
+		this.ptzType = ptzType;
+		switch (ptzType) {
 			case 0:
 				this.PTZTypeText = "未知";
 				break;
@@ -369,11 +369,11 @@ public class DeviceChannel {
 		this.endTime = endTime;
 	}
 
-	public String getSecrecy() {
+	public Integer getSecrecy() {
 		return secrecy;
 	}
 
-	public void setSecrecy(String secrecy) {
+	public void setSecrecy(Integer secrecy) {
 		this.secrecy = secrecy;
 	}
 
@@ -401,8 +401,8 @@ public class DeviceChannel {
 		this.password = password;
 	}
 
-	public int getPTZType() {
-		return PTZType;
+	public int getPtzType() {
+		return ptzType;
 	}
 
 	public String getPTZTypeText() {

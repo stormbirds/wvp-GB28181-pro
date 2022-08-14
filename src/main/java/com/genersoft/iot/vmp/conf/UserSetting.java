@@ -37,6 +37,11 @@ public class UserSetting {
 
     private String thirdPartyGBIdReg = "[\\s\\S]*";
 
+    //ZLM服务器录像目录
+    private String recordPath;
+
+    private String cloudRecordPath;
+
     private List<String> interfaceAuthenticationExcludes = new ArrayList<>();
 
     public Boolean getSavePositionHistory() {
@@ -145,5 +150,21 @@ public class UserSetting {
 
     public void setPlatformPlayTimeout(int platformPlayTimeout) {
         this.platformPlayTimeout = platformPlayTimeout;
+    }
+
+    public String getRecordPath() {
+        return recordPath;
+    }
+
+    public void setRecordPath(String recordPath) {
+        this.recordPath = recordPath;
+    }
+
+    public String getCloudRecordPath() {
+        return cloudRecordPath;
+    }
+
+    public void setCloudRecordPath(String cloudRecordPath) {
+        this.cloudRecordPath = cloudRecordPath;
     }
 }

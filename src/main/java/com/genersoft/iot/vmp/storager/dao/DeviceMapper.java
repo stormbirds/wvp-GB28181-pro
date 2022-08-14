@@ -1,6 +1,8 @@
 package com.genersoft.iot.vmp.storager.dao;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.genersoft.iot.vmp.gb28181.bean.Device;
+import com.genersoft.iot.vmp.skyeye.vo.DeviceTree;
 import org.apache.ibatis.annotations.*;
 import org.springframework.stereotype.Repository;
 
@@ -11,7 +13,7 @@ import java.util.List;
  */
 @Mapper
 @Repository
-public interface DeviceMapper {
+public interface DeviceMapper extends BaseMapper<Device> {
 
     @Select("SELECT * FROM device WHERE deviceId = #{deviceId}")
     Device getDeviceByDeviceId(String deviceId);
@@ -97,7 +99,7 @@ public interface DeviceMapper {
             " </script>"})
     int update(Device device);
 
-    @Select("SELECT *, (SELECT count(0) FROM device_channel WHERE deviceId=de.deviceId) as channelCount  FROM device de")
+    @Select("SELECT *, (SELECT count(0) FROM device_channel WHERE device_id=de.deviceId) as channelCount  FROM device de")
     List<Device> getDevices();
 
     @Delete("DELETE FROM device WHERE deviceId=#{deviceId}")
@@ -110,4 +112,6 @@ public interface DeviceMapper {
     List<Device> getOnlineDevices();
     @Select("SELECT * FROM device WHERE ip = #{host} AND port=${port}")
     Device getDeviceByHostAndPort(String host, int port);
+
+    List<DeviceTree> deviceTree(String serial);
 }

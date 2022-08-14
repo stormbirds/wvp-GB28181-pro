@@ -123,7 +123,7 @@ public class GbStreamServiceImpl implements IGbStreamService {
         deviceChannel.setModel("live");
         deviceChannel.setOwner("wvp-pro");
         deviceChannel.setParental(0);
-        deviceChannel.setSecrecy("0");
+        deviceChannel.setSecrecy(0);
         return deviceChannel;
     }
 
