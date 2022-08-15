@@ -1,7 +1,12 @@
 FROM ubuntu:20.04   as   build
 
 ARG gitUrl="https://gitee.com/pan648540858"
+ARG skyeyeUrl="https://gitee.com/stormbirds"
 ARG zlmGitUrl="https://gitee.com/xia-chu/ZLMediaKit"
+# 环境变量
+ENV LANG C.UTF-8
+# 更换源
+RUN sed -i 's@http://archive.ubuntu.com/ubuntu/@http://mirrors.aliyun.com/ubuntu/@g' /etc/apt/sources.list
 
 RUN export DEBIAN_FRONTEND=noninteractive &&\
         apt-get update && \
@@ -14,11 +19,11 @@ RUN cd /home && \
         cp maven/settings.xml /usr/share/maven/conf/
 
 RUN cd /home && \
-        git clone "${gitUrl}/wvp-GB28181-pro.git"
+        git clone "${skyeyeUrl}/skyeye-wvp.git wvp-GB28181-pro"
 RUN cd /home/wvp-GB28181-pro/web_src && \
         npm install && \
         npm run build
-RUN cd /home/wvp-GB28181-pro && \
+RUN cd /home/wvp-GB28181-pro && git checkout skyeye \
         mvn clean package -Dmaven.test.skip=true && \
         cp /home/wvp-GB28181-pro/target/*.jar /opt/wvp/ && \
         cp /home/wvp-GB28181-pro/src/main/resources/application-docker.yml /opt/wvp/config/application.yml
@@ -55,12 +60,12 @@ RUN cd /opt/wvp && \
 
 FROM ubuntu:20.04
 
-EXPOSE 18080/tcp
+EXPOSE 10000/tcp
 EXPOSE 5060/tcp
 EXPOSE 5060/udp
 EXPOSE 6379/tcp
 EXPOSE 18081/tcp
-EXPOSE 80/tcp
+EXPOSE 9080/tcp
 EXPOSE 1935/tcp
 EXPOSE 554/tcp
 EXPOSE 554/udp
