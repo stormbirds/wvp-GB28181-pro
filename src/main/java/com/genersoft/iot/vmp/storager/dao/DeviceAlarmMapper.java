@@ -24,13 +24,13 @@ public interface DeviceAlarmMapper extends BaseMapper<DeviceAlarm> {
     @Select(value = {" <script>" +
             " SELECT * FROM device_alarm " +
             " WHERE 1=1 " +
-            " <if test=\"deviceId != null\" >  AND deviceId = '${deviceId}'</if>" +
-            " <if test=\"alarmPriority != null\" >  AND alarmPriority = '${alarmPriority}' </if>" +
-            " <if test=\"alarmMethod != null\" >  AND alarmMethod = '${alarmMethod}' </if>" +
-            " <if test=\"alarmType != null\" >  AND alarmType = '${alarmType}' </if>" +
-            " <if test=\"startTime != null\" >  AND alarmTime &gt;= '${startTime}' </if>" +
-            " <if test=\"endTime != null\" >  AND alarmTime &lt;= '${endTime}' </if>" +
-            " ORDER BY alarmTime ASC " +
+            " <if test=\"deviceId != null and deviceId != ''\" >  AND deviceId = '${deviceId}'</if>" +
+            " <if test=\"alarmPriority != null and alarmPriority != ''\" >  AND alarmPriority = '${alarmPriority}' </if>" +
+            " <if test=\"alarmMethod != null and alarmMethod != ''\" >  AND alarmMethod = '${alarmMethod}' </if>" +
+            " <if test=\"alarmType != null and alarmType != ''\" >  AND alarmType = '${alarmType}' </if>" +
+            " <if test=\"startTime != null and startTime != ''\" >  AND alarmTime &gt;= '${startTime}' </if>" +
+            " <if test=\"endTime != null and endTime != ''\" >  AND alarmTime &lt;= '${endTime}' </if>" +
+            " ORDER BY alarmTime DESC " +
             " </script>"})
     List<DeviceAlarm> query(String deviceId, String alarmPriority, String alarmMethod,
                             String alarmType, String startTime, String endTime);

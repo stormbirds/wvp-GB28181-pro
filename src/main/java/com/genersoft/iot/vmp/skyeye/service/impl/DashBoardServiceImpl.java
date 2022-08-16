@@ -5,6 +5,7 @@ import com.genersoft.iot.vmp.skyeye.mapper.DashBoardMapper;
 import com.genersoft.iot.vmp.skyeye.service.IDashBoardService;
 import com.genersoft.iot.vmp.skyeye.vo.*;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
@@ -23,6 +24,7 @@ import java.util.ArrayList;
 @Service
 public class DashBoardServiceImpl implements IDashBoardService {
 
+    @Lazy
     @Resource
     private SysMonitorConfig sysMonitorConfig;
     @Resource

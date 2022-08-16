@@ -12,6 +12,7 @@
                 AS customName,
                 (A.device_id || A.channel_id) AS id,
                 0 AS parental,
+                A.`status` AS onlineSubCount,
             </when>
             <otherwise>
                 '' AS CODE,
@@ -20,9 +21,9 @@
                 AS customName,
                 A.device_id AS id,
                 1 AS parental,
+                SUM( A.`status`) AS onlineSubCount,
             </otherwise>
         </choose>
-        SUM( A.`status`) AS onlineSubCount,
         A.latitude AS latitude,
         A.longitude AS longitude,
         A.manufacture AS manufacturer,
@@ -31,14 +32,16 @@
         <choose>
             <when test="serial != null and serial != ''">
                 CASE A.status WHEN 1 THEN 'ON' ELSE 'OFF' END AS STATUS,
-                SUM( A.sub_count ) AS subCount,
+                A.sub_count AS subCount,
+                CASE WHEN A.sub_count>0 THEN 0 ELSE 1 END AS subCountDevice
             </when>
             <otherwise>
                 CASE B.`online` WHEN 1 THEN 'ON' ELSE 'OFF' END AS STATUS,
                 COUNT(A.id) AS subCount,
+                SUM( CASE WHEN A.sub_count>0 THEN 0 ELSE 1 END ) AS subCountDevice
             </otherwise>
         </choose>
-        SUM( CASE WHEN A.sub_count>0 THEN 0 ELSE 1 END ) AS subCountDevice
+
         FROM
         device_channel A
         <if test="serial == null or serial == ''">

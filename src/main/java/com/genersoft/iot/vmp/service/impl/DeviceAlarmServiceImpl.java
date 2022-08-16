@@ -29,6 +29,8 @@ public class DeviceAlarmServiceImpl extends ServiceImpl<DeviceAlarmMapper,Device
     private DeviceAlarmMapper deviceAlarmMapper;
     @Resource
     private RedisMsgPublisher redisMsgPublisher;
+    @Autowired
+    private IDeviceAlarmService deviceAlarmService;
 
     @Override
     public PageInfo<DeviceAlarm> getAllAlarm(int page, int count, String deviceId, String alarmPriority, String alarmMethod, String alarmType, String startTime, String endTime) {
@@ -40,7 +42,45 @@ public class DeviceAlarmServiceImpl extends ServiceImpl<DeviceAlarmMapper,Device
     @Override
     public void add(DeviceAlarm deviceAlarm) {
         deviceAlarmMapper.add(deviceAlarm);
-        redisMsgPublisher.sendMsg(RedisTopicEnums.TOPIC_ALARM, JSON.toJSONString(deviceAlarm));
+        int alarmMethod = Integer.parseInt(deviceAlarm.getAlarmMethod());
+        Alarms.AlarmsBuilder alarms = Alarms.builder();
+        if(alarmMethod== 4){
+            alarms.alarmMethodName(GBUtils.getAlarmMethodNames(alarmMethod));
+        }else if(alarmMethod== 5){
+            Integer alarmType = Integer.parseInt(deviceAlarm.getAlarmType());
+            alarms.alarmType(alarmType);
+            alarms.alarmTypeName(GBUtils.getAlarmTypeVideoNames(alarmType));
+//                    if(alarmType!=null && alarmType==6){
+//                        Integer eventType = getInteger(rootElement.element("Info").element("AlarmTypeParam"), "EventType");
+//                        alarms.alarmEventType(eventType);
+//                    }
+        }else if(alarmMethod== 2){
+            Integer alarmType = Integer.parseInt(deviceAlarm.getAlarmType());
+            alarms.alarmType(alarmType);
+            alarms.alarmTypeName(GBUtils.getAlarmDeviceTypeNames(alarmType));
+        }else if(alarmMethod== 6){
+            Integer alarmType = Integer.parseInt(deviceAlarm.getAlarmType());
+            alarms.alarmType(alarmType);
+            alarms.alarmTypeName(GBUtils.getAlarmDeviceFailureTypeNames(alarmType));
+        }
+        alarms
+                .id(deviceAlarm.getId())
+                .deviceId(deviceAlarm.getDeviceId())
+                .deviceName("")
+                .channelId(deviceAlarm.getChannelId())
+                .channelName("")
+                .alarmPriority(Integer.parseInt(deviceAlarm.getAlarmPriority()) )
+                .alarmPriorityName(GBUtils.getAlarmPriorityName(Integer.parseInt(deviceAlarm.getAlarmPriority()) ))
+                .alarmMethod(Integer.parseInt(deviceAlarm.getAlarmMethod()))
+                .alarmMethodName(GBUtils.getAlarmMethodNames(Integer.parseInt(deviceAlarm.getAlarmMethod())))
+                .longitude(deviceAlarm.getLongitude())
+                .latitude(deviceAlarm.getLatitude())
+                .alarmDescription(deviceAlarm.getAlarmDescription())
+                .extinfo("")
+                .time(deviceAlarm.getAlarmTime())
+                .createdAt(deviceAlarm.getCreateTime())
+                .build();
+        redisMsgPublisher.sendMsg(RedisTopicEnums.TOPIC_ALARM, JSON.toJSONString(alarms));
     }
 
     @Override
@@ -55,28 +95,32 @@ public class DeviceAlarmServiceImpl extends ServiceImpl<DeviceAlarmMapper,Device
 
     @Override
     public List<Alarms> list(String serial, String code, String starttime, String endtime, Integer priority, Integer method, Integer start, Integer limit, String q) {
-        QueryWrapper<DeviceAlarm> queryWrapper = new QueryWrapper<>();
-        queryWrapper
-                .like(StringUtils.hasText(q), "deviceId", q)
-                .or()
-                .like(StringUtils.hasText(q), "channelId", q)
-                .or()
-                .like(StringUtils.hasText(q), "alarmPriority", q)
-                .or()
-                .like(StringUtils.hasText(q), "alarmMethod", q)
-                .or()
-                .like(StringUtils.hasText(q), "alarmDescription", q)
-                .eq(StringUtils.hasText(serial),"deviceId",serial)
-                .eq(StringUtils.hasText(code),"channelId",code)
-                .ge(StringUtils.hasText(starttime),"alarmTime",starttime.replace("T",""))
-                .le(StringUtils.hasText(endtime),"alarmTime",endtime.replace("T",""))
-                .eq(priority!=null,"alarmPriority",priority)
-                .eq(method!=null,"alarmMethod",method);
+        int page = (int) Math.ceil(start*1.0/limit);
+        PageInfo<DeviceAlarm> allAlarm = deviceAlarmService.getAllAlarm(page, limit, null, String.valueOf(priority) ,String.valueOf(method) ,
+                null, starttime, endtime);
 
-
-        List<DeviceAlarm> deviceAlarms = baseMapper.selectPage(
-                new Page<>(start, limit), queryWrapper).getRecords();
-        return deviceAlarms.stream().map(deviceAlarm -> {
+//
+//        QueryWrapper<DeviceAlarm> queryWrapper = new QueryWrapper<>();
+//        queryWrapper
+//                .like(StringUtils.hasText(q), "deviceId", q)
+//                .or()
+//                .like(StringUtils.hasText(q), "channelId", q)
+//                .or()
+//                .like(StringUtils.hasText(q), "alarmPriority", q)
+//                .or()
+//                .like(StringUtils.hasText(q), "alarmMethod", q)
+//                .or()
+//                .like(StringUtils.hasText(q), "alarmDescription", q)
+//                .eq(StringUtils.hasText(serial),"deviceId",serial)
+//                .eq(StringUtils.hasText(code),"channelId",code)
+//                .ge(StringUtils.hasText(starttime),"alarmTime",starttime.replace("T",""))
+//                .le(StringUtils.hasText(endtime),"alarmTime",endtime.replace("T",""))
+//                .eq(priority!=null,"alarmPriority",priority)
+//                .eq(method!=null,"alarmMethod",method);
+//
+//        List<DeviceAlarm> deviceAlarms = baseMapper.selectPage(
+//                new Page<>(start, limit), queryWrapper).getRecords();
+        return allAlarm.getList().stream().map(deviceAlarm -> {
             Integer alarmMethod = Integer.parseInt(deviceAlarm.getAlarmMethod());
             Alarms.AlarmsBuilder alarms = Alarms.builder();
             if(alarmMethod!=null){

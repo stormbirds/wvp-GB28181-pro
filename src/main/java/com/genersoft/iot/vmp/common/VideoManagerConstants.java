@@ -96,7 +96,7 @@ public class VideoManagerConstants {
 	public static final String VM_MSG_SUBSCRIBE_MOBILE_POSITION = "mobileposition";
 
 	// 报警订阅的通知（收到报警向redis发出通知）
-	public static final String VM_MSG_SUBSCRIBE_ALARM = "alarm";
+	public static final String VM_MSG_SUBSCRIBE_ALARM = "device_alarm";
 
 	// 报警通知的发送 （收到redis发出的通知，转发给其他平台）
 	public static final String VM_MSG_SUBSCRIBE_ALARM_RECEIVE= "alarm_receive";

@@ -6,6 +6,7 @@ import com.google.common.collect.EvictingQueue;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
 import oshi.SystemInfo;
 import oshi.hardware.CentralProcessor;
@@ -32,6 +33,7 @@ public class SysMonitorConfig {
 
 
     private SystemInfo systemInfo = new SystemInfo();
+    @Lazy
     @Resource
     private IDashBoardService dashBoardService;
 

@@ -3,6 +3,7 @@ FROM ubuntu:20.04   as   build
 ARG gitUrl="https://gitee.com/pan648540858"
 ARG skyeyeUrl="https://gitee.com/stormbirds"
 ARG zlmGitUrl="https://gitee.com/xia-chu/ZLMediaKit"
+#https://gitee.com/stormbirds/skyeye-wvp.git
 # 环境变量
 ENV LANG C.UTF-8
 # 更换源
@@ -19,11 +20,11 @@ RUN cd /home && \
         cp maven/settings.xml /usr/share/maven/conf/
 
 RUN cd /home && \
-        git clone "${skyeyeUrl}/skyeye-wvp.git wvp-GB28181-pro"
-RUN cd /home/wvp-GB28181-pro/web_src && \
-        npm install && \
-        npm run build
-RUN cd /home/wvp-GB28181-pro && git checkout skyeye \
+        git clone ${skyeyeUrl}/skyeye-wvp.git wvp-GB28181-pro
+#RUN cd /home/wvp-GB28181-pro/web_src && \
+#        npm install && \
+#        npm run build
+RUN cd /home/wvp-GB28181-pro && git checkout -b skyeye -f && \
         mvn clean package -Dmaven.test.skip=true && \
         cp /home/wvp-GB28181-pro/target/*.jar /opt/wvp/ && \
         cp /home/wvp-GB28181-pro/src/main/resources/application-docker.yml /opt/wvp/config/application.yml

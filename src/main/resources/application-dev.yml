@@ -63,12 +63,14 @@ sip:
     id: ${WVP_ID:61010000002000000001}
     # [可选] 默认设备认证密码，后续扩展使用设备单独密码, 移除密码将不进行校验
     password: ${WVP_PWD:12345678}
+    # 是否存储alarm信息
+    alarm: true
 
 #zlm 默认服务器配置
 media:
     id: FQ3TF8yT83wh5Wvz
     # [必须修改] zlm服务器的内网IP
-    ip: ${ZLM_HOST:192.168.0.233}
+    ip: ${ZLM_HOST:192.168.0.108}
     # [必须修改] zlm服务器的http.port
     http-port: ${ZLM_PORT:9080}
     # [可选] zlm服务器的hook.admin_params=secret
@@ -102,7 +104,7 @@ user-settings:
     record-path: /opt/ZLMediaKit/release/linux/Debug/www/record/
     cloud-record-path: E:/dev/docker/skyeye/record/
 snap:
-    path: ${snap_path:/opt/ZLMediaKit/release/linux/Debug/www/snap/}
+    path: ${snap_path:E:/dev/ZLMediaKit/release/windows/Debug/www/snap/}
 # 版本信息， 不需修改
 version:
     version: "@project.version@"

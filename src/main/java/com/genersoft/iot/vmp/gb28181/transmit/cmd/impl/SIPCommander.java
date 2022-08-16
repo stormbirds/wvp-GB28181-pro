@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.DependsOn;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -63,10 +64,12 @@ public class SIPCommander implements ISIPCommander {
 	@Autowired
 	private SipFactory sipFactory;
 
+	@Lazy
 	@Autowired
 	@Qualifier(value="tcpSipProvider")
 	private SipProviderImpl tcpSipProvider;
 
+	@Lazy
 	@Autowired
 	@Qualifier(value="udpSipProvider")
 	private SipProviderImpl udpSipProvider;

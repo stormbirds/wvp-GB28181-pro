@@ -261,7 +261,7 @@
 
 
 	<build>
-		<finalName>${project.artifactId}-${project.version}-${maven.build.timestamp}</finalName>
+		<finalName>skyeye-wvp</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>

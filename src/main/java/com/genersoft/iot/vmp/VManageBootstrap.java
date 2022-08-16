@@ -15,7 +15,7 @@ import springfox.documentation.oas.annotations.EnableOpenApi;
  * 启动类
  */
 @ServletComponentScan({"com.genersoft.iot.vmp.conf","com.genersoft.iot.vmp.skyeye.controller"})
-@SpringBootApplication(scanBasePackages = {"com.genersoft.iot.vmp","cn.stormbirds.wvp"})
+@SpringBootApplication(scanBasePackages = {"com.genersoft.iot.vmp"})
 @MapperScan(basePackages = {"com.genersoft.iot.vmp.storager.dao","com.genersoft.iot.vmp.skyeye.mapper"})
 @EnableScheduling
 @EnableOpenApi

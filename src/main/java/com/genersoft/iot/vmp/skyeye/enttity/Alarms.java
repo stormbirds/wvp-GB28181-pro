@@ -7,9 +7,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.io.Serializable;
 
@@ -21,6 +19,9 @@ import java.io.Serializable;
  * @author stormbirds
  * @since 2021-12-12
  */
+@NoArgsConstructor
+@AllArgsConstructor
+@Data
 @Builder
 @Getter
 @Setter
@@ -127,7 +128,7 @@ public class Alarms implements Serializable {
      */
     @ApiModelProperty("扩展信息")
     @TableField("info")
-    @JsonProperty("AlarmTypeParam")
+    @JsonProperty("ExtInfo")
     private String extinfo;
 
     /**
@@ -180,4 +181,14 @@ public class Alarms implements Serializable {
     private String createdAt;
 
 
+    @ApiModelProperty("报警预案关联录像路径")
+    @JsonProperty("RecordPath")
+    private String recordPath;
+
+    @ApiModelProperty("报警预案关联快照路径")
+    @JsonProperty("SnapPath")
+    private String snapPath;
+
+    @JsonProperty("plan_description")
+    private String planDescription;
 }

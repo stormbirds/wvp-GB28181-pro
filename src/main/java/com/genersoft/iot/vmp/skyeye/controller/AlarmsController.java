@@ -1,15 +1,20 @@
 package com.genersoft.iot.vmp.skyeye.controller;
 
+import com.genersoft.iot.vmp.gb28181.bean.DeviceAlarm;
 import com.genersoft.iot.vmp.service.IDeviceAlarmService;
+import com.genersoft.iot.vmp.skyeye.GBUtils;
 import com.genersoft.iot.vmp.skyeye.enttity.Alarms;
 import com.genersoft.iot.vmp.skyeye.vo.AlarmListVo;
+import com.github.pagehelper.PageInfo;
 import io.swagger.annotations.ApiParam;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -25,6 +30,8 @@ public class AlarmsController {
 
     @Resource
     private IDeviceAlarmService alarmsService;
+    @Autowired
+    private IDeviceAlarmService deviceAlarmService;
 
     @GetMapping("/report")
     public String report(@ApiParam()String device,
@@ -67,10 +74,56 @@ public class AlarmsController {
         if(limit==null) limit=15;
         if(start==null) start =1;
         AlarmListVo alarmListVo = new AlarmListVo();
-        List<Alarms> alarms = alarmsService.list(serial,code,starttime,endtime,priority,method,start,limit,q);
+        int page = (int) Math.ceil((start+1)*1.0/limit);
+        PageInfo<DeviceAlarm> allAlarm = deviceAlarmService.getAllAlarm(page, limit, null, priority==null?"":String.valueOf(priority) ,method==null?"": String.valueOf(method) ,
+                null, starttime, endtime);
 
-        alarmListVo.setAlarmCount(alarmsService.countList(serial,code,starttime,endtime,priority,method,q));
-        alarmListVo.setAlarmList(alarms);
+        alarmListVo.setAlarmCount((int) allAlarm.getTotal());
+        alarmListVo.setAlarmList(allAlarm.getList().stream().map(deviceAlarm -> {
+            Integer alarmMethod = Integer.parseInt(deviceAlarm.getAlarmMethod());
+            Alarms.AlarmsBuilder alarms = Alarms.builder();
+            if(alarmMethod!=null){
+                if(alarmMethod== 4){
+                    alarms.alarmMethodName(GBUtils.getAlarmMethodNames(alarmMethod));
+                    //TODO 存储GPS定位信息
+                }else if(alarmMethod== 5){
+                    Integer alarmType = Integer.parseInt(deviceAlarm.getAlarmType());
+                    alarms.alarmType(alarmType);
+                    alarms.alarmTypeName(GBUtils.getAlarmTypeVideoNames(alarmType));
+//                    if(alarmType!=null && alarmType==6){
+//                        Integer eventType = getInteger(rootElement.element("Info").element("AlarmTypeParam"), "EventType");
+//                        alarms.alarmEventType(eventType);
+//                    }
+                }else if(alarmMethod== 2){
+                    Integer alarmType = Integer.parseInt(deviceAlarm.getAlarmType());
+                    alarms.alarmType(alarmType==null?2:alarmType);
+                    alarms.alarmTypeName(GBUtils.getAlarmDeviceTypeNames(alarmType));
+                }else if(alarmMethod== 6){
+                    Integer alarmType = Integer.parseInt(deviceAlarm.getAlarmType());
+                    alarms.alarmType(alarmType);
+                    alarms.alarmTypeName(GBUtils.getAlarmDeviceFailureTypeNames(alarmType));
+                }
+            }else{
+                alarms.alarmMethod(2);
+            }
+            return alarms
+                    .id(deviceAlarm.getId())
+                    .deviceId(deviceAlarm.getDeviceId())
+                    .deviceName("")
+                    .channelId(deviceAlarm.getChannelId())
+                    .channelName("")
+                    .alarmPriority(Integer.parseInt(deviceAlarm.getAlarmPriority()) )
+                    .alarmPriorityName(GBUtils.getAlarmPriorityName(Integer.parseInt(deviceAlarm.getAlarmPriority()) ))
+                    .alarmMethod(Integer.parseInt(deviceAlarm.getAlarmMethod()))
+                    .alarmMethodName(GBUtils.getAlarmMethodNames(Integer.parseInt(deviceAlarm.getAlarmMethod())))
+                    .longitude(deviceAlarm.getLongitude())
+                    .latitude(deviceAlarm.getLatitude())
+                    .alarmDescription(deviceAlarm.getAlarmDescription())
+                    .extinfo("")
+                    .time(deviceAlarm.getAlarmTime())
+                    .createdAt(deviceAlarm.getCreateTime())
+                    .build();
+        }).collect(Collectors.toList()));
         alarmListVo.setAlarmPublishToRedis(true);
         return alarmListVo ;
     }

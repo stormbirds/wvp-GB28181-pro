@@ -13,14 +13,14 @@ spring:
         # [可选] 数据库 DB
         database: ${REDIS_DB:6}
         # [可选] 访问密码,若你的redis服务器没有设置密码，就不需要用密码去连接
-        password: ${REDIS_PWD:}
+        password: ${REDIS_PWD:9xKcxomBFf@o}
         # [可选] 超时时间
         timeout: 10000
     # [必选] jdbc数据库配置
     datasource:
         # 使用mysql 打开23-28行注释， 删除29-36行
          name: wvp
-         url: jdbc:mysql://127.0.0.1:3306/wvp?useUnicode=true&serverTimezone=Asia/Shanghai&characterEncoding=UTF8&rewriteBatchedStatements=true&allowMultiQueries=true&useSSL=false&allowMultiQueries=true
+         url: jdbc:mysql://127.0.0.1:3306/wvp?useUnicode=true&serverTimezone=Asia/Shanghai&characterEncoding=UTF8&rewriteBatchedStatements=true&allowMultiQueries=true&useSSL=false&allowMultiQueries=true&allowPublicKeyRetrieval=true
          username: root
          password: root123456
          type: com.alibaba.druid.pool.DruidDataSource
@@ -62,6 +62,8 @@ sip:
     id: ${WVP_ID:61010000002000000001}
     # [可选] 默认设备认证密码，后续扩展使用设备单独密码, 移除密码将不进行校验
     password: ${WVP_PWD:12345678}
+    # 是否存储alarm信息
+    alarm: true
 
 #zlm 默认服务器配置
 media:
@@ -100,11 +102,11 @@ user-settings:
     # 是否开启接口鉴权
     interface-authentication: false
     #ZLM服务录像文件夹地址
-    record-path: E:/dev/ZLMediaKit/release/windows/Debug/www/record/
-    cloud-record-path: E:/video/
+    record-path: /home/ZLMediaKit/release/linux/Release/www/record/
+    cloud-record-path: /home/ZLMediaKit/release/linux/Release/www/cloud_record/
 
 snap:
-    path: E:/dev/ZLMediaKit/release/windows/Debug/www/snap
+    path: /home/ZLMediaKit/release/linux/Release/www/snap
 # 在线文档： swagger-ui（生产环境建议关闭）
 swagger-ui:
     enabled: true
