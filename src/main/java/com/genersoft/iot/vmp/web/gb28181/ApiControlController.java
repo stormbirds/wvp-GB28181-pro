@@ -45,7 +45,7 @@ public class ApiControlController {
                     serial, code, command, speed);
         }
         if (channel == null) {channel = 0;}
-        if (speed == null) {speed = 0;}
+        if (speed == null) {speed = 129;}
         Device device = storager.queryVideoDevice(serial);
         if (device == null) {
             JSONObject result = new JSONObject();

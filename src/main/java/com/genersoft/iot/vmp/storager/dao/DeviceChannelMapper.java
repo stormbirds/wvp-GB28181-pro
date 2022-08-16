@@ -1,5 +1,6 @@
 package com.genersoft.iot.vmp.storager.dao;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.genersoft.iot.vmp.gb28181.bean.Device;
 import com.genersoft.iot.vmp.gb28181.bean.DeviceChannel;
 import com.genersoft.iot.vmp.gb28181.bean.DeviceChannelInPlatform;
@@ -14,7 +15,7 @@ import java.util.List;
  */
 @Mapper
 @Repository
-public interface DeviceChannelMapper {
+public interface DeviceChannelMapper extends BaseMapper<DeviceChannel> {
 
     @Insert("INSERT INTO device_channel (channel_id, device_id, name, manufacture, model, owner, civil_code, block, " +
             "address, parental, parent_id, safety_way, register_way, cert_num, certifiable, err_code, secrecy, " +
@@ -22,7 +23,7 @@ public interface DeviceChannelMapper {
             "longitudeWgs84, latitudeWgs84, create_time, update_time, business_group_id, gps_time) " +
             "VALUES ('${channelId}', '${deviceId}', '${name}', '${manufacture}', '${model}', '${owner}', '${civilCode}', '${block}'," +
             "'${address}', ${parental}, '${parentId}', ${safetyWay}, ${registerWay}, '${certNum}', ${certifiable}, ${errCode}, '${secrecy}', " +
-            "'${ipAddress}', ${port}, '${password}', ${PTZType}, ${status}, '${streamId}', ${longitude}, ${latitude}, ${longitudeGcj02}, " +
+            "'${ipAddress}', ${port}, '${password}', ${ptzType}, ${status}, '${streamId}', ${longitude}, ${latitude}, ${longitudeGcj02}, " +
             "${latitudeGcj02}, ${longitudeWgs84}, ${latitudeWgs84},'${createTime}', '${updateTime}', '${businessGroupId}', '${gpsTime}')")
     int add(DeviceChannel channel);
 
@@ -47,7 +48,7 @@ public interface DeviceChannelMapper {
             "<if test='ipAddress != null'>, ip_address='${ipAddress}'</if>" +
             "<if test='port != null'>, port=${port}</if>" +
             "<if test='password != null'>, password='${password}'</if>" +
-            "<if test='PTZType != null'>, ptz_type=${PTZType}</if>" +
+            "<if test='ptzType != null'>, ptz_type=${ptzType}</if>" +
             "<if test='status != null'>, status='${status}'</if>" +
             "<if test='streamId != null'>, stream_id='${streamId}'</if>" +
             "<if test='hasAudio != null'>, audio_enable=${hasAudio}</if>" +
@@ -59,7 +60,7 @@ public interface DeviceChannelMapper {
             "<if test='latitudeWgs84 != null'>, latitudeWgs84=${latitudeWgs84}</if>" +
             "<if test='businessGroupId != null'>, business_group_id=#{businessGroupId}</if>" +
             "<if test='gpsTime != null'>, gps_time=#{gpsTime}</if>" +
-            "WHERE deviceId='${deviceId}' AND channel_id='${channelId}'"+
+            "WHERE device_id='${deviceId}' AND channel_id='${channelId}'"+
             " </script>"})
     int update(DeviceChannel channel);
 
@@ -158,7 +159,7 @@ public interface DeviceChannelMapper {
             "'${item.owner}', '${item.civilCode}', '${item.block}',${item.subCount}," +
             "'${item.address}', ${item.parental}, '${item.parentId}', ${item.safetyWay}, ${item.registerWay}, " +
             "'${item.certNum}', ${item.certifiable}, ${item.errCode}, '${item.secrecy}', " +
-            "'${item.ipAddress}', ${item.port}, '${item.password}', ${item.PTZType}, ${item.status}, " +
+            "'${item.ipAddress}', ${item.port}, '${item.password}', ${item.ptzType}, ${item.status}, " +
             "'${item.streamId}', ${item.longitude}, ${item.latitude},${item.longitudeGcj02}, " +
             "${item.latitudeGcj02},${item.longitudeWgs84}, ${item.latitudeWgs84},'${item.createTime}', '${item.updateTime}', " +
             "'${item.businessGroupId}', '${item.gpsTime}') " +

@@ -52,7 +52,7 @@ sip:
     # [必须修改] 本机的IP
     ip: ${WVP_HOST:192.168.50.50}
     # [可选] 28181服务监听的端口
-    port: ${WVP_PORT:15060}
+    port: ${WVP_PORT:5060}
     # 根据国标6.1.2中规定，domain宜采用ID统一编码的前十位编码。国标附录D中定义前8位为中心编码（由省级、市级、区级、基层编号组成，参照GB/T 2260-2007）
     # 后两位为行业编码，定义参照附录D.3
     # 3701020049标识山东济南历下区 信息行业接入
@@ -101,10 +101,11 @@ user-settings:
     auto-apply-play: true
     # 是否开启接口鉴权
     interface-authentication: false
-    #ZLM服务录像文件夹地址
+    #ZLM实时录像文件夹地址
     record-path: E:/dev/ZLMediaKit/release/windows/Debug/www/record/
+    #云端录像路径
     cloud-record-path: E:/video/
-
+#通道封面截图文件路径
 snap:
     path: E:/dev/ZLMediaKit/release/windows/Debug/www/snap
 # 在线文档： swagger-ui（生产环境建议关闭）

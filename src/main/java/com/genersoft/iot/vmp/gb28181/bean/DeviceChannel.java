@@ -1,5 +1,7 @@
 package com.genersoft.iot.vmp.gb28181.bean;
 
+import com.baomidou.mybatisplus.annotation.TableField;
+
 public class DeviceChannel {
 
 
@@ -121,6 +123,7 @@ public class DeviceChannel {
 	/**
 	 * 云台类型描述字符串
 	 */
+	@TableField(exist = false)
 	private String PTZTypeText;
 
 	/**
@@ -157,21 +160,25 @@ public class DeviceChannel {
 	/**
 	 * 经度 GCJ02
 	 */
+	@TableField("longitudeGcj02")
 	private double longitudeGcj02;
 
 	/**
 	 * 纬度 GCJ02
 	 */
+	@TableField("latitudeGcj02")
 	private double latitudeGcj02;
 
 	/**
 	 * 经度 WGS84
 	 */
+	@TableField("longitudeWgs84")
 	private double longitudeWgs84;
 
 	/**
 	 * 纬度 WGS84
 	 */
+	@TableField("latitudeWgs84")
 	private double latitudeWgs84;
 
 	/**
@@ -187,17 +194,24 @@ public class DeviceChannel {
 	/**
 	 *  是否含有音频
 	 */
+	@TableField("audio_enable")
 	private boolean hasAudio;
 
 	/**
 	 * 标记通道的类型，0->国标通道 1->直播流通道 2->业务分组/虚拟组织/行政区划
 	 */
+	@TableField(exist = false)
 	private int channelType;
 
 	/**
 	 * 业务分组
 	 */
 	private String businessGroupId;
+
+	/**
+	 * 通道序号
+	 */
+	private Integer channel;
 
 	/**
 	 * GPS的更新时间
@@ -531,5 +545,13 @@ public class DeviceChannel {
 
 	public void setGpsTime(String gpsTime) {
 		this.gpsTime = gpsTime;
+	}
+
+	public Integer getChannel() {
+		return channel;
+	}
+
+	public void setChannel(Integer channel) {
+		this.channel = channel;
 	}
 }

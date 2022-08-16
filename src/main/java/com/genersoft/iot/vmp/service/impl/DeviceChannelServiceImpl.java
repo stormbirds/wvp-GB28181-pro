@@ -1,6 +1,7 @@
 package com.genersoft.iot.vmp.service.impl;
 
 import cn.hutool.core.util.IdUtil;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.genersoft.iot.vmp.common.StreamInfo;
 import com.genersoft.iot.vmp.gb28181.bean.Device;
 import com.genersoft.iot.vmp.gb28181.bean.DeviceChannel;
@@ -31,7 +32,7 @@ import static cn.hutool.core.date.DatePattern.NORM_DATETIME_FORMATTER;
  * @author lin
  */
 @Service
-public class DeviceChannelServiceImpl implements IDeviceChannelService {
+public class DeviceChannelServiceImpl extends ServiceImpl<DeviceChannelMapper, DeviceChannel> implements IDeviceChannelService {
 
     private final static Logger logger = LoggerFactory.getLogger(DeviceChannelServiceImpl.class);
 

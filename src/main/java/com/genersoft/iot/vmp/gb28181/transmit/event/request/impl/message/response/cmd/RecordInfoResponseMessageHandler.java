@@ -1,5 +1,7 @@
 package com.genersoft.iot.vmp.gb28181.transmit.event.request.impl.message.response.cmd;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.genersoft.iot.vmp.gb28181.bean.*;
 import com.genersoft.iot.vmp.gb28181.event.EventPublisher;
 import com.genersoft.iot.vmp.gb28181.session.RecordDataCatch;
@@ -8,6 +10,7 @@ import com.genersoft.iot.vmp.gb28181.transmit.callback.RequestMessage;
 import com.genersoft.iot.vmp.gb28181.transmit.event.request.SIPRequestProcessorParent;
 import com.genersoft.iot.vmp.gb28181.transmit.event.request.impl.message.IMessageHandler;
 import com.genersoft.iot.vmp.gb28181.transmit.event.request.impl.message.response.ResponseMessageHandler;
+import com.genersoft.iot.vmp.skyeye.vo.DeviceRecord;
 import com.genersoft.iot.vmp.utils.DateUtil;
 import com.genersoft.iot.vmp.vmanager.bean.WVPResult;
 import org.dom4j.DocumentException;
@@ -30,6 +33,7 @@ import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.stream.Collectors;
 
 import static com.genersoft.iot.vmp.gb28181.utils.XmlUtil.getText;
 
@@ -171,10 +175,25 @@ public class RecordInfoResponseMessageHandler extends SIPRequestProcessorParent 
         // 对数据进行排序
         Collections.sort(recordDataCatch.getRecordInfo(deviceId, sn).getRecordList());
         wvpResult.setData(recordDataCatch.getRecordInfo(deviceId, sn));
-
+        JSONObject tmpJson = JSON.parseObject(JSON.toJSONString(wvpResult));
+        tmpJson.put("DeviceID",wvpResult.getData().getDeviceId());
+        tmpJson.put("Name",wvpResult.getData().getName());
+        tmpJson.put("SumNum",wvpResult.getData().getSumNum());
+        tmpJson.put("RecordList",wvpResult.getData().getRecordList().stream().map(recordItem -> DeviceRecord.builder()
+                .deviceid(recordItem.getDeviceId())
+                .name(recordItem.getName())
+                .filepath(recordItem.getFilePath())
+                .filesize(Double.parseDouble(recordItem.getFileSize()) )
+                .address(recordItem.getAddress())
+                .starttime(recordItem.getStartTime())
+                .endtime(recordItem.getEndTime())
+                .secrecy(recordItem.getSecrecy())
+                .type(recordItem.getType())
+                .recorderid(recordItem.getRecorderId())
+                .build()).collect(Collectors.toList()));
         RequestMessage msg = new RequestMessage();
         msg.setKey(key);
-        msg.setData(wvpResult);
+        msg.setData(tmpJson);
         deferredResultHolder.invokeAllResult(msg);
         recordDataCatch.remove(deviceId, sn);
     }
