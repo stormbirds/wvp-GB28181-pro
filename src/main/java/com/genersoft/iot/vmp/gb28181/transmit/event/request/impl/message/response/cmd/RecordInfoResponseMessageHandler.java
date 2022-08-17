@@ -179,18 +179,30 @@ public class RecordInfoResponseMessageHandler extends SIPRequestProcessorParent 
         tmpJson.put("DeviceID",wvpResult.getData().getDeviceId());
         tmpJson.put("Name",wvpResult.getData().getName());
         tmpJson.put("SumNum",wvpResult.getData().getSumNum());
-        tmpJson.put("RecordList",wvpResult.getData().getRecordList().stream().map(recordItem -> DeviceRecord.builder()
-                .deviceid(recordItem.getDeviceId())
-                .name(recordItem.getName())
-                .filepath(recordItem.getFilePath())
-                .filesize(Double.parseDouble(recordItem.getFileSize()) )
-                .address(recordItem.getAddress())
-                .starttime(recordItem.getStartTime())
-                .endtime(recordItem.getEndTime())
-                .secrecy(recordItem.getSecrecy())
-                .type(recordItem.getType())
-                .recorderid(recordItem.getRecorderId())
-                .build()).collect(Collectors.toList()));
+        tmpJson.put("RecordList",wvpResult.getData().getRecordList().stream().map(
+                recordItem ->
+                {
+                    DeviceRecord.DeviceRecordBuilder builder = DeviceRecord.builder();
+                    if(recordItem.getFileSize()!=null && StringUtils.hasText(recordItem.getFileSize())){
+                        builder.filesize(Double.parseDouble(recordItem.getFileSize()) );
+                    }else {
+                        builder.filesize(0d);
+                    }
+                    return builder
+                            .deviceid(recordItem.getDeviceId())
+                            .name(recordItem.getName())
+                            .filepath(recordItem.getFilePath())
+                            .address(recordItem.getAddress())
+                            .starttime(recordItem.getStartTime())
+                            .endtime(recordItem.getEndTime())
+                            .secrecy(recordItem.getSecrecy())
+                            .type(recordItem.getType())
+                            .recorderid(recordItem.getRecorderId())
+                            .build();
+                }
+
+                )
+                        .collect(Collectors.toList()));
         RequestMessage msg = new RequestMessage();
         msg.setKey(key);
         msg.setData(tmpJson);

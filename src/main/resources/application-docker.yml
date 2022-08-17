@@ -50,9 +50,9 @@ server:
 # 作为28181服务器的配置
 sip:
     # [必须修改] 本机的IP
-    ip: ${WVP_HOST:192.168.50.50}
+    ip: ${WVP_HOST:192.168.0.213}
     # [可选] 28181服务监听的端口
-    port: ${WVP_PORT:15060}
+    port: ${WVP_PORT:5060}
     # 根据国标6.1.2中规定，domain宜采用ID统一编码的前十位编码。国标附录D中定义前8位为中心编码（由省级、市级、区级、基层编号组成，参照GB/T 2260-2007）
     # 后两位为行业编码，定义参照附录D.3
     # 3701020049标识山东济南历下区 信息行业接入
@@ -70,7 +70,7 @@ media:
     # [必须修改] zlm服务器唯一id，用于触发hook时区别是哪台服务器,general.mediaServerId
     id: AIi7b9Hyz3i925jg
     # [必须修改] zlm服务器的内网IP
-    ip: ${ZLM_HOST:localhost}
+    ip: ${ZLM_HOST:192.168.0.213}
     # [必须修改] zlm服务器的http.port
     http-port: ${ZLM_PORT:9080}
     # [可选] zlm服务器的hook.admin_params=secret
