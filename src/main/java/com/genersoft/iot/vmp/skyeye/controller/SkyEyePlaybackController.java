@@ -48,8 +48,8 @@ public class SkyEyePlaybackController {
     @Autowired
     private DeferredResultHolder resultHolder;
 
-//    @Resource
-//    private IPlaybackService playbackService;
+    @Resource
+    private IPlaybackService playbackService;
 @Autowired
 private IPlayService playService;
     @Resource
@@ -139,7 +139,9 @@ private IPlayService playService;
             endtime = LocalDateTimeUtil.parse(endtime,DatePattern.UTC_SIMPLE_PATTERN).format(DatePattern.NORM_DATETIME_FORMATTER);
         if(starttime.contains("T"))
             starttime = LocalDateTimeUtil.parse(starttime,DatePattern.UTC_SIMPLE_PATTERN).format(DatePattern.NORM_DATETIME_FORMATTER);
-
+        if(download!=null && download){
+            return playbackService.download(serial, code, starttime, endtime, download_speed);
+        }
         return playService.playBack(serial, code, starttime, endtime, null, wvpResult->{
             String jsonStr = String.valueOf(wvpResult.getData().getData());
             JSONObject streamInfo = JSON.parseObject(jsonStr,JSONObject.class);
@@ -174,8 +176,25 @@ private IPlayService playService;
     }
 
     @GetMapping("/streaminfo")
-    public StreamInfo streaminfo(@RequestParam String streamid) {
-        return mediaService. getStreamInfoByAppAndStreamWithCheck("rtp",streamid,null,true);
+    public JSONObject streaminfo(@RequestParam String streamid) {
+        StreamInfo streamInfoTmp = mediaService.getStreamInfoByAppAndStreamWithCheck("rtp", streamid, null, true);
+        if(streamInfoTmp==null){
+            JSONObject json = new JSONObject();
+            json.put("error","该流不存在");
+            return json;
+        }
+        StreamInfo streamInfo = playService.getDownLoadInfo(streamInfoTmp.getDeviceID(), streamInfoTmp.getChannelId(), streamid);
+        JSONObject jsonResult = JSON.parseObject(JSON.toJSONString(streamInfo) ,JSONObject.class);
+        jsonResult.put("StreamID", jsonResult.get("stream"));
+        jsonResult.put("DeviceID", jsonResult.get("deviceID"));
+        jsonResult.put("ChannelID", jsonResult.get("channelId"));
+        jsonResult.put("WEBRTC", jsonResult.get("rtc"));
+        jsonResult.put("FLV", jsonResult.get("flv"));
+        jsonResult.put("WS_FLV", jsonResult.get("ws_flv"));
+        jsonResult.put("RTMP", jsonResult.get("rtmp"));
+        jsonResult.put("HLS", jsonResult.get("hls"));
+        jsonResult.put("Progress",streamInfo.getProgress());
+        return jsonResult;
     }
 
     @GetMapping("/touch")

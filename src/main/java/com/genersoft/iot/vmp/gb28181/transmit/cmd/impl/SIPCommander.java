@@ -735,8 +735,23 @@ public class SIPCommander implements ISIPCommander {
 			SIPRequest request = (SIPRequest)transaction.getRequest();
 			byeURI.setHost(request.getRemoteAddress().getHostAddress());
 			byeURI.setPort(request.getRemotePort());
+			byeURI.setUser(channelId);
 			ViaHeader viaHeader = (ViaHeader) byeRequest.getHeader(ViaHeader.NAME);
 			String protocol = viaHeader.getTransport().toUpperCase();
+			viaHeader.setRPort();
+			// 增加Contact header
+			Address concatAddress = sipFactory.createAddressFactory().createAddress(sipFactory.createAddressFactory().createSipURI(sipConfig.getId(), sipConfig.getIp()+":"+sipConfig.getPort()));
+			byeRequest.addHeader(sipFactory.createHeaderFactory().createContactHeader(concatAddress));
+			List<String> agentParam = new ArrayList<>();
+			agentParam.add("wvp-pro");
+			// TODO 添加版本信息以及日期
+			UserAgentHeader userAgentHeader = null;
+			try {
+				userAgentHeader = sipFactory.createHeaderFactory().createUserAgentHeader(agentParam);
+			} catch (ParseException e) {
+				throw new RuntimeException(e);
+			}
+			byeRequest.addHeader(userAgentHeader);
 			ClientTransaction clientTransaction = null;
 			if("TCP".equals(protocol)) {
 				clientTransaction = tcpSipProvider.getNewClientTransaction(byeRequest);
@@ -748,11 +763,14 @@ public class SIPCommander implements ISIPCommander {
 			if (okEvent != null) {
 				sipSubscribe.addOkSubscribe(callIdHeader.getCallId(), okEvent);
 			}
-
+			CSeqHeader cSeqHeader = (CSeqHeader)byeRequest.getHeader(CSeqHeader.NAME);
+			cSeqHeader.setSeqNumber(redisCatchStorage.getCSEQ());
 			dialog.sendRequest(clientTransaction);
 
 		} catch (SipException | ParseException e) {
 			e.printStackTrace();
+		} catch (InvalidArgumentException e) {
+			throw new RuntimeException(e);
 		}
 	}
 
@@ -1486,7 +1504,7 @@ public class SIPCommander implements ISIPCommander {
 				request.setContent(subscribePostitionXml.toString(), contentTypeHeader);
 
 				CSeqHeader cSeqHeader = (CSeqHeader)request.getHeader(CSeqHeader.NAME);
-				cSeqHeader.setSeqNumber(redisCatchStorage.getCSEQ(Request.SUBSCRIBE));
+				cSeqHeader.setSeqNumber(redisCatchStorage.getCSEQ());
 				request.removeHeader(CSeqHeader.NAME);
 				request.addHeader(cSeqHeader);
 			}else {
@@ -1590,7 +1608,7 @@ public class SIPCommander implements ISIPCommander {
 				request.setContent(cmdXml.toString(), contentTypeHeader);
 
 				CSeqHeader cSeqHeader = (CSeqHeader)request.getHeader(CSeqHeader.NAME);
-				cSeqHeader.setSeqNumber(redisCatchStorage.getCSEQ(Request.SUBSCRIBE));
+				cSeqHeader.setSeqNumber(redisCatchStorage.getCSEQ());
 				request.removeHeader(CSeqHeader.NAME);
 				request.addHeader(cSeqHeader);
 
@@ -1700,10 +1718,9 @@ public class SIPCommander implements ISIPCommander {
 	@Override
 	public void playPauseCmd(Device device, StreamInfo streamInfo) {
 		try {
-			Long cseq = redisCatchStorage.getCSEQ(Request.INFO);
 			StringBuffer content = new StringBuffer(200);
 			content.append("PAUSE RTSP/1.0\r\n");
-			content.append("CSeq: " + cseq + "\r\n");
+			content.append("CSeq: " + getInfoCseq() + "\r\n");
 			content.append("PauseTime: now\r\n");
 			Request request = headerProvider.createInfoRequest(device, streamInfo, content.toString());
 			if (request == null) {
@@ -1731,10 +1748,9 @@ public class SIPCommander implements ISIPCommander {
 	@Override
 	public void playResumeCmd(Device device, StreamInfo streamInfo) {
 		try {
-			Long cseq = redisCatchStorage.getCSEQ(Request.INFO);
 			StringBuffer content = new StringBuffer(200);
 			content.append("PLAY RTSP/1.0\r\n");
-			content.append("CSeq: " + cseq + "\r\n");
+			content.append("CSeq: " + getInfoCseq() + "\r\n");
 			content.append("Range: npt=now-\r\n");
 			Request request = headerProvider.createInfoRequest(device, streamInfo, content.toString());
 			if (request == null) {
@@ -1761,10 +1777,9 @@ public class SIPCommander implements ISIPCommander {
 	@Override
 	public void playSeekCmd(Device device, StreamInfo streamInfo, long seekTime) {
 		try {
-			Long cseq = redisCatchStorage.getCSEQ(Request.INFO);
 			StringBuffer content = new StringBuffer(200);
 			content.append("PLAY RTSP/1.0\r\n");
-			content.append("CSeq: " + cseq + "\r\n");
+			content.append("CSeq: " + getInfoCseq() + "\r\n");
 			content.append("Range: npt=" + Math.abs(seekTime) + "-\r\n");
 
 			Request request = headerProvider.createInfoRequest(device, streamInfo, content.toString());
@@ -1792,11 +1807,10 @@ public class SIPCommander implements ISIPCommander {
 	@Override
 	public void playSpeedCmd(Device device, StreamInfo streamInfo, Double speed) {
 		try {
-			Long cseq = redisCatchStorage.getCSEQ(Request.INFO);
 			StringBuffer content = new StringBuffer(200);
 			content.append("PLAY RTSP/1.0\r\n");
-			content.append("CSeq: " + cseq + "\r\n");
-			content.append("Scale: " + String.format("%.1f",speed) + "\r\n");
+			content.append("CSeq: " + getInfoCseq() + "\r\n");
+			content.append("Scale: " + String.format("%.6f",speed) + "\r\n");
 			Request request = headerProvider.createInfoRequest(device, streamInfo, content.toString());
 			if (request == null) {
 				return;
@@ -1815,7 +1829,9 @@ public class SIPCommander implements ISIPCommander {
 			e.printStackTrace();
 		}
 	}
-	
+	private int getInfoCseq() {
+		return (int) ((Math.random() * 9 + 1) * Math.pow(10, 8));
+	}
 	@Override
 	public void playbackControlCmd(Device device, StreamInfo streamInfo, String content,SipSubscribe.Event errorEvent, SipSubscribe.Event okEvent) {
 		try {
@@ -1823,7 +1839,6 @@ public class SIPCommander implements ISIPCommander {
 			if (request == null) {
 				return;
 			}
-			logger.info(request.toString());
 			ClientTransaction clientTransaction = null;
 			if ("TCP".equals(device.getTransport())) {
 				clientTransaction = tcpSipProvider.getNewClientTransaction(request);

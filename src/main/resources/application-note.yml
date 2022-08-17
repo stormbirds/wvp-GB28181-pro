@@ -70,7 +70,7 @@ media:
     # [必须修改] zlm服务器唯一id，用于触发hook时区别是哪台服务器,general.mediaServerId
     id: AIi7b9Hyz3i925jg
     # [必须修改] zlm服务器的内网IP
-    ip: ${ZLM_HOST:localhost}
+    ip: ${ZLM_HOST:192.168.50.50}
     # [必须修改] zlm服务器的http.port
     http-port: ${ZLM_PORT:9080}
     # [可选] zlm服务器的hook.admin_params=secret
