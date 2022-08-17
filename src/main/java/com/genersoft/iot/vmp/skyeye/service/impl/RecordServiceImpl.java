@@ -70,7 +70,7 @@ public class RecordServiceImpl extends ServiceImpl<RecordMapper, Record> impleme
     private String snapPath;
     @Autowired
     private UserSetting userSetting;
-    @Value("${media.ip}")
+    @Value("${media.stream-ip}")
     private String mediaIp;
     @Value("${media.http-port}")
     private Integer mediaHttpPort;
@@ -253,6 +253,7 @@ public class RecordServiceImpl extends ServiceImpl<RecordMapper, Record> impleme
         if(mediaPlaylist==null){
             return ;
         }
+        FileUtil.mkdir(recordRealPath);
         //更新录制记录中的m3u8
         recordCache.setM3u8(parser.writePlaylistAsString(mediaPlaylist));
         //修改并写入m3u8文件

@@ -71,6 +71,8 @@ media:
     id: FQ3TF8yT83wh5Wvz
     # [必须修改] zlm服务器的内网IP
     ip: ${ZLM_HOST:192.168.0.108}
+    # [可选] 返回流地址时的ip(外网可访问的媒体服务器地址)，置空使用 media.ip
+    stream-ip: ${zlm_media_stream_ip:192.168.0.108}
     # [必须修改] zlm服务器的http.port
     http-port: ${ZLM_PORT:9080}
     # [可选] zlm服务器的hook.admin_params=secret

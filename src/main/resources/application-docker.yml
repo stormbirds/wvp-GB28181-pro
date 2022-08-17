@@ -86,6 +86,7 @@ media:
     # 录像辅助服务， 部署此服务可以实现zlm录像的管理与下载， 0 表示不使用
     record-assist-port: 0
     sdp-ip: ${sip.ip}
+    # [可选] 返回流地址时的ip(外网可访问的媒体服务器地址)，置空使用 media.ip
     stream-ip: ${sip.ip}
 # [可选] 日志配置, 一般不需要改
 # [可选] 日志配置, 一般不需要改

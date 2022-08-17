@@ -63,7 +63,7 @@ public class DeviceAlarmServiceImpl extends ServiceImpl<DeviceAlarmMapper,Device
             alarms.alarmType(alarmType);
             alarms.alarmTypeName(GBUtils.getAlarmDeviceFailureTypeNames(alarmType));
         }
-        alarms
+        Alarms alarmsResult = alarms
                 .id(deviceAlarm.getId())
                 .deviceId(deviceAlarm.getDeviceId())
                 .deviceName("")
@@ -80,7 +80,7 @@ public class DeviceAlarmServiceImpl extends ServiceImpl<DeviceAlarmMapper,Device
                 .time(deviceAlarm.getAlarmTime())
                 .createdAt(deviceAlarm.getCreateTime())
                 .build();
-        redisMsgPublisher.sendMsg(RedisTopicEnums.TOPIC_ALARM, JSON.toJSONString(alarms));
+        redisMsgPublisher.sendMsg(RedisTopicEnums.TOPIC_ALARM, JSON.toJSONString(alarmsResult));
     }
 
     @Override
