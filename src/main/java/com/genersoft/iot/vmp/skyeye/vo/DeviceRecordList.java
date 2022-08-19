@@ -26,5 +26,10 @@ public class DeviceRecordList {
     @JsonProperty("RecordList")
     private List<DeviceRecord> recordList;
 
+    @JsonProperty("RecordList")
+    public List<DeviceRecord> getRecordList() {
+        return recordList;
+    }
+
 
 }

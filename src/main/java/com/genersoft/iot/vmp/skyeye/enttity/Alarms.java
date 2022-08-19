@@ -33,12 +33,14 @@ public class Alarms implements Serializable {
 
     @TableId("id")
     @JsonProperty("ID")
+    @JSONField(name = "ID")
     private String id;
 
     /**
      * 设备国标编号
      */
     @JsonProperty("DeviceID")
+    @JSONField(name ="DeviceID")
     @ApiModelProperty("设备国标编号")
     @TableField("device_id")
     private String deviceId;
@@ -47,13 +49,15 @@ public class Alarms implements Serializable {
      * 设备名称
      */
     @JsonProperty("DeviceName")
-    @ApiModelProperty("设备名称")
+            @JSONField(name ="DeviceName")
+            @ApiModelProperty("设备名称")
     @TableField("device_name")
     private String deviceName;
 
     /**
      * 通道国标编号
      */
+    @JSONField(name ="ChannelID")
     @JsonProperty("ChannelID")
     @ApiModelProperty("通道国标编号")
     @TableField("channel_id")
@@ -62,6 +66,7 @@ public class Alarms implements Serializable {
     /**
      * 通道名称
      */
+    @JSONField(name ="ChannelName")
     @JsonProperty("ChannelName")
     @ApiModelProperty("通道名称")
     @TableField("channel_name")
@@ -70,6 +75,7 @@ public class Alarms implements Serializable {
     /**
      * 报警级别(1-一级警情,2-二级警情,3-三级警情,4-四级警情)		允许值: 1, 2, 3, 4
      */
+    @JSONField(name ="AlarmPriority")
     @JsonProperty("AlarmPriority")
     @ApiModelProperty("报警级别(1-一级警情,2-二级警情,3-三级警情,4-四级警情)\t\t允许值: 1, 2, 3, 4")
     @TableField("alarm_priority")
@@ -78,6 +84,7 @@ public class Alarms implements Serializable {
     /**
      * 报警级别别称
      */
+    @JSONField(name ="AlarmPriorityName")
     @JsonProperty("AlarmPriorityName")
     @ApiModelProperty("报警级别别称")
     @TableField("alarm_priority_name")
@@ -86,6 +93,7 @@ public class Alarms implements Serializable {
     /**
      * 报警方式(1-电话报警,2-设备报警,3-短信报警,4-GPS报警,5-视频报警,6-设备故障报警,7-其他报警)		允许值: 1, 2, 3, 4, 5, 6, 7
      */
+    @JSONField(name ="AlarmMethod")
     @JsonProperty("AlarmMethod")
     @ApiModelProperty("报警方式(1-电话报警,2-设备报警,3-短信报警,4-GPS报警,5-视频报警,6-设备故障报警,7-其他报警)\t\t允许值: 1, 2, 3, 4, 5, 6, 7")
     @TableField("alarm_method")
@@ -94,6 +102,7 @@ public class Alarms implements Serializable {
     /**
      * 报警名字
      */
+    @JSONField(name ="AlarmMethodName")
     @JsonProperty("AlarmMethodName")
     @ApiModelProperty("报警名字")
     @TableField("alarm_method_name")
@@ -102,6 +111,7 @@ public class Alarms implements Serializable {
     /**
      * 经度
      */
+    @JSONField(name ="Longitude")
     @JsonProperty("Longitude")
     @ApiModelProperty("经度")
     @TableField("longitude")
@@ -110,6 +120,7 @@ public class Alarms implements Serializable {
     /**
      * 维度
      */
+    @JSONField(name ="Latitude")
     @JsonProperty("Latitude")
     @ApiModelProperty("维度")
     @TableField("latitude")
@@ -118,6 +129,7 @@ public class Alarms implements Serializable {
     /**
      * 报警描述
      */
+    @JSONField(name ="AlarmDescription")
     @JsonProperty("AlarmDescription")
     @ApiModelProperty("报警描述")
     @TableField("alarm_description")
@@ -126,6 +138,7 @@ public class Alarms implements Serializable {
     /**
      * 扩展信息
      */
+    @JSONField(name ="扩展信息")
     @ApiModelProperty("扩展信息")
     @TableField("info")
     @JsonProperty("ExtInfo")
@@ -134,6 +147,7 @@ public class Alarms implements Serializable {
     /**
      * 报警类型	报警方式为2时,不携带 AlarmType 为默认的设备报警,携带 AlarmType 取值对应报警类型如下:1-视频丢失报警,2-设备防拆报警,3-存储设备磁盘满报警,4-设备高温报警,5-设备低温报警;	报警方式为5时,取值如下:1-人工视频报警,2-运动目标检测报警,3-遗留物检测报警,4-物体移除检测报警,5-绊线检测报警,6-入侵检测报警,7-逆行检测报警,8-徘徊检测报警,9-流量统计报警,10-密度检测报警,11-视频异常检测报警,12-快速移动报警	报警方式为6时,取值如下:1-存储设备磁盘故障报警,2-存储设备风扇故障报警
      */
+    @JSONField(name ="AlarmType")
     @JsonProperty("AlarmType")
     @ApiModelProperty("报警类型\n\t" +
             "报警方式为2时,不携带 AlarmType 为默认的设备报警,携带 AlarmType 取值对应报警类型如下:\n" +
@@ -147,6 +161,7 @@ public class Alarms implements Serializable {
     /**
      * 报警类型名称
      */
+    @JSONField(name ="AlarmTypeName")
     @JsonProperty("AlarmTypeName")
     @ApiModelProperty("报警类型名称")
     @TableField("alarm_type_name")
@@ -155,6 +170,7 @@ public class Alarms implements Serializable {
     /**
      * 入侵报警事件类型(1-进入区域,2-离开区域)		允许值: 1, 2
      */
+    @JSONField(name ="AlarmEventType")
     @ApiModelProperty("入侵报警事件类型(1-进入区域,2-离开区域)\n\t\t允许值: 1, 2")
     @TableField("alarm_event_type")
     private Integer alarmEventType;
@@ -164,7 +180,7 @@ public class Alarms implements Serializable {
      */
     @JsonProperty("Time")
     @ApiModelProperty("报警时间")
-    @JSONField(format = "yyyy-MM-dd HH:mm:ss")
+    @JSONField(name ="Time",format = "yyyy-MM-dd HH:mm:ss")
     @TableField("time")
     private String time;
 
@@ -176,19 +192,22 @@ public class Alarms implements Serializable {
      */
     @JsonProperty("CreatedAt")
     @ApiModelProperty("创建时间")
-    @JSONField(format = "yyyy-MM-dd HH:mm:ss")
+    @JSONField(name = "CreatedAt",format = "yyyy-MM-dd HH:mm:ss")
     @TableField("created_at")
     private String createdAt;
 
 
     @ApiModelProperty("报警预案关联录像路径")
+    @JSONField(name ="RecordPath")
     @JsonProperty("RecordPath")
     private String recordPath;
 
     @ApiModelProperty("报警预案关联快照路径")
+    @JSONField(name ="SnapPath")
     @JsonProperty("SnapPath")
     private String snapPath;
 
+    @JSONField(name ="plan_description")
     @JsonProperty("plan_description")
     private String planDescription;
 }
