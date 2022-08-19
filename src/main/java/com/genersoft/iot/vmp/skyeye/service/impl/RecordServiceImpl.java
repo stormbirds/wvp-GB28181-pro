@@ -13,7 +13,8 @@ import com.genersoft.iot.vmp.conf.UserSetting;
 import com.genersoft.iot.vmp.media.zlm.ZLMRESTfulUtils;
 import com.genersoft.iot.vmp.media.zlm.dto.MediaServerItem;
 import com.genersoft.iot.vmp.service.IMediaServerService;
-import com.genersoft.iot.vmp.skyeye.constant.RealTimeRecordTask;
+import com.genersoft.iot.vmp.skyeye.constant.RecordTask;
+import com.genersoft.iot.vmp.skyeye.domain.OnRecordDTO;
 import com.genersoft.iot.vmp.skyeye.enttity.Record;
 import com.genersoft.iot.vmp.skyeye.enttity.RecordCache;
 import com.genersoft.iot.vmp.skyeye.enttity.RecordChannels;
@@ -37,6 +38,8 @@ import javax.annotation.Resource;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -100,7 +103,7 @@ public class RecordServiceImpl extends ServiceImpl<RecordMapper, Record> impleme
 //        param.put("customized_path",FileUtil.file(snapPath,streamName).getAbsolutePath() );//录像保存目录
         param.put("max_second",interval);//mp4录像切片时间大小,单位秒，置0则采用配置项
         log.info("开始实时录像，参数 [{}]",param);
-        RealTimeRecordTask.recordCompletableFutureMap.put(streamName,new CompletableFuture<>());
+        RecordTask.realtimeRecordCompletableFutureMap.put(streamName,new CompletableFuture<>());
         JSONObject jsonObject = zlmresTfulUtils.startRecord(mediaInfo,param);
         if(jsonObject.getIntValue("code")==0 && jsonObject.getBooleanValue("result")){
             streamInfo.setRecordStartAt(LocalDateTimeUtil.now().format(DatePattern.NORM_DATETIME_FORMATTER));
@@ -125,7 +128,7 @@ public class RecordServiceImpl extends ServiceImpl<RecordMapper, Record> impleme
 
             if (jsonObject.getIntValue("code") == 0 && jsonObject.getBooleanValue("result")) {
                 streamInfo.setRecordStartAt("");
-                CompletableFuture<RecordListVo> completableFuture = RealTimeRecordTask.recordCompletableFutureMap.get(streamName);
+                CompletableFuture<RecordListVo> completableFuture = RecordTask.realtimeRecordCompletableFutureMap.get(streamName);
                 return completableFuture.get(60, TimeUnit.SECONDS);
             }
 
@@ -133,72 +136,74 @@ public class RecordServiceImpl extends ServiceImpl<RecordMapper, Record> impleme
             e.printStackTrace();
         } finally {
             redisCatchStorage.startPlay(streamInfo);
-            RealTimeRecordTask.recordCompletableFutureMap.remove(streamName);
+            RecordTask.realtimeRecordCompletableFutureMap.remove(streamName);
         }
         return new RecordListVo();
     }
 
     @Override
-    public void onRecordMp4(JSONObject json) {
+    public void onRecordMp4(Record recordDTO) {
 
-        String streamName = json.getString("stream");
+        String streamName = recordDTO.getStream();
 
-        if(RealTimeRecordTask.recordCompletableFutureMap.containsKey(streamName)){
-            CompletableFuture<RecordListVo> completableFuture = RealTimeRecordTask.recordCompletableFutureMap.get(streamName);
+        if(RecordTask.realtimeRecordCompletableFutureMap.containsKey(streamName)){
+            CompletableFuture<RecordListVo> completableFuture = RecordTask.realtimeRecordCompletableFutureMap.get(streamName);
             RecordListVo recordListVo = new RecordListVo();
             List<RealtimeRecord> recordList = new ArrayList<>();
             RealtimeRecord realtimeRecord = new RealtimeRecord();
-            realtimeRecord.setDownloadUrl(String.format("http://%s:%d/%s",mediaIp,mediaHttpPort,json.getString("url")));
-            realtimeRecord.setStartTime(LocalDateTimeUtil.of(json.getLong("start_time")*1000));
-            realtimeRecord.setEndTime(LocalDateTimeUtil.of((json.getLong("start_time")+json.getLong("time_len"))*1000));
+            realtimeRecord.setDownloadUrl(String.format("http://%s:%d/%s",mediaIp,mediaHttpPort,recordDTO.getUrl()));
+            realtimeRecord.setStartTime(recordDTO.getStartTime());
+            realtimeRecord.setEndTime(LocalDateTimeUtil.offset(recordDTO.getStartTime(),recordDTO.getTimeLen().longValue(), ChronoUnit.SECONDS));
             recordList.add(realtimeRecord);
             recordListVo.setRecordList(recordList);
             recordListVo.setRecordCount(recordList.size());
             recordListVo.setStreamID(streamName);
             completableFuture.complete(recordListVo);
+        }else if(RecordTask.playbackRecordDownloadCompletableFutureMap.containsKey(streamName)){
+
         }
 
     }
 
     @Override
-    public void onRecordTs(JSONObject json) {
-        json.put("start_time",LocalDateTimeUtil.of(json.getLong("start_time")*1000).format(NORM_DATETIME_FORMATTER));
-        String streamName = json.getString("stream");
-        MediaServerItem mediaInfo = mediaServerService.getOne(json.getString("mediaServerId"));
-        String tsUrl = String.format("http://%s:%d/%s",mediaInfo.getIp(),mediaInfo.getHttpPort(),json.getString("url")) ;
-        LocalDateTime tsLocalDateTime = LocalDateTimeUtil.parse(json.getString("start_time"),NORM_DATETIME_FORMATTER);
+    public void onRecordTs(Record recordDTO) {
+
+        String streamName = recordDTO.getStream();
+        MediaServerItem mediaInfo = mediaServerService.getOne(recordDTO.getMediaServerId());
+        String tsUrl = String.format("http://%s:%d/%s",mediaInfo.getIp(),mediaInfo.getHttpPort(),recordDTO.getUrl()) ;
+        LocalDateTime tsLocalDateTime = recordDTO.getStartTime();
         MediaPlaylistParser parser = new MediaPlaylistParser();
         MediaPlaylist mediaPlaylist = null;
         String tsNewFileName;
         String recordRealPath ;
         RecordCache recordCache = null;
-        if(Boolean.TRUE.equals(stringRedisTemplate.hasKey(String.format(KEY_RECORD_STREAM_HASH,json.getString("app"),streamName)))){
-            recordCache = JSON.parseObject(stringRedisTemplate.opsForValue().get(String.format(KEY_RECORD_STREAM_HASH,json.getString("app"),json.getString("stream"))),RecordCache.class );
+        if(Boolean.TRUE.equals(stringRedisTemplate.hasKey(String.format(KEY_RECORD_STREAM_HASH,recordDTO.getApp(),streamName)))){
+            recordCache = JSON.parseObject(stringRedisTemplate.opsForValue().get(String.format(KEY_RECORD_STREAM_HASH,recordDTO.getApp(),recordDTO.getStream())),RecordCache.class );
             if(recordCache==null){
-                stringRedisTemplate.delete(String.format(KEY_RECORD_STREAM_HASH,json.getString("app"),json.getString("stream")));
+                stringRedisTemplate.delete(String.format(KEY_RECORD_STREAM_HASH,recordDTO.getApp(),recordDTO.getStream()));
             }
         }
-        if(Boolean.TRUE.equals(stringRedisTemplate.hasKey(String.format(KEY_RECORD_STREAM_HASH,json.getString("app"),json.getString("stream"))))
+        if(Boolean.TRUE.equals(stringRedisTemplate.hasKey(String.format(KEY_RECORD_STREAM_HASH,recordDTO.getApp(),recordDTO.getStream())))
                 && recordCache!=null
                 && LocalDateTimeUtil.between(recordCache.getCreatedAt(),LocalDateTime.now()).getSeconds()<=1800
                 && recordCache.getCount()<179)
         {
             recordRealPath = recordCache.getPath();
             recordCache.setCount(recordCache.getCount()+1);
-            recordCache.setDuration(json.getDouble("time_len")+recordCache.getDuration());
-            recordCache.setFileSize(json.getInteger("file_size")+recordCache.getFileSize());
+            recordCache.setDuration(recordDTO.getTimeLen()+recordCache.getDuration());
+            recordCache.setFileSize(recordDTO.getFileSize()+recordCache.getFileSize());
             tsNewFileName =String.format(tsFilePathFormater,tsLocalDateTime.format(tsNameFormatter),recordCache.getCount());
 
             try {
                 mediaPlaylist = parser.readPlaylist(recordCache.getM3u8());
                 List<MediaSegment> mediaSegments = new ArrayList<>(mediaPlaylist.mediaSegments());
                 mediaSegments.add(MediaSegment.builder()
-                        .duration(json.getDouble("time_len"))
+                        .duration(recordDTO.getTimeLen())
                         .uri(tsNewFileName)
                         .build());
                 mediaPlaylist = MediaPlaylist.builder()
                         .version(3)
-                        .targetDuration((int) Math.ceil(Math.max(mediaPlaylist.targetDuration(),json.getDouble("time_len")) ))
+                        .targetDuration((int) Math.ceil(Math.max(mediaPlaylist.targetDuration(),recordDTO.getTimeLen()) ))
                         .mediaSequence(0)
                         .ongoing(false)
                         .addAllMediaSegments(mediaSegments)
@@ -210,20 +215,20 @@ public class RecordServiceImpl extends ServiceImpl<RecordMapper, Record> impleme
             //生成录像目录（E:/dev/ZLMediaKit/release/windows/Debug/www / rtp / 44010200492000000002_44010200491310000002 / 20220727 / 20220727191511）
             recordRealPath = String.format("%s/%s/%s/%s/%s",
                     userSetting.getCloudRecordPath(),
-                    json.getString("app"),
+                    recordDTO.getApp(),
                     streamName,
                     tsLocalDateTime.format(PURE_DATE_FORMATTER),
                     tsLocalDateTime.format(PURE_DATETIME_FORMATTER));
             recordCache = new RecordCache();
             recordCache.setCount(0);
-            recordCache.setApp(json.getString("app"));
-            recordCache.setStream(json.getString("stream"));
+            recordCache.setApp(recordDTO.getApp());
+            recordCache.setStream(recordDTO.getStream());
             recordCache.setPath(recordRealPath);
             recordCache.setCreatedAt(tsLocalDateTime);
-            recordCache.setDuration(json.getDouble("time_len"));
-            recordCache.setFileSize(json.getInteger("file_size"));
+            recordCache.setDuration(recordDTO.getTimeLen());
+            recordCache.setFileSize(recordDTO.getFileSize());
             recordCache.setUrl(String.format("%s/%s/%s/%s/%s_record.m3u8",
-                    json.getString("app"),
+                    recordDTO.getApp(),
                     streamName,
                     tsLocalDateTime.format(PURE_DATE_FORMATTER),
                     tsLocalDateTime.format(PURE_DATETIME_FORMATTER),streamName));
@@ -257,35 +262,34 @@ public class RecordServiceImpl extends ServiceImpl<RecordMapper, Record> impleme
         //更新录制记录中的m3u8
         recordCache.setM3u8(parser.writePlaylistAsString(mediaPlaylist));
         //修改并写入m3u8文件
-        FileUtil.writeString(recordCache.getM3u8(),String.format("%s/%s_record.m3u8", recordRealPath,json.getString("stream")), "UTF-8");
+        FileUtil.writeString(recordCache.getM3u8(),String.format("%s/%s_record.m3u8", recordRealPath,recordDTO.getStream()), "UTF-8");
         //将ts文件写入指定录制目录
         HttpUtil.downloadFileFromUrl(tsUrl,FileUtil.file(recordRealPath,tsNewFileName).getAbsolutePath());
 
-        stringRedisTemplate.opsForValue().set(String.format(KEY_RECORD_STREAM_HASH,json.getString("app"),json.getString("stream")) ,JSON.toJSONString(recordCache), Duration.ofSeconds(30));
+        stringRedisTemplate.opsForValue().set(String.format(KEY_RECORD_STREAM_HASH,recordDTO.getApp(),recordDTO.getStream()) ,JSON.toJSONString(recordCache), Duration.ofSeconds(30));
 
-        Record record = json.toJavaObject(Record.class);
-        record.setFileName(String.format("%s_record.m3u8", streamName));
-        record.setFilePath(String.format("%s/%s_record.m3u8", recordRealPath,json.getString("stream")));
-        record.setStartTime( recordCache.getCreatedAt()) ;
-        record.setTimeLen(recordCache.getDuration());
-        record.setFileSize(recordCache.getFileSize());
-        record.setUrl(recordCache.getUrl());
+        recordDTO.setFileName(String.format("%s_record.m3u8", streamName));
+        recordDTO.setFilePath(String.format("%s/%s_record.m3u8", recordRealPath,recordDTO.getStream()));
+        recordDTO.setStartTime( recordCache.getCreatedAt()) ;
+        recordDTO.setTimeLen(recordCache.getDuration());
+        recordDTO.setFileSize(recordCache.getFileSize());
+        recordDTO.setUrl(recordCache.getUrl());
         if(baseMapper.exists(Wrappers.<Record>lambdaQuery()
-                .eq(Record::getMediaServerId,json.getString("mediaServerId"))
-                .eq(Record::getApp,json.getString("app"))
+                .eq(Record::getMediaServerId,recordDTO.getMediaServerId())
+                .eq(Record::getApp,recordDTO.getApp())
                 .eq(Record::getStream,streamName)
                 .eq(Record::getStartTime,recordCache.getCreatedAt())
         )){
             update(Wrappers.<Record>lambdaUpdate()
                     .set(Record::getTimeLen,recordCache.getDuration())
                     .set(Record::getFileSize,recordCache.getFileSize())
-                    .eq(Record::getMediaServerId,json.getString("mediaServerId"))
-                    .eq(Record::getApp,json.getString("app"))
+                    .eq(Record::getMediaServerId,recordDTO.getMediaServerId())
+                    .eq(Record::getApp,recordDTO.getApp())
                     .eq(Record::getStream,streamName)
                     .eq(Record::getStartTime,recordCache.getCreatedAt())
             );
         }else{
-            save(record);
+            save(recordDTO);
         }
 
     }

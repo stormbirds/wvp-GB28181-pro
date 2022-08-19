@@ -2,6 +2,7 @@ package com.genersoft.iot.vmp.skyeye.service;
 
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.genersoft.iot.vmp.skyeye.domain.OnRecordDTO;
 import com.genersoft.iot.vmp.skyeye.enttity.Record;
 import com.genersoft.iot.vmp.skyeye.vo.RecordListVo;
 
@@ -16,7 +17,7 @@ public interface IRecordService extends IService<Record> {
 
     RecordListVo stop(String streamName);
 
-    void onRecordMp4(JSONObject json);
+    void onRecordMp4(Record recordDTO);
 
-    void onRecordTs(JSONObject json);
+    void onRecordTs(Record recordDTO);
 }

@@ -5,9 +5,12 @@ import java.math.RoundingMode;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 import javax.sip.ResponseEvent;
 
+import cn.hutool.core.date.DatePattern;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,6 +62,8 @@ import com.genersoft.iot.vmp.vmanager.bean.WVPResult;
 import com.genersoft.iot.vmp.vmanager.gb28181.play.bean.PlayResult;
 
 import gov.nist.javax.sip.stack.SIPDialog;
+
+import static com.genersoft.iot.vmp.skyeye.constant.RecordTask.playbackRecordDownloadCompletableFutureMap;
 
 @SuppressWarnings(value = {"rawtypes", "unchecked"})
 @Service
@@ -490,13 +495,18 @@ public class PlayServiceImpl implements IPlayService {
             return null;
         }
         MediaServerItem newMediaServerItem = getNewMediaServerItem(device);
-        SSRCInfo ssrcInfo = mediaServerService.openRTPServer(newMediaServerItem, null, true, true);
+        String streamId = deviceId+"_"+channelId+"_"+
+                LocalDateTimeUtil.parse(startTime).format(DatePattern.PURE_DATETIME_FORMATTER) +"-"+
+                LocalDateTimeUtil.parse(endTime).format(DatePattern.PURE_DATETIME_FORMATTER)+"_playback";
+        SSRCInfo ssrcInfo = mediaServerService.openRTPServer(newMediaServerItem, streamId, true, true);
 
         return download(newMediaServerItem, ssrcInfo, deviceId, channelId, startTime, endTime, downloadSpeed,infoCallBack, hookCallBack);
     }
 
     @Override
-    public DeferredResult<ResponseEntity<String>> download(MediaServerItem mediaServerItem, SSRCInfo ssrcInfo, String deviceId, String channelId, String startTime, String endTime, int downloadSpeed, InviteStreamCallback infoCallBack, PlayBackCallback hookCallBack) {
+    public DeferredResult<ResponseEntity<String>> download(MediaServerItem mediaServerItem, SSRCInfo ssrcInfo, String deviceId,
+                                                           String channelId, String startTime, String endTime, int downloadSpeed,
+                                                           InviteStreamCallback infoCallBack, PlayBackCallback hookCallBack) {
         if (mediaServerItem == null || ssrcInfo == null) {
             return null;
         }
@@ -508,7 +518,7 @@ public class PlayServiceImpl implements IPlayService {
             result.setResult(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
             return result;
         }
-
+        playbackRecordDownloadCompletableFutureMap.put(ssrcInfo.getStream(),new CompletableFuture<>());
         resultHolder.put(key, uuid, result);
         RequestMessage msg = new RequestMessage();
         msg.setId(uuid);

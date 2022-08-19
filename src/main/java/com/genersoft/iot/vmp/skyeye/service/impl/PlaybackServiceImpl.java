@@ -7,6 +7,7 @@ import com.genersoft.iot.vmp.gb28181.transmit.callback.DeferredResultHolder;
 import com.genersoft.iot.vmp.service.IPlayService;
 import com.genersoft.iot.vmp.skyeye.service.IPlaybackService;
 import com.genersoft.iot.vmp.vmanager.bean.WVPResult;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,7 @@ import org.springframework.web.context.request.async.DeferredResult;
  * @ Email xbaojun@gmail.com
  * @ Date 2022/8/18 1:10
  */
+@Slf4j
 @Service
 public class PlaybackServiceImpl implements IPlaybackService {
     @Autowired
@@ -31,7 +33,13 @@ public class PlaybackServiceImpl implements IPlaybackService {
         if(download_speed==null){
             download_speed = 4;
         }
-        DeferredResult<ResponseEntity<String>> result = playService.download(serial, code, starttime, endtime, download_speed, null, hookCallBack->{
+
+        return playService.download(serial, code, starttime, endtime, download_speed, inviteStreamInfo -> {
+            if(inviteStreamInfo!=null)
+                log.info("inviteStreamInfo [CallId {},App {},Stream {},MediaServerItem {},Response {}]",inviteStreamInfo.getCallId(),inviteStreamInfo.getApp(),
+                    inviteStreamInfo.getStream(),JSON.toJSONString( inviteStreamInfo.getMediaServerItem()),
+                    inviteStreamInfo.getResponse());
+        }, hookCallBack->{
             if(hookCallBack.getCode()==0){
                 WVPResult<StreamInfo> wvpResult = (WVPResult<StreamInfo>) hookCallBack.getData().getData();
                 StreamInfo streamInfo = wvpResult.getData();
@@ -50,7 +58,5 @@ public class PlaybackServiceImpl implements IPlaybackService {
             }
             resultHolder.invokeResult(hookCallBack.getData());
         });
-
-        return result;
     }
 }
