@@ -137,6 +137,7 @@ public class ApiStreamController {
             result.put("RTMP", streamInfo.getRtmp());
             result.put("HLS", streamInfo.getHls());
             result.put("RTSP", streamInfo.getRtsp());
+            result.put("WEBRTC", streamInfo.getRtc());
             result.put("CDN", "");
             result.put("SnapURL", String.format("http://%s:%s/snap/%s.jpg", sipIp, serverPort, streamInfo.getStream()));
             result.put("Transport", device.getTransport());

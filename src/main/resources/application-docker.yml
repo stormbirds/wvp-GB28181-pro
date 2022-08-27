@@ -109,7 +109,7 @@ user-settings:
 snap:
     path: /home/ZLMediaKit/release/linux/Release/www/snap
 # 在线文档： swagger-ui（生产环境建议关闭）
-swagger-ui:
+doc:
     enabled: true
 
 # 版本信息， 不需修改

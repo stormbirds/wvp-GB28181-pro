@@ -33,6 +33,7 @@ import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import java.net.InetAddress;
@@ -147,7 +148,7 @@ public class StreamProxyServiceImpl implements IStreamProxyService {
         }else {
             result.append("保存失败");
         }
-        if ( !StringUtils.isEmpty(param.getPlatformGbId()) && streamLive) {
+        if ( !ObjectUtils.isEmpty(param.getPlatformGbId()) && streamLive) {
             List<GbStream> gbStreams = new ArrayList<>();
             gbStreams.add(param);
             if (gbStreamService.addPlatformInfo(gbStreams, param.getPlatformGbId(), param.getCatalogId())){
@@ -174,7 +175,7 @@ public class StreamProxyServiceImpl implements IStreamProxyService {
         streamProxyItem.setCreateTime(now);
         try {
             if (streamProxyMapper.add(streamProxyItem) > 0) {
-                if (!StringUtils.isEmpty(streamProxyItem.getGbId())) {
+                if (!ObjectUtils.isEmpty(streamProxyItem.getGbId())) {
                     if (gbStreamMapper.add(streamProxyItem) < 0) {
                         //事务回滚
                         dataSourceTransactionManager.rollback(transactionStatus);
@@ -209,7 +210,7 @@ public class StreamProxyServiceImpl implements IStreamProxyService {
         streamProxyItem.setStreamType("proxy");
         try {
             if (streamProxyMapper.update(streamProxyItem) > 0) {
-                if (!StringUtils.isEmpty(streamProxyItem.getGbId())) {
+                if (!ObjectUtils.isEmpty(streamProxyItem.getGbId())) {
                     if (gbStreamMapper.updateByAppAndStream(streamProxyItem) == 0) {
                         //事务回滚
                         dataSourceTransactionManager.rollback(transactionStatus);

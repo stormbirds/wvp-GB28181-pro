@@ -34,6 +34,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
@@ -170,7 +171,7 @@ public class NotifyRequestProcessor extends SIPRequestProcessorParent implements
 			String channelId = deviceIdElement.getTextTrim().toString();
 			Device device = redisCatchStorage.getDevice(deviceId);
 			if (device != null) {
-				if (!StringUtils.isEmpty(device.getName())) {
+				if (!ObjectUtils.isEmpty(device.getName())) {
 					mobilePosition.setDeviceName(device.getName());
 				}
 			}

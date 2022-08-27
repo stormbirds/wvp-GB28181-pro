@@ -18,10 +18,13 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.async.DeferredResult;
@@ -55,16 +58,14 @@ public class DeviceConfig {
 	 * @param heartBeatCount 心跳计数
 	 * @return
 	 */
-	@ApiOperation("基本配置设置命令")
 	@GetMapping("/basicParam/{deviceId}")
-	@ApiImplicitParams({
-			@ApiImplicitParam(name = "deviceId", value ="设备ID" ,dataTypeClass = String.class),
-			@ApiImplicitParam(name = "channelId", value ="通道ID",dataTypeClass = String.class ),
-			@ApiImplicitParam(name = "name", value ="名称" ,dataTypeClass = String.class),
-			@ApiImplicitParam(name = "expiration", value ="到期时间" ,dataTypeClass = String.class),
-			@ApiImplicitParam(name = "heartBeatInterval", value ="心跳间隔" ,dataTypeClass = String.class),
-			@ApiImplicitParam(name = "heartBeatCount", value ="心跳计数" ,dataTypeClass = String.class),
-	})
+	@Operation(summary = "基本配置设置命令")
+	@Parameter(name = "deviceId", description = "设备国标编号", required = true)
+	@Parameter(name = "channelId", description = "通道国标编号", required = true)
+	@Parameter(name = "name", description = "名称")
+	@Parameter(name = "expiration", description = "到期时间")
+	@Parameter(name = "heartBeatInterval", description = "心跳间隔")
+	@Parameter(name = "heartBeatCount", description = "心跳计数")
 	public DeferredResult<ResponseEntity<String>> homePositionApi(@PathVariable String deviceId,
                                                                	String channelId,
                                                                 @RequestParam(required = false) String name,
@@ -109,12 +110,10 @@ public class DeviceConfig {
 	 * @param channelId 通道ID
 	 * @return
 	 */
-	@ApiOperation("设备配置查询请求")
-	@ApiImplicitParams({
-			@ApiImplicitParam(name = "deviceId", value ="设备ID" ,dataTypeClass = String.class),
-			@ApiImplicitParam(name = "channelId", value ="通道ID" ,dataTypeClass = String.class),
-			@ApiImplicitParam(name = "configType", value ="配置类型" ,dataTypeClass = String.class),
-	})
+	@Operation(summary = "设备配置查询请求")
+	@Parameter(name = "deviceId", description = "设备国标编号", required = true)
+	@Parameter(name = "channelId", description = "通道国标编号", required = true)
+	@Parameter(name = "configType", description = "配置类型")
 	@GetMapping("/query/{deviceId}/{configType}")
     public DeferredResult<ResponseEntity<String>> configDownloadApi(@PathVariable String deviceId, 
                                                                 @PathVariable String configType,
@@ -122,7 +121,7 @@ public class DeviceConfig {
 		if (logger.isDebugEnabled()) {
 			logger.debug("设备状态查询API调用");
 		}
-		String key = DeferredResultHolder.CALLBACK_CMD_CONFIGDOWNLOAD + (StringUtils.isEmpty(channelId) ? deviceId : channelId);
+		String key = DeferredResultHolder.CALLBACK_CMD_CONFIGDOWNLOAD + (ObjectUtils.isEmpty(channelId) ? deviceId : channelId);
 		String uuid = UUID.randomUUID().toString();
 		Device device = storager.queryVideoDevice(deviceId);
 		cmder.deviceConfigQuery(device, channelId, configType, event -> {

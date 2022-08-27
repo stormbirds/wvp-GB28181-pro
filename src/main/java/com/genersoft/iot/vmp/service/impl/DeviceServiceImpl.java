@@ -1,5 +1,6 @@
 package com.genersoft.iot.vmp.service.impl;
 
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.genersoft.iot.vmp.conf.DynamicTask;
 import com.genersoft.iot.vmp.gb28181.bean.*;
@@ -28,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.support.incrementer.AbstractIdentityColumnMaxValueIncrementer;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
@@ -312,13 +314,13 @@ public class DeviceServiceImpl extends ServiceImpl<DeviceMapper, Device> impleme
             logger.warn("更新设备时未找到设备信息");
             return;
         }
-        if (!StringUtils.isEmpty(device.getName())) {
+        if (!ObjectUtils.isEmpty(device.getName())) {
             deviceInStore.setName(device.getName());
         }
-        if (!StringUtils.isEmpty(device.getCharset())) {
+        if (!ObjectUtils.isEmpty(device.getCharset())) {
             deviceInStore.setCharset(device.getCharset());
         }
-        if (!StringUtils.isEmpty(device.getMediaServerId())) {
+        if (!ObjectUtils.isEmpty(device.getMediaServerId())) {
             deviceInStore.setMediaServerId(device.getMediaServerId());
         }
 
@@ -482,6 +484,18 @@ public class DeviceServiceImpl extends ServiceImpl<DeviceMapper, Device> impleme
     @Override
     public List<DeviceTree> channeltree(String serial, Boolean subfetch, String pcode, Integer limit) {
         return baseMapper.deviceTree(serial);
+    }
+
+    @Override
+    public boolean removeDeviceById(String serial) {
+        try {
+            deviceChannelService.remove(Wrappers.<DeviceChannel>lambdaQuery().eq(DeviceChannel::getDeviceId, serial));
+            baseMapper.del(serial);
+            return true;
+        }catch (Exception e){
+            log.error("删除设备出错",e);
+        }
+        return false;
     }
 
     private List<BaseTree<DeviceChannel>> transportChannelsToTree(List<DeviceChannel> channels, String parentId) {

@@ -15,13 +15,13 @@ import com.genersoft.iot.vmp.service.IMediaServerService;
 import com.genersoft.iot.vmp.utils.SpringBeanFactory;
 import com.genersoft.iot.vmp.vmanager.bean.WVPResult;
 import gov.nist.javax.sip.SipStackImpl;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiImplicitParam;
-import io.swagger.annotations.ApiImplicitParams;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Set;
 
 @SuppressWarnings("rawtypes")
-@Api(tags = "服务控制")
+@Tag(name = "服务控制")
 @CrossOrigin
 @RestController
 @RequestMapping("/api/server")
@@ -61,10 +61,10 @@ public class ServerController {
     private int serverPort;
 
 
-    @ApiOperation("流媒体服务列表")
+    @Operation(summary = "流媒体服务列表")
     @GetMapping(value = "/media_server/list")
     @ResponseBody
-    public WVPResult<List<MediaServerItem>> getMediaServerList(boolean detail){
+    public WVPResult<List<MediaServerItem>> getMediaServerList(){
         WVPResult<List<MediaServerItem>> result = new WVPResult<>();
         result.setCode(0);
         result.setMsg("success");
@@ -72,7 +72,7 @@ public class ServerController {
         return result;
     }
 
-    @ApiOperation("在线流媒体服务列表")
+    @Operation(summary = "在线流媒体服务列表")
     @GetMapping(value = "/media_server/online/list")
     @ResponseBody
     public WVPResult<List<MediaServerItem>> getOnlineMediaServerList(){
@@ -83,7 +83,8 @@ public class ServerController {
         return result;
     }
 
-    @ApiOperation("获取流媒体服务")
+    @Operation(summary = "获取流媒体服务")
+    @Parameter(name = "id", description = "流媒体服务ID", required = true)
     @GetMapping(value = "/media_server/one/{id}")
     @ResponseBody
     public WVPResult<MediaServerItem> getMediaServer(@PathVariable String id){
@@ -94,24 +95,21 @@ public class ServerController {
         return result;
     }
 
-    @ApiOperation("测试流媒体服务")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name="ip", value = "流媒体服务IP", dataTypeClass = String.class),
-            @ApiImplicitParam(name="port", value = "流媒体服务HTT端口", dataTypeClass = Integer.class),
-            @ApiImplicitParam(name="secret", value = "流媒体服务secret", dataTypeClass = String.class),
-    })
+    @Operation(summary = "测试流媒体服务")
+    @Parameter(name = "ip", description = "流媒体服务IP", required = true)
+    @Parameter(name = "port", description = "流媒体服务HTT端口", required = true)
+    @Parameter(name = "secret", description = "流媒体服务secret", required = true)
     @GetMapping(value = "/media_server/check")
     @ResponseBody
-    public WVPResult<MediaServerItem> checkMediaServer(@RequestParam String ip, @RequestParam int port, @RequestParam String secret){
+    public WVPResult<MediaServerItem> checkMediaServer(@RequestParam String ip,
+                                                       @RequestParam int port,
+                                                       @RequestParam String secret){
         return mediaServerService.checkMediaServer(ip, port, secret);
     }
 
-    @ApiOperation("测试流媒体录像管理服务")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name="ip", value = "流媒体服务IP", dataTypeClass = String.class),
-            @ApiImplicitParam(name="port", value = "流媒体服务HTT端口", dataTypeClass = Integer.class),
-            @ApiImplicitParam(name="secret", value = "流媒体服务secret", dataTypeClass = String.class),
-    })
+    @Operation(summary = "测试流媒体录像管理服务")
+    @Parameter(name = "ip", description = "流媒体服务IP", required = true)
+    @Parameter(name = "port", description = "流媒体服务HTT端口", required = true)
     @GetMapping(value = "/media_server/record/check")
     @ResponseBody
     public WVPResult<String> checkMediaRecordServer(@RequestParam String ip, @RequestParam int port){
@@ -128,23 +126,21 @@ public class ServerController {
         return result;
     }
 
-    @ApiOperation("保存流媒体服务")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name="mediaServerItem", value = "流媒体信息", dataTypeClass = MediaServerItem.class)
-    })
+    @Operation(summary = "保存流媒体服务")
+    @Parameter(name = "mediaServerItem", description = "流媒体信息", required = true)
     @PostMapping(value = "/media_server/save")
     @ResponseBody
     public WVPResult<String> saveMediaServer(@RequestBody  MediaServerItem mediaServerItem){
         MediaServerItem mediaServerItemInDatabase = mediaServerService.getOne(mediaServerItem.getId());
 
         if (mediaServerItemInDatabase != null) {
-            if (StringUtils.isEmpty(mediaServerItemInDatabase.getSendRtpPortRange())
-                    && StringUtils.isEmpty(mediaServerItem.getSendRtpPortRange())){
+            if (ObjectUtils.isEmpty(mediaServerItemInDatabase.getSendRtpPortRange())
+                    && ObjectUtils.isEmpty(mediaServerItem.getSendRtpPortRange())){
                 mediaServerItem.setSendRtpPortRange("30000,30500");
             }
            mediaServerService.update(mediaServerItem);
         }else {
-            if (StringUtils.isEmpty(mediaServerItem.getSendRtpPortRange())){
+            if (ObjectUtils.isEmpty(mediaServerItem.getSendRtpPortRange())){
                 mediaServerItem.setSendRtpPortRange("30000,30500");
             }
             return mediaServerService.add(mediaServerItem);
@@ -156,10 +152,8 @@ public class ServerController {
         return result;
     }
 
-    @ApiOperation("移除流媒体服务")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name="id", value = "流媒体ID", dataTypeClass = String.class)
-    })
+    @Operation(summary = "移除流媒体服务")
+    @Parameter(name = "id", description = "流媒体ID", required = true)
     @DeleteMapping(value = "/media_server/delete")
     @ResponseBody
     public WVPResult<String> deleteMediaServer(@RequestParam  String id){
@@ -180,7 +174,7 @@ public class ServerController {
 
 
 
-    @ApiOperation("重启服务")
+    @Operation(summary = "重启服务")
     @GetMapping(value = "/restart")
     @ResponseBody
     public Object restart(){
@@ -213,7 +207,7 @@ public class ServerController {
         return "success";
     }
 
-    @ApiOperation("版本信息")
+    @Operation(summary = "获取版本信息")
     @GetMapping(value = "/version")
     @ResponseBody
     public WVPResult<VersionPo> getVersion(){
@@ -224,11 +218,9 @@ public class ServerController {
         return result;
     }
 
-    @ApiOperation("配置信息")
+    @Operation(summary = "获取配置信息")
+    @Parameter(name = "type", description = "配置类型（sip, base）", required = true)
     @GetMapping(value = "/config")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name="type", value = "配置类型（sip, base）", dataTypeClass = String.class),
-    })
     @ResponseBody
     public WVPResult<JSONObject> getVersion(String type){
         WVPResult<JSONObject> result = new WVPResult<>();
@@ -237,7 +229,7 @@ public class ServerController {
 
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("server.port", serverPort);
-        if (StringUtils.isEmpty(type)) {
+        if (ObjectUtils.isEmpty(type)) {
             jsonObject.put("sip", JSON.toJSON(sipConfig));
             jsonObject.put("base", JSON.toJSON(userSetting));
         }else {
@@ -256,7 +248,7 @@ public class ServerController {
         return result;
     }
 
-    @ApiOperation("获取当前所有hook")
+    @Operation(summary = "获取当前所有hook")
     @GetMapping(value = "/hooks")
     @ResponseBody
     public WVPResult<List<IHookSubscribe>> getHooks(){
@@ -280,7 +272,7 @@ public class ServerController {
 //
 //        Set<String> allKeys = dynamicTask.getAllKeys();
 //        jsonObject.put("server.port", serverPort);
-//        if (StringUtils.isEmpty(type)) {
+//        if (ObjectUtils.isEmpty(type)) {
 //            jsonObject.put("sip", JSON.toJSON(sipConfig));
 //            jsonObject.put("base", JSON.toJSON(userSetting));
 //        }else {

@@ -64,7 +64,13 @@ public class StreamServiceImpl implements IStreamService {
     @Override
     public Mono<SkyEyeStreamInfo> info(String streamid, Boolean touch) {
         StreamInfo streamInfo = redisCatchStorage.queryPlayByStreamId(streamid);
+        if(streamInfo==null){
+            return Mono.justOrEmpty(new SkyEyeStreamInfo());
+        }
         MediaServerItem mediaInfo = mediaServerService.getOne(streamInfo.getMediaServerId());
+        if(mediaInfo==null){
+            return Mono.justOrEmpty(new SkyEyeStreamInfo());
+        }
         JSONObject mediaList = zlmresTfulUtils.getMediaList(mediaInfo, streamInfo.getApp(), streamid);
         Device device = storager.queryVideoDevice(streamInfo.getDeviceID());
         DeviceChannel channel = channelMapper.getChannelById(streamInfo.getDeviceID(),streamInfo.getChannelId());

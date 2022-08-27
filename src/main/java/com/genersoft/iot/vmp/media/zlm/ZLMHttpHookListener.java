@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -644,7 +645,7 @@ public class ZLMHttpHookListener {
 
 	private Map<String, String> urlParamToMap(String params) {
 		HashMap<String, String> map = new HashMap<>();
-		if (StringUtils.isEmpty(params)) {
+		if (ObjectUtils.isEmpty(params)) {
 			return map;
 		}
 		String[] paramsArray = params.split("&");

@@ -5,6 +5,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -18,7 +19,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
  * @author: lawrencehj
  * @data: 2021-01-20
  */
-@Api(tags = "SSE推送")
+@Tag(name = "SSE推送")
 @CrossOrigin
 @Controller
 @RequestMapping("/api")
@@ -26,10 +27,7 @@ public class SseController {
     @Autowired
     AlarmEventListener alarmEventListener;
 
-    @ApiOperation("浏览器推送")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "browserId", value = "浏览器ID", dataTypeClass = String.class),
-    })
+
     @GetMapping("/emit")
     public SseEmitter emit(@RequestParam String browserId) {
         final SseEmitter sseEmitter = new SseEmitter(0L);

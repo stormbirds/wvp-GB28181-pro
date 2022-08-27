@@ -18,15 +18,15 @@ import com.genersoft.iot.vmp.vmanager.bean.WVPResult;
 import com.genersoft.iot.vmp.vmanager.gb28181.platform.bean.ChannelReduce;
 import com.genersoft.iot.vmp.vmanager.gb28181.platform.bean.UpdateChannelParam;
 import com.github.pagehelper.PageInfo;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiImplicitParam;
-import io.swagger.annotations.ApiImplicitParams;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import com.genersoft.iot.vmp.conf.SipConfig;
@@ -36,7 +36,7 @@ import java.util.List;
 /**
  * 级联平台管理
  */
-@Api(tags = "级联平台管理")
+@Tag(name = "级联平台管理")
 @CrossOrigin
 @RestController
 @RequestMapping("/api/platform")
@@ -73,7 +73,7 @@ public class PlatformController {
      *
      * @return
      */
-    @ApiOperation("获取国标服务的配置")
+    @Operation(summary = "获取国标服务的配置")
     @GetMapping("/server_config")
     public ResponseEntity<JSONObject> serverConfig() {
         JSONObject result = new JSONObject();
@@ -89,7 +89,8 @@ public class PlatformController {
      *
      * @return
      */
-    @ApiOperation("获取国标服务的配置")
+    @Operation(summary = "获取级联服务器信息")
+    @Parameter(name = "id", description = "平台国标编号", required = true)
     @GetMapping("/info/{id}")
     public ResponseEntity<WVPResult<ParentPlatform>> getPlatform(@PathVariable String id) {
         ParentPlatform parentPlatform = storager.queryParentPlatByServerGBId(id);
@@ -112,12 +113,10 @@ public class PlatformController {
      * @param count 每页条数
      * @return
      */
-    @ApiOperation("分页查询级联平台")
+    @Operation(summary = "分页查询级联平台")
+    @Parameter(name = "page", description = "当前页", required = true)
+    @Parameter(name = "count", description = "每页条数", required = true)
     @GetMapping("/query/{count}/{page}")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "page", value = "当前页", dataTypeClass = Integer.class),
-            @ApiImplicitParam(name = "count", value = "每页条数", dataTypeClass = Integer.class),
-    })
     public PageInfo<ParentPlatform> platforms(@PathVariable int page, @PathVariable int count) {
 
         PageInfo<ParentPlatform> parentPlatformPageInfo = storager.queryParentPlatformList(page, count);
@@ -136,10 +135,7 @@ public class PlatformController {
      * @param parentPlatform
      * @return
      */
-    @ApiOperation("添加上级平台信息")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "parentPlatform", value = "上级平台信息", dataTypeClass = ParentPlatform.class),
-    })
+    @Operation(summary = "添加上级平台信息")
     @PostMapping("/add")
     @ResponseBody
     public ResponseEntity<WVPResult<String>> addPlatform(@RequestBody ParentPlatform parentPlatform) {
@@ -148,16 +144,16 @@ public class PlatformController {
             logger.debug("保存上级平台信息API调用");
         }
         WVPResult<String> wvpResult = new WVPResult<>();
-        if (StringUtils.isEmpty(parentPlatform.getName())
-                || StringUtils.isEmpty(parentPlatform.getServerGBId())
-                || StringUtils.isEmpty(parentPlatform.getServerGBDomain())
-                || StringUtils.isEmpty(parentPlatform.getServerIP())
-                || StringUtils.isEmpty(parentPlatform.getServerPort())
-                || StringUtils.isEmpty(parentPlatform.getDeviceGBId())
-                || StringUtils.isEmpty(parentPlatform.getExpires())
-                || StringUtils.isEmpty(parentPlatform.getKeepTimeout())
-                || StringUtils.isEmpty(parentPlatform.getTransport())
-                || StringUtils.isEmpty(parentPlatform.getCharacterSet())
+        if (ObjectUtils.isEmpty(parentPlatform.getName())
+                || ObjectUtils.isEmpty(parentPlatform.getServerGBId())
+                || ObjectUtils.isEmpty(parentPlatform.getServerGBDomain())
+                || ObjectUtils.isEmpty(parentPlatform.getServerIP())
+                || ObjectUtils.isEmpty(parentPlatform.getServerPort())
+                || ObjectUtils.isEmpty(parentPlatform.getDeviceGBId())
+                || ObjectUtils.isEmpty(parentPlatform.getExpires())
+                || ObjectUtils.isEmpty(parentPlatform.getKeepTimeout())
+                || ObjectUtils.isEmpty(parentPlatform.getTransport())
+                || ObjectUtils.isEmpty(parentPlatform.getCharacterSet())
         ) {
             wvpResult.setCode(-1);
             wvpResult.setMsg("missing parameters");
@@ -211,10 +207,7 @@ public class PlatformController {
      * @param parentPlatform
      * @return
      */
-    @ApiOperation("保存上级平台信息")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "parentPlatform", value = "上级平台信息", dataTypeClass = ParentPlatform.class),
-    })
+    @Operation(summary = "保存上级平台信息")
     @PostMapping("/save")
     @ResponseBody
     public ResponseEntity<WVPResult<String>> savePlatform(@RequestBody ParentPlatform parentPlatform) {
@@ -223,16 +216,16 @@ public class PlatformController {
             logger.debug("保存上级平台信息API调用");
         }
         WVPResult<String> wvpResult = new WVPResult<>();
-        if (StringUtils.isEmpty(parentPlatform.getName())
-                || StringUtils.isEmpty(parentPlatform.getServerGBId())
-                || StringUtils.isEmpty(parentPlatform.getServerGBDomain())
-                || StringUtils.isEmpty(parentPlatform.getServerIP())
-                || StringUtils.isEmpty(parentPlatform.getServerPort())
-                || StringUtils.isEmpty(parentPlatform.getDeviceGBId())
-                || StringUtils.isEmpty(parentPlatform.getExpires())
-                || StringUtils.isEmpty(parentPlatform.getKeepTimeout())
-                || StringUtils.isEmpty(parentPlatform.getTransport())
-                || StringUtils.isEmpty(parentPlatform.getCharacterSet())
+        if (ObjectUtils.isEmpty(parentPlatform.getName())
+                || ObjectUtils.isEmpty(parentPlatform.getServerGBId())
+                || ObjectUtils.isEmpty(parentPlatform.getServerGBDomain())
+                || ObjectUtils.isEmpty(parentPlatform.getServerIP())
+                || ObjectUtils.isEmpty(parentPlatform.getServerPort())
+                || ObjectUtils.isEmpty(parentPlatform.getDeviceGBId())
+                || ObjectUtils.isEmpty(parentPlatform.getExpires())
+                || ObjectUtils.isEmpty(parentPlatform.getKeepTimeout())
+                || ObjectUtils.isEmpty(parentPlatform.getTransport())
+                || ObjectUtils.isEmpty(parentPlatform.getCharacterSet())
         ) {
             wvpResult.setCode(-1);
             wvpResult.setMsg("missing parameters");
@@ -286,10 +279,8 @@ public class PlatformController {
      * @param serverGBId 上级平台国标ID
      * @return
      */
-    @ApiOperation("删除上级平台")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "serverGBId", value = "上级平台国标ID", dataTypeClass = String.class),
-    })
+    @Operation(summary = "删除上级平台")
+    @Parameter(name = "serverGBId", description = "上级平台的国标编号")
     @DeleteMapping("/delete/{serverGBId}")
     @ResponseBody
     public ResponseEntity<String> deletePlatform(@PathVariable String serverGBId) {
@@ -297,7 +288,7 @@ public class PlatformController {
         if (logger.isDebugEnabled()) {
             logger.debug("删除上级平台API调用");
         }
-        if (StringUtils.isEmpty(serverGBId)
+        if (ObjectUtils.isEmpty(serverGBId)
         ) {
             return new ResponseEntity<>("missing parameters", HttpStatus.BAD_REQUEST);
         }
@@ -339,10 +330,8 @@ public class PlatformController {
      * @param serverGBId 上级平台国标ID
      * @return
      */
-    @ApiOperation("查询上级平台是否存在")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "serverGBId", value = "上级平台国标ID", dataTypeClass = String.class),
-    })
+    @Operation(summary = "查询上级平台是否存在")
+    @Parameter(name = "serverGBId", description = "上级平台的国标编号")
     @GetMapping("/exit/{serverGBId}")
     @ResponseBody
     public ResponseEntity<String> exitPlatform(@PathVariable String serverGBId) {
@@ -365,16 +354,14 @@ public class PlatformController {
      * @param channelType 通道类型
      * @return
      */
-    @ApiOperation("分页查询级联平台的所有所有通道")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "page", value = "当前页", dataTypeClass = Integer.class),
-            @ApiImplicitParam(name = "count", value = "每页条数", dataTypeClass = Integer.class),
-            @ApiImplicitParam(name = "platformId", value = "上级平台ID", dataTypeClass = String.class),
-            @ApiImplicitParam(name = "catalogId", value = "目录ID", dataTypeClass = String.class),
-            @ApiImplicitParam(name = "query", value = "查询内容", dataTypeClass = String.class),
-            @ApiImplicitParam(name = "online", value = "是否在线", dataTypeClass = Boolean.class),
-            @ApiImplicitParam(name = "channelType", value = "通道类型", dataTypeClass = Boolean.class),
-    })
+    @Operation(summary = "查询上级平台是否存在")
+    @Parameter(name = "page", description = "当前页", required = true)
+    @Parameter(name = "count", description = "每页条数", required = true)
+    @Parameter(name = "platformId", description = "上级平台的国标编号")
+    @Parameter(name = "catalogId", description = "目录ID")
+    @Parameter(name = "query", description = "查询内容")
+    @Parameter(name = "online", description = "是否在线")
+    @Parameter(name = "channelType", description = "通道类型")
     @GetMapping("/channel_list")
     @ResponseBody
     public PageInfo<ChannelReduce> channelList(int page, int count,
@@ -384,16 +371,13 @@ public class PlatformController {
                                                @RequestParam(required = false) Boolean online,
                                                @RequestParam(required = false) Boolean channelType) {
 
-//        if (logger.isDebugEnabled()) {
-//            logger.debug("查询所有所有通道API调用");
-//        }
-        if (StringUtils.isEmpty(platformId)) {
+        if (ObjectUtils.isEmpty(platformId)) {
             platformId = null;
         }
-        if (StringUtils.isEmpty(query)) {
+        if (ObjectUtils.isEmpty(query)) {
             query = null;
         }
-        if (StringUtils.isEmpty(platformId) || StringUtils.isEmpty(catalogId)) {
+        if (ObjectUtils.isEmpty(platformId) || ObjectUtils.isEmpty(catalogId)) {
             catalogId = null;
         }
         PageInfo<ChannelReduce> channelReduces = storager.queryAllChannelList(page, count, query, online, channelType, platformId, catalogId);
@@ -407,10 +391,7 @@ public class PlatformController {
      * @param param 通道关联参数
      * @return
      */
-    @ApiOperation("向上级平台添加国标通道")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "param", value = "通道关联参数", dataTypeClass = UpdateChannelParam.class),
-    })
+    @Operation(summary = "向上级平台添加国标通道")
     @PostMapping("/update_channel_for_gb")
     @ResponseBody
     public ResponseEntity<String> updateChannelForGB(@RequestBody UpdateChannelParam param) {
@@ -429,10 +410,7 @@ public class PlatformController {
      * @param param 通道关联参数
      * @return
      */
-    @ApiOperation("从上级平台移除国标通道")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "param", value = "通道关联参数", dataTypeClass = UpdateChannelParam.class),
-    })
+    @Operation(summary = "从上级平台移除国标通道")
     @DeleteMapping("/del_channel_for_gb")
     @ResponseBody
     public ResponseEntity<String> delChannelForGB(@RequestBody UpdateChannelParam param) {
@@ -452,11 +430,9 @@ public class PlatformController {
      * @param parentId   目录父ID
      * @return
      */
-    @ApiOperation("获取目录")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "platformId", value = "平台ID", dataTypeClass = String.class, required = true),
-            @ApiImplicitParam(name = "parentId", value = "目录父ID", dataTypeClass = String.class, required = true),
-    })
+    @Operation(summary = "获取目录")
+    @Parameter(name = "platformId", description = "上级平台的国标编号", required = true)
+    @Parameter(name = "parentId", description = "父级目录的国标编号", required = true)
     @GetMapping("/catalog")
     @ResponseBody
     public ResponseEntity<WVPResult<List<PlatformCatalog>>> getCatalogByPlatform(String platformId, String parentId) {
@@ -472,11 +448,6 @@ public class PlatformController {
             parentId = platform.getDeviceGBId();
         }
         List<PlatformCatalog> platformCatalogList = storager.getChildrenCatalogByPlatform(platformId, parentId);
-//        if (platform.getTreeType().equals(TreeType.BUSINESS_GROUP)) {
-//            platformCatalogList = storager.getChildrenCatalogByPlatform(platformId, parentId);
-//        }else {
-//
-//        }
 
         WVPResult<List<PlatformCatalog>> result = new WVPResult<>();
         result.setCode(0);
@@ -491,10 +462,7 @@ public class PlatformController {
      * @param platformCatalog 目录
      * @return
      */
-    @ApiOperation("添加目录")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "platformCatalog", value = "目录信息", dataTypeClass = PlatformCatalog.class, required = true),
-    })
+    @Operation(summary = "添加目录")
     @PostMapping("/catalog/add")
     @ResponseBody
     public ResponseEntity<WVPResult<List<PlatformCatalog>>> addCatalog(@RequestBody PlatformCatalog platformCatalog) {
@@ -528,10 +496,7 @@ public class PlatformController {
      * @param platformCatalog 目录
      * @return
      */
-    @ApiOperation("编辑目录")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "platformCatalog", value = "目录信息", dataTypeClass = PlatformCatalog.class, required = true),
-    })
+    @Operation(summary = "编辑目录")
     @PostMapping("/catalog/edit")
     @ResponseBody
     public ResponseEntity<WVPResult<List<PlatformCatalog>>> editCatalog(@RequestBody PlatformCatalog platformCatalog) {
@@ -563,10 +528,9 @@ public class PlatformController {
      * @param id 目录Id
      * @return
      */
-    @ApiOperation("删除目录")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "id", value = "目录Id", dataTypeClass = String.class, required = true),
-    })
+    @Operation(summary = "删除目录")
+    @Parameter(name = "id", description = "目录Id", required = true)
+    @Parameter(name = "platformId", description = "平台Id", required = true)
     @DeleteMapping("/catalog/del")
     @ResponseBody
     public ResponseEntity<WVPResult<String>> delCatalog(String id, String platformId) {
@@ -576,7 +540,7 @@ public class PlatformController {
         }
         WVPResult<String> result = new WVPResult<>();
 
-        if (StringUtils.isEmpty(id) || StringUtils.isEmpty(platformId)) {
+        if (ObjectUtils.isEmpty(id) || ObjectUtils.isEmpty(platformId)) {
             result.setCode(-1);
             result.setMsg("param error");
             return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
@@ -609,10 +573,7 @@ public class PlatformController {
      * @param platformCatalog 关联的信息
      * @return
      */
-    @ApiOperation("删除关联")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "platformCatalog", value = "关联的信息", dataTypeClass = PlatformCatalog.class, required = true),
-    })
+    @Operation(summary = "删除关联")
     @DeleteMapping("/catalog/relation/del")
     @ResponseBody
     public ResponseEntity<WVPResult<List<PlatformCatalog>>> delRelation(@RequestBody PlatformCatalog platformCatalog) {
@@ -641,11 +602,9 @@ public class PlatformController {
      * @param catalogId  目录Id
      * @return
      */
-    @ApiOperation("修改默认目录")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "platformId", value = "平台Id", dataTypeClass = String.class, required = true),
-            @ApiImplicitParam(name = "catalogId", value = "目录Id", dataTypeClass = String.class, required = true),
-    })
+    @Operation(summary = "修改默认目录")
+    @Parameter(name = "catalogId", description = "目录Id", required = true)
+    @Parameter(name = "platformId", description = "平台Id", required = true)
     @PostMapping("/catalog/default/update")
     @ResponseBody
     public ResponseEntity<WVPResult<String>> setDefaultCatalog(String platformId, String catalogId) {

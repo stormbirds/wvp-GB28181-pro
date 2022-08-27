@@ -1,14 +1,14 @@
 package com.genersoft.iot.vmp.vmanager.gb28181.ptz;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiImplicitParam;
-import io.swagger.annotations.ApiImplicitParams;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.async.DeferredResult;
@@ -21,7 +21,7 @@ import com.genersoft.iot.vmp.storager.IVideoManagerStorage;
 
 import java.util.UUID;
 
-@Api(tags = "云台控制")
+@Tag(name = "云台控制")
 @CrossOrigin
 @RestController
 @RequestMapping("/api/ptz")
@@ -48,15 +48,13 @@ public class PtzController {
 	 * @param zoomSpeed	    缩放速度
 	 * @return String 控制结果
 	 */
-	@ApiOperation("云台控制")
-	@ApiImplicitParams({
-			@ApiImplicitParam(name = "deviceId", value = "设备ID", dataTypeClass = String.class),
-			@ApiImplicitParam(name = "channelId", value = "通道ID", dataTypeClass = String.class),
-			@ApiImplicitParam(name = "command", value = "控制指令,允许值: left, right, up, down, upleft, upright, downleft, downright, zoomin, zoomout, stop", dataTypeClass = String.class),
-			@ApiImplicitParam(name = "horizonSpeed", value = "水平速度", dataTypeClass = Integer.class),
-			@ApiImplicitParam(name = "verticalSpeed", value = "垂直速度", dataTypeClass = Integer.class),
-			@ApiImplicitParam(name = "zoomSpeed", value = "缩放速度", dataTypeClass = Integer.class),
-	})
+	@Operation(summary = "云台控制")
+	@Parameter(name = "deviceId", description = "设备国标编号", required = true)
+	@Parameter(name = "channelId", description = "通道国标编号", required = true)
+	@Parameter(name = "command", description = "控制指令,允许值: left, right, up, down, upleft, upright, downleft, downright, zoomin, zoomout, stop", required = true)
+	@Parameter(name = "horizonSpeed", description = "水平速度", required = true)
+	@Parameter(name = "verticalSpeed", description = "垂直速度", required = true)
+	@Parameter(name = "zoomSpeed", description = "缩放速度", required = true)
 	@PostMapping("/control/{deviceId}/{channelId}")
 	public ResponseEntity<String> ptz(@PathVariable String deviceId,@PathVariable String channelId, String command, int horizonSpeed, int verticalSpeed, int zoomSpeed){
 
@@ -106,15 +104,14 @@ public class PtzController {
 		return new ResponseEntity<String>("success",HttpStatus.OK);
 	}
 
-	@ApiOperation("通用前端控制命令")
-	@ApiImplicitParams({
-			@ApiImplicitParam(name = "deviceId", value = "设备ID", dataTypeClass = String.class),
-			@ApiImplicitParam(name = "channelId", value = "通道ID", dataTypeClass = String.class),
-			@ApiImplicitParam(name = "cmdCode", value = "指令码", dataTypeClass = Integer.class),
-			@ApiImplicitParam(name = "parameter1", value = "数据一", dataTypeClass = Integer.class),
-			@ApiImplicitParam(name = "parameter2", value = "数据二", dataTypeClass = Integer.class),
-			@ApiImplicitParam(name = "combindCode2", value = "组合码二", dataTypeClass = Integer.class),
-	})
+
+	@Operation(summary = "通用前端控制命令")
+	@Parameter(name = "deviceId", description = "设备国标编号", required = true)
+	@Parameter(name = "channelId", description = "通道国标编号", required = true)
+	@Parameter(name = "cmdCode", description = "指令码", required = true)
+	@Parameter(name = "parameter1", description = "数据一", required = true)
+	@Parameter(name = "parameter2", description = "数据二", required = true)
+	@Parameter(name = "combindCode2", description = "组合码二", required = true)
 	@PostMapping("/front_end_command/{deviceId}/{channelId}")
 	public ResponseEntity<String> frontEndCommand(@PathVariable String deviceId,@PathVariable String channelId,int cmdCode, int parameter1, int parameter2, int combindCode2){
 
@@ -127,11 +124,9 @@ public class PtzController {
 		return new ResponseEntity<String>("success",HttpStatus.OK);
 	}
 
-	@ApiOperation("预置位查询")
-	@ApiImplicitParams({
-            @ApiImplicitParam(name = "deviceId", value = "设备ID", dataTypeClass = String.class),
-            @ApiImplicitParam(name = "channelId", value = "通道ID", dataTypeClass = String.class),
-	})
+	@Operation(summary = "预置位查询")
+	@Parameter(name = "deviceId", description = "设备国标编号", required = true)
+	@Parameter(name = "channelId", description = "通道国标编号", required = true)
 	@GetMapping("/preset/query/{deviceId}/{channelId}")
 	public DeferredResult<ResponseEntity<String>> presetQueryApi(@PathVariable String deviceId, @PathVariable String channelId) {
 		if (logger.isDebugEnabled()) {
@@ -139,7 +134,7 @@ public class PtzController {
 		}
 		Device device = storager.queryVideoDevice(deviceId);
 		String uuid =  UUID.randomUUID().toString();
-		String key =  DeferredResultHolder.CALLBACK_CMD_PRESETQUERY + (StringUtils.isEmpty(channelId) ? deviceId : channelId);
+		String key =  DeferredResultHolder.CALLBACK_CMD_PRESETQUERY + (ObjectUtils.isEmpty(channelId) ? deviceId : channelId);
 		DeferredResult<ResponseEntity<String>> result = new DeferredResult<ResponseEntity<String >> (3 * 1000L);
 		result.onTimeout(()->{
 			logger.warn(String.format("获取设备预置位超时"));

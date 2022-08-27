@@ -1,9 +1,19 @@
 package com.genersoft.iot.vmp.skyeye.config;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.TypeReference;
+import com.genersoft.iot.vmp.common.StreamInfo;
+import com.genersoft.iot.vmp.media.zlm.ZLMRESTfulUtils;
+import com.genersoft.iot.vmp.media.zlm.dto.MediaItem;
+import com.genersoft.iot.vmp.media.zlm.dto.MediaServerItem;
+import com.genersoft.iot.vmp.service.IMediaServerService;
+import com.genersoft.iot.vmp.skyeye.GBUtils;
 import com.genersoft.iot.vmp.skyeye.service.IDashBoardService;
 import com.genersoft.iot.vmp.skyeye.vo.*;
 import com.google.common.collect.EvictingQueue;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -17,9 +27,8 @@ import oshi.software.os.OSFileStore;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @ Description cn.stormbirds.skyeye.boot
@@ -36,6 +45,10 @@ public class SysMonitorConfig {
     @Lazy
     @Resource
     private IDashBoardService dashBoardService;
+    @Autowired
+    private IMediaServerService mediaServerService;
+    @Autowired
+    private ZLMRESTfulUtils zlmresTfulUtils;
 
     @Value("${monitor.mac:}")
     private String mac;
@@ -53,6 +66,19 @@ public class SysMonitorConfig {
     private long[] oldTicks;
     private long[][] oldProcTicks;
 
+    LoadVo liveLoad = new LoadVo(getTimeString(), "0" , "", "直播");
+    LoadVo playBackLoad = new LoadVo(getTimeString(), "0", "", "回放");
+    LoadVo recordLoad = new LoadVo(getTimeString(), "0", "", "录像");
+    LoadVo h265Load = new LoadVo(getTimeString(), "0", "", "H265");
+    LoadVo casLoad = new LoadVo(getTimeString(), "0", "", "级联");
+    LoadVo playLoad = new LoadVo(getTimeString(),"0","","播放");
+
+    AtomicInteger  liveCount = new AtomicInteger();
+    AtomicInteger  playbackCount =  new AtomicInteger();
+    AtomicInteger  recordCount = new AtomicInteger();
+    AtomicInteger  h265Count = new AtomicInteger();
+    AtomicInteger playCount = new AtomicInteger();
+
     @Scheduled(fixedRate = 3000)
     public void initSystemInfo() {
 
@@ -67,8 +93,76 @@ public class SysMonitorConfig {
         CpuVo cpuVo = new CpuVo(getTimeString(), cpuData(cpu));
         cpuQueue.add(cpuVo);
         getNet(systemInfo);
-//                    getLoad();
+                    getLoad();
 //                    getGbChannels();
+    }
+
+    private void getLoad() {
+        List<MediaServerItem> mediaServerItems = mediaServerService.getAllOnline();
+        if(mediaServerItems==null || mediaServerItems.isEmpty()){
+            liveLoad = new LoadVo(getTimeString(), "0" , "", "直播");
+            playBackLoad = new LoadVo(getTimeString(), "0", "", "回放");
+            recordLoad = new LoadVo(getTimeString(), "0", "", "录像");
+            h265Load = new LoadVo(getTimeString(), "0", "", "H265");
+            casLoad = new LoadVo(getTimeString(), "0", "", "级联");
+            playLoad = new LoadVo(getTimeString(),"0","","播放");
+            loadQueue.clear();
+            loadQueue.add(liveLoad);
+            loadQueue.add(playBackLoad);
+            loadQueue.add(recordLoad);
+            loadQueue.add(h265Load);
+            loadQueue.add(casLoad);
+            loadQueue.add(playLoad);
+            return;
+        }else{
+            liveCount = new AtomicInteger();
+            playbackCount =  new AtomicInteger();
+            recordCount = new AtomicInteger();
+            h265Count = new AtomicInteger();
+            playCount = new AtomicInteger();
+            for (MediaServerItem mediaServerItem : mediaServerItems) {
+                JSONObject jsonObject = zlmresTfulUtils.getMediaList(mediaServerItem,null);
+                if (jsonObject.getInteger("code") == 0) {
+                    JSONArray data = jsonObject.getJSONArray("data");
+                    if (data != null && data.size() > 0) {
+                        for (int i = 0; i < data.size(); i++) {
+                            JSONObject streamJSONObj = data.getJSONObject(i);
+                            if ("rtmp".equals(streamJSONObj.getString("schema"))) {
+                                int totalReaderCount = streamJSONObj.getInteger("totalReaderCount");
+                                String app = streamJSONObj.getString("app");
+                                String stream = streamJSONObj.getString("stream");
+                                List<MediaItem.MediaTrack> tracks = streamJSONObj.getObject("tracks", new TypeReference<List<MediaItem.MediaTrack>>() {
+                                });
+                                tracks.stream().filter(mediaTrack -> mediaTrack.getCodecType() == 0 && mediaTrack.getCodecId() == 1)
+                                        .findFirst().ifPresent(m -> h265Count.addAndGet(totalReaderCount));
+                                if("rtp".equals(app) && !GBUtils.checkStreamGb(stream)) {
+                                    playbackCount.addAndGet(totalReaderCount);
+                                }else if(!GBUtils.checkStreamGb(stream)){
+                                    liveCount.addAndGet(1);
+                                }
+                                if(streamJSONObj.getBoolean("isRecordingHLS") || streamJSONObj.getBoolean("isRecordingMP4")){
+                                    recordCount.addAndGet(1);
+                                }
+                                playCount.addAndGet(totalReaderCount);
+                            }
+                        }
+                    }
+                }
+
+            }
+            liveLoad.setLoad(liveCount.toString());
+            playBackLoad.setLoad(playbackCount.toString());
+            recordLoad.setLoad(recordCount.toString());
+            h265Load.setLoad(h265Count.toString());
+            playLoad.setLoad(playCount.toString());
+            loadQueue.clear();
+            loadQueue.add(liveLoad);
+            loadQueue.add(playBackLoad);
+            loadQueue.add(recordLoad);
+            loadQueue.add(h265Load);
+            loadQueue.add(casLoad);
+            loadQueue.add(playLoad);
+        }
     }
 
     public Queue<NetVo> getNetQueue() {

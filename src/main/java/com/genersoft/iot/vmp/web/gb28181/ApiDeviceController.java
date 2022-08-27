@@ -6,6 +6,7 @@ import com.genersoft.iot.vmp.gb28181.bean.Device;
 import com.genersoft.iot.vmp.gb28181.bean.DeviceChannel;
 import com.genersoft.iot.vmp.storager.IVideoManagerStorage;
 import com.github.pagehelper.PageInfo;
+import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,24 +54,24 @@ public class ApiDeviceController {
      * @return
      */
     @RequestMapping(value = "/list")
-    public JSONObject list( @RequestParam(required = false)Integer start,
-                            @RequestParam(required = false)Integer limit,
-                            @RequestParam(required = false)String q,
-                            @RequestParam(required = false)Boolean online ){
+    public JSONObject list( @ApiParam(required = false,value = "分页开始,从零开始") Integer start,
+                            @ApiParam(required = false,value = "分页大小") Integer limit,
+                            @ApiParam(required = false,value = "搜索关键字") String q,
+                            @ApiParam(required = false,value = "在线状态\n" +
+                                    "\n" +
+                                    "允许值: true, false") Boolean online,
+                            @ApiParam(required = false,value = "") String sort,
+                            @ApiParam(required = false,value = "") String order ){
 
 //        if (logger.isDebugEnabled()) {
 //            logger.debug("查询所有视频设备API调用");
 //        }
         JSONObject result = new JSONObject();
-        List<Device> devices;
-        if (start == null || limit ==null) {
-            devices = storager.queryVideoDeviceList();
-            result.put("DeviceCount", devices.size());
-        }else {
-            PageInfo<Device> deviceList = storager.queryVideoDeviceList(start/limit+1, limit);
-            result.put("DeviceCount", deviceList.getTotal());
-            devices = deviceList.getList();
-        }
+        start = start == null?0:start;
+        limit = limit == null?10:limit;
+
+        List<Device> devices = storager.queryVideoDeviceList(start, limit,q,online,sort,order);
+        result.put("DeviceCount", devices.size());
 
         JSONArray deviceJSONList = new JSONArray();
         for (Device device : devices) {

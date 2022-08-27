@@ -33,5 +33,7 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addResourceHandler("/snap/**")
                 .addResourceLocations("file:" + snapPath)
                 .setCacheControl(CacheControl.maxAge(30, TimeUnit.MINUTES));
+//        registry.addResourceHandler("/static/**")
+//                .addResourceLocations("file:"+s)
     }
 }

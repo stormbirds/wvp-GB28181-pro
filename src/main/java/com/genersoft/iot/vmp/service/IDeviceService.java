@@ -140,4 +140,6 @@ public interface IDeviceService extends IService<Device> {
     List<DeviceChannel> queryVideoDeviceInTreeNode(String deviceId, String parentId);
 
     List<DeviceTree> channeltree(String serial, Boolean subfetch, String pcode, Integer limit);
+
+    boolean removeDeviceById(String serial);
 }

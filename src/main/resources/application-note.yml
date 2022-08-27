@@ -4,6 +4,9 @@ spring:
         multipart:
             max-file-size: 10MB
             max-request-size: 100MB
+    web:
+        resources:
+            static-locations: classpath:/META-INF/resources/,classpath:/resources/**,classpath:/static/,classpath:/public/,file:E:/dev/wvp-GB28181-pro/src/main/resources/static
     # REDIS数据库配置
     redis:
         # [必须修改] Redis服务器IP, REDIS安装在本机的,使用127.0.0.1
@@ -38,7 +41,7 @@ spring:
              poolPreparedStatements: false         # 是否開啟PSCache，並且指定每個連線上PSCache的大小
              timeBetweenEvictionRunsMillis: 60000  # 配置間隔多久才進行一次檢測，檢測需要關閉的空閒連線，單位是毫秒
              minEvictableIdleTimeMillis: 300000    # 配置一個連線在池中最小生存的時間，單位是毫秒
-             filters: stat,wall,slf4j             # 配置监控统计拦截的filters，监控统计用的filter:sta, 日志用的filter:log4j, 防御sql注入的filter:wall
+             filters: stat,slf4j             # 配置监控统计拦截的filters，监控统计用的filter:sta, 日志用的filter:log4j
              useGlobalDataSourceStat: true         # 合并多个DruidDataSource的监控数据
              # 通过connectProperties属性来打开mergeSql功能；慢SQL记录
              connectionProperties: druid.stat.mergeSql=true;druid.stat.slowSqlMillis=1000
@@ -46,6 +49,7 @@ spring:
 # [可选] WVP监听的HTTP端口, 网页和接口调用都是这个端口
 server:
     port: 10000
+
 
 # 作为28181服务器的配置
 sip:
@@ -110,11 +114,14 @@ user-settings:
 snap:
     path: E:/dev/ZLMediaKit/release/windows/Debug/www/snap
 # 在线文档： swagger-ui（生产环境建议关闭）
-swagger-ui:
+doc:
     enabled: true
+
 
 # 版本信息， 不需修改
 version:
     version: "@project.version@"
     description: "@project.description@"
     artifact-id: "@project.artifactId@"
+mybatis-plus:
+    mapper-locations: classpath*:mapper/*.xml,classpath*:mapper/**/*Mapper.xml

@@ -1,7 +1,5 @@
 package com.genersoft.iot.vmp;
 
-import java.util.logging.LogManager;
-
 import com.genersoft.iot.vmp.conf.druid.EnableDruidSupport;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
@@ -9,7 +7,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.servlet.ServletComponentScan;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import springfox.documentation.oas.annotations.EnableOpenApi;
+
+import java.util.logging.LogManager;
 
 /**
  * 启动类
@@ -18,7 +17,6 @@ import springfox.documentation.oas.annotations.EnableOpenApi;
 @SpringBootApplication(scanBasePackages = {"com.genersoft.iot.vmp"})
 @MapperScan(basePackages = {"com.genersoft.iot.vmp.storager.dao","com.genersoft.iot.vmp.skyeye.mapper"})
 @EnableScheduling
-@EnableOpenApi
 @EnableDruidSupport
 public class VManageBootstrap extends LogManager {
 	private static String[] args;

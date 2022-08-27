@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import javax.sip.InvalidArgumentException;
@@ -43,7 +44,7 @@ import static com.genersoft.iot.vmp.gb28181.utils.XmlUtil.getText;
 @Component
 public class RecordInfoResponseMessageHandler extends SIPRequestProcessorParent implements InitializingBean, IMessageHandler {
 
-    private Logger logger = LoggerFactory.getLogger(RecordInfoResponseMessageHandler.class);
+    private final Logger logger = LoggerFactory.getLogger(RecordInfoResponseMessageHandler.class);
     private final String cmdType = "RecordInfo";
 
     private ConcurrentLinkedQueue<HandlerCatchData> taskQueue = new ConcurrentLinkedQueue<>();
@@ -97,7 +98,7 @@ public class RecordInfoResponseMessageHandler extends SIPRequestProcessorParent 
                             recordInfo.setName(getText(rootElementForCharset, "Name"));
                             String sumNumStr = getText(rootElementForCharset, "SumNum");
                             int sumNum = 0;
-                            if (!StringUtils.isEmpty(sumNumStr)) {
+                            if (!ObjectUtils.isEmpty(sumNumStr)) {
                                 sumNum = Integer.parseInt(sumNumStr);
                             }
                             recordInfo.setSumNum(sumNum);

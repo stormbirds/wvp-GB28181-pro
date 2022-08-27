@@ -61,4 +61,9 @@ public class DevicesController {
                                       @ApiParam(required = false) Integer limit) {
         return new ArrayList<>();
     }
+
+    @GetMapping("/remove")
+    public String remove(@ApiParam String serial) {
+        return deviceService.removeDeviceById(serial)?"ok":"failure";
+    }
 }

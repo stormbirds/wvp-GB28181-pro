@@ -1,12 +1,13 @@
 package com.genersoft.iot.vmp.storager.impl;
 
-import com.genersoft.iot.vmp.common.StreamInfo;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.genersoft.iot.vmp.conf.SipConfig;
 import com.genersoft.iot.vmp.gb28181.bean.*;
 import com.genersoft.iot.vmp.gb28181.event.EventPublisher;
 import com.genersoft.iot.vmp.gb28181.event.subscribe.catalog.CatalogEvent;
 import com.genersoft.iot.vmp.media.zlm.dto.StreamProxyItem;
-import com.genersoft.iot.vmp.media.zlm.dto.StreamPushItem;
 import com.genersoft.iot.vmp.service.IGbStreamService;
 import com.genersoft.iot.vmp.service.bean.GPSMsgInfo;
 import com.genersoft.iot.vmp.storager.IRedisCatchStorage;
@@ -26,6 +27,7 @@ import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
@@ -132,7 +134,7 @@ public class VideoManagerStorageImpl implements IVideoManagerStorage {
 						deviceChannel.setStreamId(allChannelMapInPlay.get(deviceChannel.getChannelId()).getStreamId());
 					}
 					channels.add(deviceChannel);
-					if (!StringUtils.isEmpty(deviceChannel.getParentId())) {
+					if (!ObjectUtils.isEmpty(deviceChannel.getParentId())) {
 						if (subContMap.get(deviceChannel.getParentId()) == null) {
 							subContMap.put(deviceChannel.getParentId(), 1);
 						}else {
@@ -281,6 +283,22 @@ public class VideoManagerStorageImpl implements IVideoManagerStorage {
 		PageHelper.startPage(page, count);
 		List<Device> all = deviceMapper.getDevices();
 		return new PageInfo<>(all);
+	}
+
+	@Override
+	public List<Device> queryVideoDeviceList(int page, int count, String q, Boolean online, String sort, String order) {
+		PageHelper.startPage(page, count);
+		List<Device> all = deviceMapper.getDevices();
+		QueryWrapper<Device> queryWrapper = new QueryWrapper<>();
+		queryWrapper
+				.like(StringUtils.hasText(q), "id", q)
+				.or()
+				.like(StringUtils.hasText(q), "manufacturer", q)
+				.eq(online != null, "online", online);
+		if (StringUtils.hasText(sort) && StringUtils.hasText(order))
+			queryWrapper.orderBy(StringUtils.hasText(sort) && StringUtils.hasText(order), order.startsWith("asc"), sort);
+		return deviceMapper.selectPage(
+				new Page<>(page+1, count), queryWrapper).getRecords();
 	}
 
 	/**

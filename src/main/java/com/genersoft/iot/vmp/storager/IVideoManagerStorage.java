@@ -1,5 +1,6 @@
 package com.genersoft.iot.vmp.storager;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.genersoft.iot.vmp.gb28181.bean.*;
 import com.genersoft.iot.vmp.media.zlm.dto.StreamProxyItem;
 import com.genersoft.iot.vmp.media.zlm.dto.StreamPushItem;
@@ -92,6 +93,14 @@ public interface IVideoManagerStorage {
 	 * @return List<Device> 设备对象数组
 	 */
 	public PageInfo<Device> queryVideoDeviceList(int page, int count);
+
+	/**
+	 * 获取多个设备
+	 * @param page 当前页数
+	 * @param count 每页数量
+	 * @return List<Device> 设备对象数组
+	 */
+	public List<Device> queryVideoDeviceList(int page, int count, String q, Boolean online, String sort, String order);
 
 	/**
 	 * 获取多个设备
