@@ -12,8 +12,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import javax.sip.*;
-import javax.sip.header.CSeqHeader;
-import javax.sip.header.CallIdHeader;
+import javax.sip.header.*;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 import java.util.Map;
@@ -28,6 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SIPProcessorObserver implements ISIPProcessorObserver {
 
     private final static Logger logger = LoggerFactory.getLogger(SIPProcessorObserver.class);
+
     private static Map<String, ISIPRequestProcessor> requestProcessorMap = new ConcurrentHashMap<>();
     private static Map<String, ISIPResponseProcessor> responseProcessorMap = new ConcurrentHashMap<>();
     private static ITimeoutProcessor timeoutProcessor;
@@ -71,7 +71,6 @@ public class SIPProcessorObserver implements ISIPProcessorObserver {
     @Override
     @Async
     public void processRequest(RequestEvent requestEvent) {
-        logger.debug("\n收到请求：\n{}", requestEvent.getRequest());
         String method = requestEvent.getRequest().getMethod();
         ISIPRequestProcessor sipRequestProcessor = requestProcessorMap.get(method);
         if (sipRequestProcessor == null) {
@@ -90,7 +89,6 @@ public class SIPProcessorObserver implements ISIPProcessorObserver {
     @Async
     public void processResponse(ResponseEvent responseEvent) {
         Response response = responseEvent.getResponse();
-        logger.debug("\n收到响应：\n{}", responseEvent.getResponse());
         int status = response.getStatusCode();
 
         if (((status >= 200) && (status < 300)) || status == Response.UNAUTHORIZED) { // Success!

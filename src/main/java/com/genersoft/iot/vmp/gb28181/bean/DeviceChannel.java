@@ -14,13 +14,13 @@ public class DeviceChannel {
 	private int id;
 
 	/**
-	 * 通道id
+	 * 通道国标编号
 	 */
 	@Schema(description = "通道国标编号")
 	private String channelId;
 
 	/**
-	 * 设备id
+	 * 设备国标编号
 	 */
 	@Schema(description = "设备国标编号")
 	private String deviceId;
@@ -82,7 +82,7 @@ public class DeviceChannel {
 	/**
 	 * 信令安全模式  缺省为0; 0:不采用; 2: S/MIME签名方式; 3: S/ MIME加密签名同时采用方式; 4:数字摘要方式
 	 */
-	@Schema(description = "信令安全模式 缺省为0; 0:不采用; 2: S/MIME签名方式; 3: S/ MIME加密签名同时采用方式; 4:数字摘要方式")
+	@Schema(description = "信令安全模式  缺省为0; 0:不采用; 2: S/MIME签名方式; 3: S/ MIME加密签名同时采用方式; 4:数字摘要方式")
 	private int safetyWay;
 	
 	/**
@@ -275,9 +275,9 @@ public class DeviceChannel {
 		this.deviceId = deviceId;
 	}
 
-	public void setPtzType(int ptzType) {
-		this.ptzType = ptzType;
-		switch (ptzType) {
+	public void setPTZType(int PTZType) {
+		this.ptzType = PTZType;
+		switch (PTZType) {
 			case 0:
 				this.PTZTypeText = "未知";
 				break;

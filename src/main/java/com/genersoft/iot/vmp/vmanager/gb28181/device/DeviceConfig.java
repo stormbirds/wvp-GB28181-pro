@@ -14,12 +14,9 @@ import com.genersoft.iot.vmp.gb28181.transmit.callback.RequestMessage;
 import com.genersoft.iot.vmp.gb28181.transmit.cmd.impl.SIPCommander;
 import com.genersoft.iot.vmp.storager.IVideoManagerStorage;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiImplicitParam;
-import io.swagger.annotations.ApiImplicitParams;
-import io.swagger.annotations.ApiOperation;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +28,7 @@ import org.springframework.web.context.request.async.DeferredResult;
 
 import java.util.UUID;
 
-@Api(tags = "国标设备配置")
+@Tag(name = "国标设备配置")
 @CrossOrigin
 @RestController
 @RequestMapping("/api/device/config")
@@ -85,7 +82,7 @@ public class DeviceConfig {
 			msg.setData(String.format("设备配置操作失败，错误码： %s, %s", event.statusCode, event.msg));
 			resultHolder.invokeResult(msg);
 		});
-		DeferredResult<String> result = new DeferredResult<String>(3 * 1000L);
+        DeferredResult<String> result = new DeferredResult<String>(3 * 1000L);
 		result.onTimeout(() -> {
 			logger.warn(String.format("设备配置操作超时, 设备未返回应答指令"));
 			// 释放rtpserver
@@ -131,7 +128,7 @@ public class DeviceConfig {
 			msg.setData(String.format("获取设备配置失败，错误码： %s, %s", event.statusCode, event.msg));
 			resultHolder.invokeResult(msg);
 		});
-		DeferredResult<String> result = new DeferredResult<String > (3 * 1000L);
+        DeferredResult<String> result = new DeferredResult<String > (3 * 1000L);
 		result.onTimeout(()->{
 			logger.warn(String.format("获取设备配置超时"));
 			// 释放rtpserver

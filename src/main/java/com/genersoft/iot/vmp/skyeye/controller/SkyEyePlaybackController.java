@@ -121,7 +121,7 @@ private IPlayService playService;
     }
 
     @GetMapping("/start")
-    public DeferredResult<String> start(@RequestParam String serial,
+    public DeferredResult<WVPResult<StreamInfo>> start(@RequestParam String serial,
                                           @RequestParam(required = false) Integer channel,
                                           @RequestParam(required = false) String code,
                                           @RequestParam(required = false) String starttime,

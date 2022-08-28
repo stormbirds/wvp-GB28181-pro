@@ -31,7 +31,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.DependsOn;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
@@ -65,12 +64,10 @@ public class SIPCommander implements ISIPCommander {
 	@Autowired
 	private SipFactory sipFactory;
 
-	@Lazy
 	@Autowired
 	@Qualifier(value="tcpSipProvider")
 	private SipProviderImpl tcpSipProvider;
 
-	@Lazy
 	@Autowired
 	@Qualifier(value="udpSipProvider")
 	private SipProviderImpl udpSipProvider;
@@ -643,7 +640,7 @@ public class SIPCommander implements ISIPCommander {
 						hookEvent.call(new InviteStreamInfo(mediaServerItem, json, callIdHeader.getCallId(), "rtp", ssrcInfo.getStream()));
 						subscribe.removeSubscribe(hookSubscribe);
 						hookSubscribe.getContent().put("regist", false);
-						hookSubscribe.getContent().put("schema", "rtmp");
+						hookSubscribe.getContent().put("schema", "rtsp");
 						// 添加流注销的订阅，注销了后向设备发送bye
 						subscribe.addSubscribe(hookSubscribe,
 								(MediaServerItem mediaServerItemForEnd, JSONObject jsonForEnd)->{
@@ -1808,6 +1805,7 @@ public class SIPCommander implements ISIPCommander {
 	@Override
 	public void playSpeedCmd(Device device, StreamInfo streamInfo, Double speed) {
 		try {
+
 			StringBuffer content = new StringBuffer(200);
 			content.append("PLAY RTSP/1.0\r\n");
 			content.append("CSeq: " + getInfoCseq() + "\r\n");
@@ -1830,9 +1828,11 @@ public class SIPCommander implements ISIPCommander {
 			e.printStackTrace();
 		}
 	}
+
 	private int getInfoCseq() {
 		return (int) ((Math.random() * 9 + 1) * Math.pow(10, 8));
 	}
+
 	@Override
 	public void playbackControlCmd(Device device, StreamInfo streamInfo, String content,SipSubscribe.Event errorEvent, SipSubscribe.Event okEvent) {
 		try {

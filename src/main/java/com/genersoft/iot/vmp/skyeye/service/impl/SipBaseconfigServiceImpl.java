@@ -1,6 +1,8 @@
 package com.genersoft.iot.vmp.skyeye.service.impl;
 
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.genersoft.iot.vmp.skyeye.enttity.SipBaseconfig;
+import com.genersoft.iot.vmp.skyeye.mapper.SipBaseconfigMapper;
 import com.genersoft.iot.vmp.skyeye.service.ISipBaseconfigService;
 import com.genersoft.iot.vmp.skyeye.service.ISmsBaseconfigService;
 import com.alibaba.fastjson.JSON;
@@ -22,7 +24,7 @@ import static com.genersoft.iot.vmp.skyeye.constant.RedisCacheKey.SIP_BASECONFIG
  * @since 2021-09-17
  */
 @Service
-public class SipBaseconfigServiceImpl implements ISipBaseconfigService {
+public class SipBaseconfigServiceImpl extends ServiceImpl<SipBaseconfigMapper, SipBaseconfig> implements ISipBaseconfigService {
 
     @Resource
     private ReactiveStringRedisTemplate reactiveStringRedisTemplate;

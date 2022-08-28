@@ -1,6 +1,8 @@
 package com.genersoft.iot.vmp.skyeye.service.impl;
 
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.genersoft.iot.vmp.skyeye.enttity.SmsBaseconfig;
+import com.genersoft.iot.vmp.skyeye.mapper.SmsBaseconfigMapper;
 import com.genersoft.iot.vmp.skyeye.service.ISmsBaseconfigService;
 import com.alibaba.fastjson.JSON;
 import org.springframework.data.redis.core.ReactiveHashOperations;
@@ -19,7 +21,7 @@ import static com.genersoft.iot.vmp.skyeye.constant.RedisCacheKey.SMS_BASECONFIG
  * @ Date 2021/12/16 0:33
  */
 @Service
-public class SmsBaseconfigServiceImpl implements ISmsBaseconfigService {
+public class SmsBaseconfigServiceImpl extends ServiceImpl<SmsBaseconfigMapper, SmsBaseconfig> implements ISmsBaseconfigService {
 
     @Resource
     private ReactiveStringRedisTemplate reactiveStringRedisTemplate;

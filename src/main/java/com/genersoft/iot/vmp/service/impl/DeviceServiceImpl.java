@@ -112,7 +112,6 @@ public class DeviceServiceImpl extends ServiceImpl<DeviceMapper, Device> impleme
 
             commander.deviceInfoQuery(device);
             sync(device);
-            // TODO 如果设备下的通道级联到了其他平台，那么需要发送事件或者notify给上级平台
         }else {
             if(device.getOnline() == 0){
                 device.setOnline(1);
@@ -126,6 +125,7 @@ public class DeviceServiceImpl extends ServiceImpl<DeviceMapper, Device> impleme
 
                 commander.deviceInfoQuery(device);
                 sync(device);
+                // TODO 如果设备下的通道级联到了其他平台，那么需要发送事件或者notify给上级平台
             }else {
                 deviceMapper.update(device);
                 redisCatchStorage.updateDevice(device);

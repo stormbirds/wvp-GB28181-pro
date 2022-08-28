@@ -31,7 +31,7 @@ import org.springframework.web.context.request.async.DeferredResult;
 
 import java.util.UUID;
 
-@Tag(name = "国标设备控制")
+@Tag(name  = "国标设备控制")
 @CrossOrigin
 @RestController
 @RequestMapping("/api/device/control")
@@ -294,7 +294,7 @@ public class DeviceControl {
 	 * @param lengthy 拉框宽度像素值
 	 * @return
 	 */
-	@Operation(summary = "拉框缩放")
+	@Operation(summary = "拉框放大")
 	@Parameter(name = "deviceId", description = "设备国标编号", required = true)
 	@Parameter(name = "channelId", description = "通道国标编号", required = true)
 	@Parameter(name = "length", description = "播放窗口长度像素值", required = true)

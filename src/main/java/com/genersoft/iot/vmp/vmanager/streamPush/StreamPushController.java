@@ -5,6 +5,7 @@ import com.alibaba.excel.ExcelReader;
 import com.alibaba.excel.read.metadata.ReadSheet;
 import com.genersoft.iot.vmp.common.StreamInfo;
 import com.genersoft.iot.vmp.conf.UserSetting;
+import com.genersoft.iot.vmp.conf.exception.ControllerException;
 import com.genersoft.iot.vmp.conf.security.SecurityUtils;
 import com.genersoft.iot.vmp.conf.security.dto.LoginUser;
 import com.genersoft.iot.vmp.gb28181.bean.GbStream;
@@ -17,9 +18,11 @@ import com.genersoft.iot.vmp.service.IMediaService;
 import com.genersoft.iot.vmp.service.IStreamPushService;
 import com.genersoft.iot.vmp.service.impl.StreamPushUploadFileHandler;
 import com.genersoft.iot.vmp.vmanager.bean.BatchGBStreamParam;
+import com.genersoft.iot.vmp.vmanager.bean.ErrorCode;
 import com.genersoft.iot.vmp.vmanager.bean.StreamPushExcelDto;
 import com.genersoft.iot.vmp.vmanager.bean.WVPResult;
 import com.github.pagehelper.PageInfo;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -44,7 +47,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-@Tag(name = "推流信息管理")
+@Tag(name  = "推流信息管理")
 @Controller
 @CrossOrigin
 @RequestMapping(value = "/api/push")
@@ -67,14 +70,14 @@ public class StreamPushController {
     @Autowired
     private UserSetting userSetting;
 
+    @GetMapping(value = "/list")
+    @ResponseBody
     @Operation(summary = "推流列表查询")
     @Parameter(name = "page", description = "当前页")
     @Parameter(name = "count", description = "每页查询数量")
     @Parameter(name = "query", description = "查询内容")
     @Parameter(name = "pushing", description = "是否正在推流")
     @Parameter(name = "mediaServerId", description = "流媒体ID")
-    @GetMapping(value = "/list")
-    @ResponseBody
     public PageInfo<StreamPushItem> list(@RequestParam(required = false)Integer page,
                                          @RequestParam(required = false)Integer count,
                                          @RequestParam(required = false)String query,
@@ -91,54 +94,46 @@ public class StreamPushController {
         return pushList;
     }
 
-    @Operation(summary = "将推流添加到国标")
     @PostMapping(value = "/save_to_gb")
     @ResponseBody
-    public Object saveToGB(@RequestBody GbStream stream){
-        if (streamPushService.saveToGB(stream)){
-            return "success";
-        }else {
-            return "fail";
+    @Operation(summary = "将推流添加到国标")
+    public void saveToGB(@RequestBody GbStream stream){
+        if (!streamPushService.saveToGB(stream)){
+           throw new ControllerException(ErrorCode.ERROR100);
         }
     }
 
 
-    @Operation(summary = "将推流移出到国标")
     @DeleteMapping(value = "/remove_form_gb")
     @ResponseBody
-    public Object removeFormGB(@RequestBody GbStream stream){
-        if (streamPushService.removeFromGB(stream)){
-            return "success";
-        }else {
-            return "fail";
+    @Operation(summary = "将推流移出到国标")
+    public void removeFormGB(@RequestBody GbStream stream){
+        if (!streamPushService.removeFromGB(stream)){
+            throw new ControllerException(ErrorCode.ERROR100);
         }
     }
 
 
+    @PostMapping(value = "/stop")
+    @ResponseBody
     @Operation(summary = "中止一个推流")
     @Parameter(name = "app", description = "应用名", required = true)
     @Parameter(name = "stream", description = "流id", required = true)
-    @PostMapping(value = "/stop")
-    @ResponseBody
-    public Object stop(String app, String streamId){
-        if (streamPushService.stop(app, streamId)){
-            return "success";
-        }else {
-            return "fail";
+    public void stop(String app, String streamId){
+        if (!streamPushService.stop(app, streamId)){
+            throw new ControllerException(ErrorCode.ERROR100);
         }
     }
 
-    @Operation(summary = "中止多个推流")
     @DeleteMapping(value = "/batchStop")
     @ResponseBody
-    public Object batchStop(@RequestBody BatchGBStreamParam batchGBStreamParam){
+    @Operation(summary = "中止多个推流")
+    public void batchStop(@RequestBody BatchGBStreamParam batchGBStreamParam){
         if (batchGBStreamParam.getGbStreams().size() == 0) {
-            return "fail";
+            throw new ControllerException(ErrorCode.ERROR100);
         }
-        if (streamPushService.batchStop(batchGBStreamParam.getGbStreams())){
-            return "success";
-        }else {
-            return "fail";
+        if (!streamPushService.batchStop(batchGBStreamParam.getGbStreams())){
+            throw new ControllerException(ErrorCode.ERROR100);
         }
     }
 
@@ -242,13 +237,13 @@ public class StreamPushController {
      * @param stream 流id
      * @return
      */
+    @GetMapping(value = "/getPlayUrl")
+    @ResponseBody
     @Operation(summary = "获取推流播放地址")
     @Parameter(name = "app", description = "应用名", required = true)
     @Parameter(name = "stream", description = "流id", required = true)
     @Parameter(name = "mediaServerId", description = "媒体服务器id")
-    @GetMapping(value = "/getPlayUrl")
-    @ResponseBody
-    public WVPResult<StreamInfo> getPlayUrl(@RequestParam String app,@RequestParam String stream,
+    public StreamInfo getPlayUrl(@RequestParam String app,@RequestParam String stream,
                                             @RequestParam(required = false) String mediaServerId){
         boolean authority = false;
         // 是否登陆用户, 登陆用户返回完整信息
@@ -256,52 +251,38 @@ public class StreamPushController {
         if (userInfo!= null) {
             authority = true;
         }
-        WVPResult<StreamInfo> result = new WVPResult<>();
         StreamPushItem push = streamPushService.getPush(app, stream);
         if (push != null && !push.isSelf()) {
-            result.setCode(-1);
-            result.setMsg("来自其他平台的推流信息");
-            return result;
+            throw new ControllerException(ErrorCode.ERROR100.getCode(), "来自其他平台的推流信息");
         }
         StreamInfo streamInfo = mediaService.getStreamInfoByAppAndStreamWithCheck(app, stream, mediaServerId, authority);
-        if (streamInfo != null){
-            result.setCode(0);
-            result.setMsg("success");
-            result.setData(streamInfo);
-        }else {
-            result.setCode(-1);
-            result.setMsg("获取播放地址失败");
+        if (streamInfo == null){
+            throw new ControllerException(ErrorCode.ERROR100.getCode(), "获取播放地址失败");
         }
-
-        return result;
+        return streamInfo;
     }
 
     /**
-     * 获取推流播放地址
+     * 添加推流信息
      * @param stream 推流信息
      * @return
      */
-    @Operation(summary = "获取推流播放地址")
     @PostMapping(value = "/add")
     @ResponseBody
-    public WVPResult<StreamInfo> add(@RequestBody StreamPushItem stream){
+    @Operation(summary = "添加推流信息")
+    public void add(@RequestBody StreamPushItem stream){
         if (ObjectUtils.isEmpty(stream.getGbId())) {
-
-            return new WVPResult<>(400, "国标ID不可为空", null);
+            throw new ControllerException(ErrorCode.ERROR400.getCode(), "国标ID不可为空");
         }
         if (ObjectUtils.isEmpty(stream.getApp()) && ObjectUtils.isEmpty(stream.getStream())) {
-            return new WVPResult<>(400, "app或stream不可为空", null);
+            throw new ControllerException(ErrorCode.ERROR400.getCode(), "app或stream不可为空");
         }
         stream.setStatus(false);
         stream.setPushIng(false);
         stream.setAliveSecond(0L);
         stream.setTotalReaderCount("0");
-        boolean result = streamPushService.add(stream);
-
-        if (result) {
-            return new WVPResult<>(0, "success", null);
-        }else {
-            return new WVPResult<>(-1, "fail", null);
+        if (!streamPushService.add(stream)) {
+            throw new ControllerException(ErrorCode.ERROR100);
         }
     }
 }

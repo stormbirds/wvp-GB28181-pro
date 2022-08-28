@@ -1,8 +1,8 @@
 package com.genersoft.iot.vmp.gb28181.bean;
 
-
 import io.swagger.v3.oas.annotations.media.Schema;
 
+@Schema(description = "报警信息")
 public class DeviceAlarm {
 
 	/**
@@ -24,7 +24,7 @@ public class DeviceAlarm {
 	private String channelId;
 
 	/**
-	 * 报警级别, 1为一级警情, 2为二级警情, 3为三级警情, 4为四级 警情-
+	 * 报警级别, 1为一级警情, 2为二级警情, 3为三级警情, 4为四级警情
 	 */
 	@Schema(description = "报警级别, 1为一级警情, 2为二级警情, 3为三级警情, 4为四级警情")
 	private String alarmPriority;

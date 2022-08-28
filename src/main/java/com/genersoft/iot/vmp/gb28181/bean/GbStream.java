@@ -28,6 +28,7 @@ public class GbStream extends PlatformGbStream{
     private String streamType;
     @Schema(description = "状态")
     private boolean status;
+
     @Schema(description = "创建时间")
     public String createTime;
 

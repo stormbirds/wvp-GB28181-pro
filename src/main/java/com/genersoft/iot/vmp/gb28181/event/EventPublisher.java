@@ -39,7 +39,7 @@ public class EventPublisher {
 	public void platformKeepaliveExpireEventPublish(String platformGbId){
 		PlatformKeepaliveExpireEvent platformKeepaliveExpireEvent = new PlatformKeepaliveExpireEvent(this);
 		platformKeepaliveExpireEvent.setPlatformGbID(platformGbId);
-		applicationEventPublisher.publishEvent(platformKeepaliveExpireEvent);
+        applicationEventPublisher.publishEvent(platformKeepaliveExpireEvent);
     }
 
 	/**

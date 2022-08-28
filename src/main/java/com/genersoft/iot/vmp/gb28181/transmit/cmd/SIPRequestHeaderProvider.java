@@ -236,7 +236,7 @@ public class SIPRequestHeaderProvider {
 	}
 
 	public Request createInfoRequest(Device device, StreamInfo streamInfo, String content)
-			throws SipException, ParseException, InvalidArgumentException{
+			throws SipException, ParseException, InvalidArgumentException {
 		if (streamInfo == null) {
 			return null;
 		}
@@ -262,11 +262,9 @@ public class SIPRequestHeaderProvider {
 
 		ViaHeader viaHeader = (ViaHeader) infoRequest.getHeader(ViaHeader.NAME);
 		viaHeader.setRPort();
-
 		// 增加Contact header
 		Address concatAddress = sipFactory.createAddressFactory().createAddress(sipFactory.createAddressFactory()
 				.createSipURI(sipConfig.getId(), sipConfig.getIp() + ":" + sipConfig.getPort()));
-
 		infoRequest.addHeader(sipFactory.createHeaderFactory().createContactHeader(concatAddress));
 		List<String> agentParam = new ArrayList<>();
 		agentParam.add("wvp-pro");

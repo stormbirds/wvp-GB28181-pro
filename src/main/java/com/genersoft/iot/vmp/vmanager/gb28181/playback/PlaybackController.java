@@ -3,21 +3,18 @@ package com.genersoft.iot.vmp.vmanager.gb28181.playback;
 import com.genersoft.iot.vmp.common.StreamInfo;
 import com.genersoft.iot.vmp.conf.exception.ControllerException;
 import com.genersoft.iot.vmp.gb28181.transmit.callback.DeferredResultHolder;
-//import com.genersoft.iot.vmp.media.zlm.ZLMRESTfulUtils;
-import com.genersoft.iot.vmp.service.IMediaServerService;
+import com.genersoft.iot.vmp.gb28181.transmit.callback.RequestMessage;
 import com.genersoft.iot.vmp.storager.IRedisCatchStorage;
 import com.genersoft.iot.vmp.service.IPlayService;
 import com.genersoft.iot.vmp.vmanager.bean.ErrorCode;
+import com.genersoft.iot.vmp.vmanager.bean.WVPResult;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.util.ObjectUtils;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -47,17 +44,11 @@ public class PlaybackController {
 	@Autowired
 	private IRedisCatchStorage redisCatchStorage;
 
-	// @Autowired
-	// private ZLMRESTfulUtils zlmresTfulUtils;
-
 	@Autowired
 	private IPlayService playService;
 
 	@Autowired
 	private DeferredResultHolder resultHolder;
-
-	@Autowired
-	private IMediaServerService mediaServerService;
 
 	@Operation(summary = "开始视频回放")
 	@Parameter(name = "deviceId", description = "设备国标编号", required = true)
@@ -65,16 +56,26 @@ public class PlaybackController {
 	@Parameter(name = "startTime", description = "开始时间", required = true)
 	@Parameter(name = "endTime", description = "结束时间", required = true)
 	@GetMapping("/start/{deviceId}/{channelId}")
-	public DeferredResult<String> play(@PathVariable String deviceId, @PathVariable String channelId,
-													   String startTime,String endTime) {
+	public DeferredResult<WVPResult<StreamInfo>> play(@PathVariable String deviceId, @PathVariable String channelId,
+										  String startTime, String endTime) {
 
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("设备回放 API调用，deviceId：%s ，channelId：%s", deviceId, channelId));
 		}
 
+
 		return playService.playBack(deviceId, channelId, startTime, endTime, null,
-				playBackResult->resultHolder.invokeResult(playBackResult.getData()));
+				playBackResult->{
+					if (playBackResult.getCode() != ErrorCode.SUCCESS.getCode()) {
+						RequestMessage data = playBackResult.getData();
+						data.setData(WVPResult.fail(playBackResult.getCode(), playBackResult.getMsg()));
+						resultHolder.invokeResult(data);
+					}else {
+						resultHolder.invokeResult(playBackResult.getData());
+					}
+				});
 	}
+
 
 	@Operation(summary = "停止视频回放")
 	@Parameter(name = "deviceId", description = "设备国标编号", required = true)
@@ -85,13 +86,12 @@ public class PlaybackController {
 			@PathVariable String deviceId,
 			@PathVariable String channelId,
 			@PathVariable String stream) {
-
 		if (ObjectUtils.isEmpty(deviceId) || ObjectUtils.isEmpty(channelId) || ObjectUtils.isEmpty(stream)) {
 			throw new ControllerException(ErrorCode.ERROR400);
 		}
 		cmder.streamByeCmd(deviceId, channelId, stream, null);
-
 	}
+
 
 	@Operation(summary = "回放暂停")
 	@Parameter(name = "streamId", description = "回放流ID", required = true)
@@ -107,6 +107,7 @@ public class PlaybackController {
 		cmder.playPauseCmd(device, streamInfo);
 	}
 
+
 	@Operation(summary = "回放恢复")
 	@Parameter(name = "streamId", description = "回放流ID", required = true)
 	@GetMapping("/resume/{streamId}")
@@ -120,6 +121,7 @@ public class PlaybackController {
 		Device device = storager.queryVideoDevice(streamInfo.getDeviceID());
 		cmder.playResumeCmd(device, streamInfo);
 	}
+
 
 	@Operation(summary = "回放拖动播放")
 	@Parameter(name = "streamId", description = "回放流ID", required = true)
@@ -154,5 +156,4 @@ public class PlaybackController {
 		Device device = storager.queryVideoDevice(streamInfo.getDeviceID());
 		cmder.playSpeedCmd(device, streamInfo, speed);
 	}
-
 }

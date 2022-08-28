@@ -1,5 +1,6 @@
 package com.genersoft.iot.vmp.skyeye.service;
 
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.genersoft.iot.vmp.skyeye.enttity.SipBaseconfig;
 import reactor.core.publisher.Mono;
 
@@ -9,7 +10,7 @@ import reactor.core.publisher.Mono;
  * @Email xbaojun@gmail.com
  * @Date 2022/8/11 11:30
  */
-public interface ISipBaseconfigService {
+public interface ISipBaseconfigService extends IService<SipBaseconfig> {
     Mono get(String serial);
 
     Mono<String> update(SipBaseconfig baseconfig);

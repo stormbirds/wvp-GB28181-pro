@@ -12,7 +12,6 @@ import com.genersoft.iot.vmp.gb28181.transmit.callback.DeferredResultHolder;
 import com.genersoft.iot.vmp.gb28181.transmit.cmd.impl.SIPCommander;
 import com.genersoft.iot.vmp.gb28181.transmit.event.request.ISIPRequestProcessor;
 import com.genersoft.iot.vmp.gb28181.transmit.event.request.SIPRequestProcessorParent;
-import com.genersoft.iot.vmp.gb28181.utils.Coordtransform;
 import com.genersoft.iot.vmp.gb28181.utils.NumericUtil;
 import com.genersoft.iot.vmp.gb28181.utils.SipUtils;
 import com.genersoft.iot.vmp.gb28181.utils.XmlUtil;
@@ -35,7 +34,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
-import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import javax.sip.InvalidArgumentException;
@@ -144,7 +142,7 @@ public class NotifyRequestProcessor extends SIPRequestProcessorParent implements
 			}
 		} catch (SipException | InvalidArgumentException | ParseException e) {
 			e.printStackTrace();
-		}finally {
+		} finally {
 			taskQueueHandlerRun = false;
 		}
 	}
@@ -165,6 +163,7 @@ public class NotifyRequestProcessor extends SIPRequestProcessorParent implements
 				logger.error("处理MobilePosition移动位置Notify时未获取到消息体,{}", evt.getRequest());
 				return;
 			}
+
 			MobilePosition mobilePosition = new MobilePosition();
 			mobilePosition.setCreateTime(DateUtil.getNow());
 			Element deviceIdElement = rootElement.element("DeviceID");
@@ -220,6 +219,7 @@ public class NotifyRequestProcessor extends SIPRequestProcessorParent implements
 			}
 
 			storager.updateChannelPosition(deviceChannel);
+
 			// 发送redis消息。 通知位置信息的变化
 			JSONObject jsonObject = new JSONObject();
 			jsonObject.put("time", time);
@@ -302,8 +302,6 @@ public class NotifyRequestProcessor extends SIPRequestProcessorParent implements
 				mobilePosition.setLatitude(deviceAlarm.getLatitude());
 				mobilePosition.setReportSource("GPS Alarm");
 
-
-
 				// 更新device channel 的经纬度
 				DeviceChannel deviceChannel = new DeviceChannel();
 				deviceChannel.setDeviceId(device.getDeviceId());
@@ -335,6 +333,7 @@ public class NotifyRequestProcessor extends SIPRequestProcessorParent implements
 				jsonObject.put("direction", mobilePosition.getDirection());
 				jsonObject.put("speed", mobilePosition.getSpeed());
 				redisCatchStorage.sendMobilePositionMsg(jsonObject);
+
 			}
 			// TODO: 需要实现存储报警信息、报警分类
 

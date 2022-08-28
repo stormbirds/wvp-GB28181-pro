@@ -66,58 +66,8 @@ public class RedisConfig extends CachingConfigurerSupport {
 	@Autowired
 	private RedisKeyDeleteEventMessageListener redisKeyDeleteEventMessageListener;
 
-
-	@Resource
-	private RedisProperties redisProperties;
 	@Resource
 	private LettuceConnectionFactory lettuceConnectionFactory;
-//	public GenericObjectPoolConfig<?> genericObjectPoolConfig(RedisProperties.Pool properties) {
-//		GenericObjectPoolConfig<?> config = new GenericObjectPoolConfig<>();
-//		config.setMaxTotal(properties.getMaxActive());
-//		config.setMaxIdle(properties.getMaxIdle());
-//		config.setMinIdle(properties.getMinIdle());
-//		if (properties.getTimeBetweenEvictionRuns() != null) {
-//			config.setTimeBetweenEvictionRuns(Duration.ofMillis(properties.getTimeBetweenEvictionRuns().toMillis()) );
-//		}
-//		if (properties.getMaxWait() != null) {
-//			config.setMaxWait(Duration.ofSeconds(properties.getMaxWait().getSeconds()) );
-//		}
-//		return config;
-//	}
-
-//	@Bean
-//	public DefaultClientResources lettuceClientResources() {
-//		return DefaultClientResources.create();
-//	}
-//
-//	@Bean(destroyMethod = "destroy")
-//	public LettuceConnectionFactory lettuceConnectionFactory(ClientResources clientResources) {
-//		//redis配置
-//		RedisConfiguration redisConfiguration = new
-//				RedisStandaloneConfiguration(redisProperties.getHost(),redisProperties.getPort());
-//		((RedisStandaloneConfiguration) redisConfiguration).setDatabase(redisProperties.getDatabase());
-//		((RedisStandaloneConfiguration) redisConfiguration).setPassword(redisProperties.getPassword());
-//
-//		//连接池配置
-//		GenericObjectPoolConfig genericObjectPoolConfig =
-//				new GenericObjectPoolConfig();
-//
-//		//redis客户端配置
-//		LettucePoolingClientConfiguration.LettucePoolingClientConfigurationBuilder
-//				builder =  LettucePoolingClientConfiguration.builder().
-//				commandTimeout(Duration.ofSeconds(redisProperties.getTimeout().getSeconds()));
-//
-//		builder.shutdownTimeout(Duration.ofSeconds(redisProperties.getTimeout().getSeconds()));
-//		builder.poolConfig(genericObjectPoolConfig);
-//		LettuceClientConfiguration lettuceClientConfiguration = builder.build();
-//
-//		//根据配置和客户端配置创建连接
-//		LettuceConnectionFactory lettuceConnectionFactory = new
-//				LettuceConnectionFactory(redisConfiguration,lettuceClientConfiguration);
-//		lettuceConnectionFactory .afterPropertiesSet();
-//
-//		return lettuceConnectionFactory;
-//	}
 
 
 	@Bean
@@ -130,8 +80,6 @@ public class RedisConfig extends CachingConfigurerSupport {
 		redisTemplate.setHashValueSerializer(fastJsonRedisSerializer);
 		// 全局开启AutoType，不建议使用
 		 ParserConfig.getGlobalInstance().setAutoTypeSupport(true);
-		// 建议使用这种方式，小范围指定白名单，需要序列化的类
-//		ParserConfig.getGlobalInstance().addAccept("com.avatar");
 		// key的序列化采用StringRedisSerializer
 		redisTemplate.setKeySerializer(new StringRedisSerializer());
 		redisTemplate.setHashKeySerializer(new StringRedisSerializer());

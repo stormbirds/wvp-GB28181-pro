@@ -8,6 +8,7 @@ import com.genersoft.iot.vmp.utils.DateUtil;
 import com.genersoft.iot.vmp.vmanager.bean.ErrorCode;
 import com.genersoft.iot.vmp.vmanager.bean.WVPResult;
 import com.github.pagehelper.PageInfo;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -22,7 +23,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.text.ParseException;
 
-@Tag(name = "日志管理")
+@Tag(name  = "日志管理")
 @CrossOrigin
 @RestController
 @RequestMapping("/api/log")
@@ -47,6 +48,7 @@ public class LogController {
      * @param endTime 结束时间
      * @return
      */
+    @GetMapping("/all")
     @Operation(summary = "分页查询报警")
     @Parameter(name = "query", description = "查询内容", required = true)
     @Parameter(name = "page", description = "当前页", required = true)
@@ -54,7 +56,6 @@ public class LogController {
     @Parameter(name = "type", description = "类型", required = true)
     @Parameter(name = "startTime", description = "开始时间", required = true)
     @Parameter(name = "endTime", description = "结束时间", required = true)
-    @GetMapping("/all")
     public PageInfo<LogDto> getAll(
             @RequestParam int page,
             @RequestParam int count,
@@ -79,6 +80,7 @@ public class LogController {
         if (!DateUtil.verification(startTime, DateUtil.formatter) || !DateUtil.verification(endTime, DateUtil.formatter)){
             throw new ControllerException(ErrorCode.ERROR400);
         }
+
         return logService.getAll(page, count, query, type, startTime, endTime);
     }
 

@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.genersoft.iot.vmp.gb28181.bean.Device;
 import com.genersoft.iot.vmp.gb28181.bean.DeviceChannel;
+import com.genersoft.iot.vmp.gb28181.bean.TreeType;
 import com.genersoft.iot.vmp.gb28181.event.subscribe.catalog.CatalogEvent;
 import com.genersoft.iot.vmp.utils.DateUtil;
 import org.dom4j.Attribute;
@@ -394,12 +395,12 @@ public class XmlUtil {
             //兼容INFO中的信息
             Element info = itemDevice.element("Info");
             if(XmlUtil.getText(info, "PTZType") == null || "".equals(XmlUtil.getText(info, "PTZType"))){
-                deviceChannel.setPtzType(0);
+                deviceChannel.setPTZType(0);
             }else{
-                deviceChannel.setPtzType(Integer.parseInt(XmlUtil.getText(info, "PTZType")));
+                deviceChannel.setPTZType(Integer.parseInt(XmlUtil.getText(info, "PTZType")));
             }
         } else {
-            deviceChannel.setPtzType(Integer.parseInt(XmlUtil.getText(itemDevice, "PTZType")));
+            deviceChannel.setPTZType(Integer.parseInt(XmlUtil.getText(itemDevice, "PTZType")));
         }
         deviceChannel.setHasAudio(true); // 默认含有音频，播放时再检查是否有音频及是否AAC
         return deviceChannel;

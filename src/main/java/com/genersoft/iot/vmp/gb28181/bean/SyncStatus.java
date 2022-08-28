@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * 摄像机同步状态
  * @author lin
  */
+@Schema(description = "摄像机同步状态")
 public class SyncStatus {
     @Schema(description = "总数")
     private int total;

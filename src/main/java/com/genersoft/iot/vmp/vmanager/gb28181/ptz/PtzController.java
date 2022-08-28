@@ -1,13 +1,12 @@
 package com.genersoft.iot.vmp.vmanager.gb28181.ptz;
 
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
@@ -21,7 +20,7 @@ import com.genersoft.iot.vmp.storager.IVideoManagerStorage;
 
 import java.util.UUID;
 
-@Tag(name = "云台控制")
+@Tag(name  = "云台控制")
 @CrossOrigin
 @RestController
 @RequestMapping("/api/ptz")
@@ -46,8 +45,8 @@ public class PtzController {
 	 * @param horizonSpeed	水平移动速度
 	 * @param verticalSpeed	垂直移动速度
 	 * @param zoomSpeed	    缩放速度
-	 * @return String 控制结果
 	 */
+
 	@Operation(summary = "云台控制")
 	@Parameter(name = "deviceId", description = "设备国标编号", required = true)
 	@Parameter(name = "channelId", description = "通道国标编号", required = true)
@@ -120,6 +119,7 @@ public class PtzController {
 
 		cmder.frontEndCmd(device, channelId, cmdCode, parameter1, parameter2, combindCode2);
 	}
+
 
 	@Operation(summary = "预置位查询")
 	@Parameter(name = "deviceId", description = "设备国标编号", required = true)

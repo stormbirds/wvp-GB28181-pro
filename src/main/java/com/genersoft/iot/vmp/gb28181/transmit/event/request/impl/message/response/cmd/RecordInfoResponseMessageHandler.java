@@ -155,7 +155,6 @@ public class RecordInfoResponseMessageHandler extends SIPRequestProcessorParent 
                         } finally {
                             taskQueueHandlerRun = false;
                         }
-
                     }
                 });
             }

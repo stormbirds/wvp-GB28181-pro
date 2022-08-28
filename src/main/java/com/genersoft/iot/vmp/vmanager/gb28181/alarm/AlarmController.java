@@ -4,23 +4,17 @@ import com.genersoft.iot.vmp.conf.exception.ControllerException;
 import com.genersoft.iot.vmp.gb28181.bean.Device;
 import com.genersoft.iot.vmp.gb28181.bean.DeviceAlarm;
 import com.genersoft.iot.vmp.gb28181.bean.ParentPlatform;
-import com.genersoft.iot.vmp.gb28181.bean.SubscribeInfo;
 import com.genersoft.iot.vmp.gb28181.transmit.cmd.ISIPCommander;
 import com.genersoft.iot.vmp.gb28181.transmit.cmd.ISIPCommanderForPlatform;
 import com.genersoft.iot.vmp.service.IDeviceAlarmService;
-import com.genersoft.iot.vmp.service.IGbStreamService;
 import com.genersoft.iot.vmp.storager.IVideoManagerStorage;
 import com.genersoft.iot.vmp.utils.DateUtil;
 import com.genersoft.iot.vmp.vmanager.bean.ErrorCode;
 import com.genersoft.iot.vmp.vmanager.bean.WVPResult;
 import com.github.pagehelper.PageInfo;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiImplicitParam;
-import io.swagger.annotations.ApiImplicitParams;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.models.auth.In;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -29,7 +23,6 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
-import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -53,7 +46,6 @@ public class AlarmController {
     private IVideoManagerStorage storage;
 
 
-
     /**
      *  删除报警
      *
@@ -71,12 +63,11 @@ public class AlarmController {
             @RequestParam(required = false) Integer id,
             @RequestParam(required = false) String deviceIds,
             @RequestParam(required = false) String time
-
     ) {
         if (ObjectUtils.isEmpty(id)) {
             id = null;
         }
-        if (!StringUtils.hasText(deviceIds)) {
+        if (ObjectUtils.isEmpty(deviceIds)) {
             deviceIds = null;
         }
         if (ObjectUtils.isEmpty(time)) {
@@ -103,9 +94,7 @@ public class AlarmController {
     @GetMapping("/test/notify/alarm")
     @Operation(summary = "测试向上级/设备发送模拟报警通知")
     @Parameter(name = "deviceId", description = "设备国标编号")
-    public void delete(
-            @RequestParam(required = false) String deviceId
-    ) {
+    public void delete(@RequestParam String deviceId) {
         Device device = storage.queryVideoDevice(deviceId);
         ParentPlatform platform = storage.queryParentPlatByServerGBId(deviceId);
         DeviceAlarm deviceAlarm = new DeviceAlarm();

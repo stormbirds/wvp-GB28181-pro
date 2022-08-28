@@ -4,7 +4,6 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.genersoft.iot.vmp.VManageBootstrap;
 import com.genersoft.iot.vmp.common.VersionPo;
-import com.genersoft.iot.vmp.conf.DynamicTask;
 import com.genersoft.iot.vmp.conf.SipConfig;
 import com.genersoft.iot.vmp.conf.UserSetting;
 import com.genersoft.iot.vmp.conf.VersionInfo;
@@ -17,12 +16,13 @@ import com.genersoft.iot.vmp.utils.SpringBeanFactory;
 import com.genersoft.iot.vmp.vmanager.bean.ErrorCode;
 import com.genersoft.iot.vmp.vmanager.bean.WVPResult;
 import gov.nist.javax.sip.SipStackImpl;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.ehcache.xml.model.ThreadPoolsType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
@@ -33,7 +33,6 @@ import javax.sip.ObjectInUseException;
 import javax.sip.SipProvider;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 @SuppressWarnings("rawtypes")
 @Tag(name = "服务控制")
@@ -60,27 +59,29 @@ public class ServerController {
     @Value("${server.port}")
     private int serverPort;
 
+
     @Autowired
     private ThreadPoolTaskExecutor taskExecutor;
 
-    @Operation(summary = "流媒体服务列表")
+
     @GetMapping(value = "/media_server/list")
     @ResponseBody
+    @Operation(summary = "流媒体服务列表")
     public List<MediaServerItem> getMediaServerList() {
         return mediaServerService.getAll();
     }
 
-    @Operation(summary = "在线流媒体服务列表")
     @GetMapping(value = "/media_server/online/list")
     @ResponseBody
+    @Operation(summary = "在线流媒体服务列表")
     public List<MediaServerItem> getOnlineMediaServerList() {
         return mediaServerService.getAllOnline();
     }
 
-    @Operation(summary = "获取流媒体服务")
-    @Parameter(name = "id", description = "流媒体服务ID", required = true)
     @GetMapping(value = "/media_server/one/{id}")
     @ResponseBody
+    @Operation(summary = "停止视频回放")
+    @Parameter(name = "id", description = "流媒体服务ID", required = true)
     public MediaServerItem getMediaServer(@PathVariable String id) {
         return mediaServerService.getOne(id);
     }
@@ -111,16 +112,16 @@ public class ServerController {
     @Parameter(name = "mediaServerItem", description = "流媒体信息", required = true)
     @PostMapping(value = "/media_server/save")
     @ResponseBody
-    public void saveMediaServer(@RequestBody  MediaServerItem mediaServerItem){
+    public void saveMediaServer(@RequestBody MediaServerItem mediaServerItem) {
         MediaServerItem mediaServerItemInDatabase = mediaServerService.getOne(mediaServerItem.getId());
 
         if (mediaServerItemInDatabase != null) {
             if (ObjectUtils.isEmpty(mediaServerItemInDatabase.getSendRtpPortRange()) && ObjectUtils.isEmpty(mediaServerItem.getSendRtpPortRange())) {
                 mediaServerItem.setSendRtpPortRange("30000,30500");
             }
-           mediaServerService.update(mediaServerItem);
-        }else {
-            if (ObjectUtils.isEmpty(mediaServerItem.getSendRtpPortRange())){
+            mediaServerService.update(mediaServerItem);
+        } else {
+            if (ObjectUtils.isEmpty(mediaServerItem.getSendRtpPortRange())) {
                 mediaServerItem.setSendRtpPortRange("30000,30500");
             }
             mediaServerService.add(mediaServerItem);
@@ -140,11 +141,10 @@ public class ServerController {
     }
 
 
-
     @Operation(summary = "重启服务")
     @GetMapping(value = "/restart")
     @ResponseBody
-    public void restart(){
+    public void restart() {
         taskExecutor.execute(()-> {
             try {
                 Thread.sleep(3000);
@@ -164,8 +164,7 @@ public class ServerController {
                 throw new ControllerException(ErrorCode.ERROR100.getCode(), e.getMessage());
             }
         });
-
-    }
+    };
 
     @Operation(summary = "获取版本信息")
     @GetMapping(value = "/version")
@@ -174,22 +173,19 @@ public class ServerController {
         return versionInfo.getVersion();
     }
 
+    @GetMapping(value = "/config")
     @Operation(summary = "获取配置信息")
     @Parameter(name = "type", description = "配置类型（sip, base）", required = true)
-    @GetMapping(value = "/config")
     @ResponseBody
-    public JSONObject getVersion(String type){
-        WVPResult<JSONObject> result = new WVPResult<>();
-        result.setCode(0);
-        result.setMsg("success");
+    public JSONObject getVersion(String type) {
 
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("server.port", serverPort);
         if (ObjectUtils.isEmpty(type)) {
             jsonObject.put("sip", JSON.toJSON(sipConfig));
             jsonObject.put("base", JSON.toJSON(userSetting));
-        }else {
-            switch (type){
+        } else {
+            switch (type) {
                 case "sip":
                     jsonObject.put("sip", sipConfig);
                     break;
@@ -203,11 +199,10 @@ public class ServerController {
         return jsonObject;
     }
 
-    @Operation(summary = "获取当前所有hook")
     @GetMapping(value = "/hooks")
     @ResponseBody
+    @Operation(summary = "获取当前所有hook")
     public List<IHookSubscribe> getHooks() {
         return zlmHttpHookSubscribe.getAll();
     }
-
 }

@@ -22,7 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
 import java.util.*;
 
@@ -378,6 +377,24 @@ public class RedisCatchStorageImpl implements IRedisCatchStorage {
         }else {
             return null;
         }
+    }
+
+    @Override
+    public List<SendRtpItem> querySendRTPServerByChnnelId(String channelId) {
+        if (channelId == null) {
+            return null;
+        }
+        String platformGbId = "*";
+        String callId = "*";
+        String streamId = "*";
+        String key = VideoManagerConstants.PLATFORM_SEND_RTP_INFO_PREFIX + userSetting.getServerId() + "_" + platformGbId
+                + "_" + channelId + "_" + streamId + "_" + callId;
+        List<Object> scan = RedisUtil.scan(key);
+        List<SendRtpItem> result = new ArrayList<>();
+        for (Object o : scan) {
+            result.add((SendRtpItem) RedisUtil.get((String) o));
+        }
+        return result;
     }
 
     @Override

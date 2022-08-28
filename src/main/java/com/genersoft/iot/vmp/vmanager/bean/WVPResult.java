@@ -1,5 +1,6 @@
 package com.genersoft.iot.vmp.vmanager.bean;
 
+
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "统一返回结果")

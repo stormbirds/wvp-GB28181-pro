@@ -91,7 +91,6 @@ public class VideoManagerConstants {
 	 * 接收推流设备的GPS变化通知
 	 */
 	public static final String VM_MSG_PUSH_STREAM_STATUS_CHANGE = "VM_MSG_PUSH_STREAM_STATUS_CHANGE";
-
 	/**
 	 * 接收推流设备列表更新变化通知
 	 */
@@ -115,7 +114,7 @@ public class VideoManagerConstants {
 	/**
 	 * 报警订阅的通知（收到报警向redis发出通知）
 	 */
-	public static final String VM_MSG_SUBSCRIBE_ALARM = "device_alarm";
+	public static final String VM_MSG_SUBSCRIBE_ALARM = "alarm";
 
 	/**
 	 * 报警通知的发送 （收到redis发出的通知，转发给其他平台）
@@ -128,10 +127,8 @@ public class VideoManagerConstants {
 	public static final String VM_MSG_SUBSCRIBE_DEVICE_STATUS = "device";
 
 
-
-
-
 	//**************************    第三方  ****************************************
+
 	public static final String WVP_STREAM_GB_ID_PREFIX = "memberNo_";
 	public static final String WVP_STREAM_GPS_MSG_PREFIX = "WVP_STREAM_GPS_MSG_";
 

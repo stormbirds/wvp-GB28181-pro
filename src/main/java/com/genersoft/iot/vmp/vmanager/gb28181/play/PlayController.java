@@ -17,14 +17,13 @@ import com.genersoft.iot.vmp.vmanager.bean.WVPResult;
 import com.genersoft.iot.vmp.vmanager.gb28181.play.bean.PlayResult;
 import com.genersoft.iot.vmp.service.IMediaService;
 import com.genersoft.iot.vmp.service.IPlayService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -40,7 +39,7 @@ import org.springframework.web.context.request.async.DeferredResult;
 import java.util.List;
 import java.util.UUID;
 
-@Tag(name = "国标设备点播")
+@Tag(name  = "国标设备点播")
 @CrossOrigin
 @RestController
 @RequestMapping("/api/play")
@@ -90,6 +89,7 @@ public class PlayController {
 		return playResult.getResult();
 	}
 
+
 	@Operation(summary = "停止点播")
 	@Parameter(name = "deviceId", description = "设备国标编号", required = true)
 	@Parameter(name = "channelId", description = "通道国标编号", required = true)
@@ -106,6 +106,7 @@ public class PlayController {
 		if (streamInfo == null) {
 			throw new ControllerException(ErrorCode.ERROR100.getCode(), "点播未找到");
 		}
+
 		cmder.streamByeCmd(deviceId, channelId, streamInfo.getStream(), null, null);
 		redisCatchStorage.stopPlay(streamInfo);
 
@@ -114,12 +115,12 @@ public class PlayController {
 		json.put("deviceId", deviceId);
 		json.put("channelId", channelId);
 		return json;
+
 	}
 
 	/**
 	 * 将不是h264的视频通过ffmpeg 转码为h264 + aac
 	 * @param streamId 流ID
-	 * @return
 	 */
 	@Operation(summary = "将不是h264的视频通过ffmpeg 转码为h264 + aac")
 	@Parameter(name = "streamId", description = "视频流ID", required = true)
@@ -163,15 +164,12 @@ public class PlayController {
 
 	/**
 	 * 结束转码
-	 * @param key
-	 * @return
 	 */
 	@Operation(summary = "结束转码")
 	@Parameter(name = "key", description = "视频流key", required = true)
 	@Parameter(name = "mediaServerId", description = "流媒体服务ID", required = true)
 	@PostMapping("/convertStop/{key}")
 	public void playConvertStop(@PathVariable String key, String mediaServerId) {
-		JSONObject result = new JSONObject();
 		if (mediaServerId == null) {
 			throw new ControllerException(ErrorCode.ERROR400.getCode(), "流媒体：" + mediaServerId + "不存在" );
 		}
@@ -190,8 +188,6 @@ public class PlayController {
 				throw new ControllerException(ErrorCode.ERROR100 );
 			}
 		}
-
-
 	}
 
 	@Operation(summary = "语音广播命令")

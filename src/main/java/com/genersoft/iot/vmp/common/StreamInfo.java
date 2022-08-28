@@ -1,5 +1,6 @@
 package com.genersoft.iot.vmp.common;
 
+
 public class StreamInfo {
 
     private String app;
@@ -30,6 +31,8 @@ public class StreamInfo {
     private String rtsp;
     private String rtsps;
     private String rtc;
+
+    private String rtcs;
     private String mediaServerId;
     private Object tracks;
     private String startTime;
@@ -309,5 +312,13 @@ public class StreamInfo {
 
     public void setIp(String ip) {
         this.ip = ip;
+    }
+
+    public String getRtcs() {
+        return rtcs;
+    }
+
+    public void setRtcs(String rtcs) {
+        this.rtcs = rtcs;
     }
 }

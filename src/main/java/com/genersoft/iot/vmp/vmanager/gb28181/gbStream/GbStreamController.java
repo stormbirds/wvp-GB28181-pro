@@ -15,7 +15,7 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
-@Tag(name = "视频流关联到级联平台")
+@Tag(name  = "视频流关联到级联平台")
 @CrossOrigin
 @RestController
 @RequestMapping("/api/gbStream")

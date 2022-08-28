@@ -7,6 +7,7 @@ import com.genersoft.iot.vmp.storager.dao.dto.Role;
 import com.genersoft.iot.vmp.utils.DateUtil;
 import com.genersoft.iot.vmp.vmanager.bean.ErrorCode;
 import com.genersoft.iot.vmp.vmanager.bean.WVPResult;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -17,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Tag(name = "角色管理")
+@Tag(name  = "角色管理")
 @CrossOrigin
 @RestController
 @RequestMapping("/api/role")
@@ -26,10 +27,10 @@ public class RoleController {
     @Autowired
     private IRoleService roleService;
 
+    @PostMapping("/add")
     @Operation(summary = "添加角色")
     @Parameter(name = "name", description = "角色名", required = true)
     @Parameter(name = "authority", description = "权限（自行定义内容，目前未使用）", required = true)
-    @PostMapping("/add")
     public void add(@RequestParam String name,
                                                   @RequestParam(required = false) String authority){
         // 获取当前登录用户id
@@ -51,9 +52,9 @@ public class RoleController {
         }
     }
 
+    @DeleteMapping("/delete")
     @Operation(summary = "删除角色")
     @Parameter(name = "id", description = "用户Id", required = true)
-    @DeleteMapping("/delete")
     public void delete(@RequestParam Integer id){
         // 获取当前登录用户id
         int currenRoleId = SecurityUtils.getUserInfo().getRole().getId();
@@ -68,8 +69,8 @@ public class RoleController {
         }
     }
 
-    @Operation(summary = "查询角色")
     @GetMapping("/all")
+    @Operation(summary = "查询角色")
     public List<Role> all(){
         // 获取当前登录用户id
         List<Role> allRoles = roleService.getAll();

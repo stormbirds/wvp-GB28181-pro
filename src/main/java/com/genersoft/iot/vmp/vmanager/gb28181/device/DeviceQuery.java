@@ -43,7 +43,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.util.*;
 
-@Tag(name = "国标设备查询", description = "国标设备查询")
+@Tag(name  = "国标设备查询", description = "国标设备查询")
 @SuppressWarnings("rawtypes")
 @CrossOrigin
 @RestController
@@ -85,6 +85,7 @@ public class DeviceQuery {
 	@Parameter(name = "deviceId", description = "设备国标编号", required = true)
 	@GetMapping("/devices/{deviceId}")
 	public Device devices(@PathVariable String deviceId){
+
 		return storager.queryVideoDevice(deviceId);
 	}
 
@@ -99,6 +100,7 @@ public class DeviceQuery {
 	@Parameter(name = "count", description = "每页查询数量", required = true)
 	@GetMapping("/devices")
 	public PageInfo<Device> devices(int page, int count){
+
 		return storager.queryVideoDeviceList(page, count);
 	}
 
@@ -111,8 +113,10 @@ public class DeviceQuery {
 	 * @param query 查询内容
 	 * @param online 是否在线  在线 true / 离线 false
 	 * @param channelType 设备 false/子目录 true
+	 * @param catalogUnderDevice 是否直属与设备的目录
 	 * @return 通道列表
 	 */
+	@GetMapping("/devices/{deviceId}/channels")
 	@Operation(summary = "分页查询通道")
 	@Parameter(name = "deviceId", description = "设备国标编号", required = true)
 	@Parameter(name = "page", description = "当前页", required = true)
@@ -121,14 +125,12 @@ public class DeviceQuery {
 	@Parameter(name = "online", description = "是否在线")
 	@Parameter(name = "channelType", description = "设备/子目录-> false/true")
 	@Parameter(name = "catalogUnderDevice", description = "是否直属与设备的目录")
-	@GetMapping("/devices/{deviceId}/channels")
 	public PageInfo channels(@PathVariable String deviceId,
 											   int page, int count,
 											   @RequestParam(required = false) String query,
 											   @RequestParam(required = false) Boolean online,
 											   @RequestParam(required = false) Boolean channelType,
 											   @RequestParam(required = false) Boolean catalogUnderDevice) {
-
 		if (ObjectUtils.isEmpty(query)) {
 			query = null;
 		}
@@ -270,7 +272,6 @@ public class DeviceQuery {
 	public ResponseEntity updateTransport(@PathVariable String deviceId, @PathVariable String streamMode){
 		Device device = storager.queryVideoDevice(deviceId);
 		device.setStreamMode(streamMode);
-//		storager.updateDevice(device);
 		deviceService.updateDevice(device);
 		return new ResponseEntity<>(null,HttpStatus.OK);
 	}
@@ -388,9 +389,10 @@ public class DeviceQuery {
 		return result;
 	}
 
+
+	@GetMapping("/{deviceId}/sync_status")
 	@Operation(summary = "获取通道同步进度")
 	@Parameter(name = "deviceId", description = "设备国标编号", required = true)
-	@GetMapping("/{deviceId}/sync_status")
 	public WVPResult<SyncStatus> getSyncStatus(@PathVariable String deviceId) {
 		SyncStatus channelSyncStatus = deviceService.getChannelSyncStatus(deviceId);
 		WVPResult<SyncStatus> wvpResult = new WVPResult<>();
@@ -408,9 +410,9 @@ public class DeviceQuery {
 		return wvpResult;
 	}
 
+	@GetMapping("/{deviceId}/subscribe_info")
 	@Operation(summary = "获取设备的订阅状态")
 	@Parameter(name = "deviceId", description = "设备国标编号", required = true)
-	@GetMapping("/{deviceId}/subscribe_info")
 	public WVPResult<Map<String, String>> getSubscribeInfo(@PathVariable String deviceId) {
 		Set<String> allKeys = dynamicTask.getAllKeys();
 		Map<String, String> dialogStateMap = new HashMap<>();
@@ -434,10 +436,10 @@ public class DeviceQuery {
 		return wvpResult;
 	}
 
+	@GetMapping("/snap/{deviceId}/{channelId}")
 	@Operation(summary = "请求截图")
 	@Parameter(name = "deviceId", description = "设备国标编号", required = true)
 	@Parameter(name = "channelId", description = "通道国标编号", required = true)
-	@GetMapping("/snap/{deviceId}/{channelId}")
 	public void getSnap(HttpServletResponse resp, @PathVariable String deviceId, @PathVariable String channelId) {
 
 		try {
@@ -499,7 +501,6 @@ public class DeviceQuery {
 		return new ResponseEntity<>(pageInfo,HttpStatus.OK);
 	}
 
-
 	/**
 	 * 查询国标树下的通道
 	 * @param deviceId 设备ID
@@ -515,7 +516,6 @@ public class DeviceQuery {
 	@Parameter(name = "count", description = "每页条数", required = true)
 	@GetMapping("/tree/channel/{deviceId}")
 	public ResponseEntity<PageInfo> getChannelInTreeNode(@PathVariable String deviceId, @RequestParam(required = false) String parentId, int page, int count){
-
 
 		if (page <= 0) {
 			page = 1;

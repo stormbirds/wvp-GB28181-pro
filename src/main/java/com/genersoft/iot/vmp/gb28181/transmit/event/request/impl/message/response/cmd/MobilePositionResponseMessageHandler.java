@@ -31,8 +31,6 @@ import java.text.ParseException;
 
 import static com.genersoft.iot.vmp.gb28181.utils.XmlUtil.getText;
 
-
-
 /**
  * 移动设备位置数据查询回复
  * @author lin

@@ -34,7 +34,6 @@ import java.text.ParseException;
 
 import static com.genersoft.iot.vmp.gb28181.utils.XmlUtil.*;
 
-
 /**
  * 报警事件的处理，参考：9.4
  */
@@ -145,6 +144,7 @@ public class AlarmNotifyMessageHandler extends SIPRequestProcessorParent impleme
                     storager.insertMobilePosition(mobilePosition);
                 }
                 storager.updateChannelPosition(deviceChannel);
+
                 // 发送redis消息。 通知位置信息的变化
                 JSONObject jsonObject = new JSONObject();
                 jsonObject.put("time", mobilePosition.getTime());
@@ -164,7 +164,7 @@ public class AlarmNotifyMessageHandler extends SIPRequestProcessorParent impleme
             }
         }
 
-        if (channelId.equals(sipConfig.getId())) {
+        if ("7".equals(deviceAlarm.getAlarmMethod()) ) {
             // 发送给平台的报警信息。 发送redis通知
             AlarmChannelMessage alarmChannelMessage = new AlarmChannelMessage();
             alarmChannelMessage.setAlarmSn(Integer.parseInt(deviceAlarm.getAlarmMethod()));
@@ -179,7 +179,6 @@ public class AlarmNotifyMessageHandler extends SIPRequestProcessorParent impleme
         if (sipConfig.isAlarm()) {
             deviceAlarmService.add(deviceAlarm);
         }
-
 
         if (redisCatchStorage.deviceIsOnline(device.getDeviceId())) {
             publisher.deviceAlarmEventPublish(deviceAlarm);

@@ -13,10 +13,6 @@ import com.genersoft.iot.vmp.storager.IVideoManagerStorage;
 import com.genersoft.iot.vmp.vmanager.bean.WVPResult;
 import com.github.pagehelper.util.StringUtil;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiImplicitParam;
-import io.swagger.annotations.ApiImplicitParams;
-import io.swagger.annotations.ApiOperation;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -36,7 +32,7 @@ import org.springframework.web.context.request.async.DeferredResult;
 /**
  *  位置信息管理
  */
-@Tag(name = "位置信息管理")
+@Tag(name  = "位置信息管理")
 @CrossOrigin
 @RestController
 @RequestMapping("/api/position")
@@ -57,7 +53,7 @@ public class MobilePositionController {
 	private IDeviceService deviceService;
 
     /**
-     *  查询历史轨迹
+     * 查询历史轨迹
      * @param deviceId 设备ID
      * @param start 开始时间
      * @param end 结束时间

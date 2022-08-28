@@ -77,10 +77,10 @@ public class StreamProxyController {
         return streamProxyService.save(param);
     }
 
-    @Operation(summary = "获取ffmpeg.cmd模板")
-    @Parameter(name = "mediaServerId", description = "流媒体ID", required = true)
     @GetMapping(value = "/ffmpeg_cmd/list")
     @ResponseBody
+    @Operation(summary = "获取ffmpeg.cmd模板")
+    @Parameter(name = "mediaServerId", description = "流媒体ID", required = true)
     public JSONObject getFFmpegCMDs(@RequestParam String mediaServerId){
         logger.debug("获取节点[ {} ]ffmpeg.cmd模板", mediaServerId );
 
@@ -91,11 +91,11 @@ public class StreamProxyController {
         return streamProxyService.getFFmpegCMDs(mediaServerItem);
     }
 
+    @DeleteMapping(value = "/del")
+    @ResponseBody
     @Operation(summary = "移除代理")
     @Parameter(name = "app", description = "应用名", required = true)
     @Parameter(name = "stream", description = "流id", required = true)
-    @DeleteMapping(value = "/del")
-    @ResponseBody
     public void del(@RequestParam String app, @RequestParam String stream){
         logger.info("移除代理： " + app + "/" + stream);
         if (app == null || stream == null) {
@@ -105,24 +105,25 @@ public class StreamProxyController {
         }
     }
 
+    @GetMapping(value = "/start")
+    @ResponseBody
     @Operation(summary = "启用代理")
     @Parameter(name = "app", description = "应用名", required = true)
     @Parameter(name = "stream", description = "流id", required = true)
-    @GetMapping(value = "/start")
-    @ResponseBody
     public void start(String app, String stream){
         logger.info("启用代理： " + app + "/" + stream);
         boolean result = streamProxyService.start(app, stream);
         if (!result) {
             logger.info("启用代理失败： " + app + "/" + stream);
+            throw new ControllerException(ErrorCode.ERROR100);
         }
     }
 
+    @GetMapping(value = "/stop")
+    @ResponseBody
     @Operation(summary = "停用代理")
     @Parameter(name = "app", description = "应用名", required = true)
     @Parameter(name = "stream", description = "流id", required = true)
-    @GetMapping(value = "/stop")
-    @ResponseBody
     public void stop(String app, String stream){
         logger.info("停用代理： " + app + "/" + stream);
         boolean result = streamProxyService.stop(app, stream);

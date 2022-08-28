@@ -38,7 +38,7 @@ import java.util.List;
 /**
  * 级联平台管理
  */
-@Tag(name = "级联平台管理")
+@Tag(name  = "级联平台管理")
 @CrossOrigin
 @RestController
 @RequestMapping("/api/platform")
@@ -98,7 +98,7 @@ public class PlatformController {
         ParentPlatform parentPlatform = storager.queryParentPlatByServerGBId(id);
         WVPResult<ParentPlatform> wvpResult = new WVPResult<>();
         if (parentPlatform != null) {
-            return parentPlatform;
+            return  parentPlatform;
         } else {
             throw new ControllerException(ErrorCode.ERROR100.getCode(), "未查询到此平台");
         }
@@ -111,10 +111,10 @@ public class PlatformController {
      * @param count 每页条数
      * @return
      */
+    @GetMapping("/query/{count}/{page}")
     @Operation(summary = "分页查询级联平台")
     @Parameter(name = "page", description = "当前页", required = true)
     @Parameter(name = "count", description = "每页条数", required = true)
-    @GetMapping("/query/{count}/{page}")
     public PageInfo<ParentPlatform> platforms(@PathVariable int page, @PathVariable int count) {
 
         PageInfo<ParentPlatform> parentPlatformPageInfo = storager.queryParentPlatformList(page, count);
@@ -197,7 +197,7 @@ public class PlatformController {
     @Operation(summary = "保存上级平台信息")
     @PostMapping("/save")
     @ResponseBody
-    public String savePlatform(@RequestBody ParentPlatform parentPlatform) {
+    public void savePlatform(@RequestBody ParentPlatform parentPlatform) {
 
         if (logger.isDebugEnabled()) {
             logger.debug("保存上级平台信息API调用");
@@ -247,7 +247,6 @@ public class PlatformController {
                 // 停止订阅相关的定时任务
                 subscribeHolder.removeAllSubscribe(parentPlatform.getServerGBId());
             }
-            return null;
         } else {
             throw new ControllerException(ErrorCode.ERROR100.getCode(),"写入数据库失败");
         }
@@ -263,7 +262,7 @@ public class PlatformController {
     @Parameter(name = "serverGBId", description = "上级平台的国标编号")
     @DeleteMapping("/delete/{serverGBId}")
     @ResponseBody
-    public ResponseEntity<String> deletePlatform(@PathVariable String serverGBId) {
+    public String deletePlatform(@PathVariable String serverGBId) {
 
         if (logger.isDebugEnabled()) {
             logger.debug("删除上级平台API调用");
@@ -316,9 +315,6 @@ public class PlatformController {
     @ResponseBody
     public Boolean exitPlatform(@PathVariable String serverGBId) {
 
-//        if (logger.isDebugEnabled()) {
-//            logger.debug("查询上级平台是否存在API调用：" + serverGBId);
-//        }
         ParentPlatform parentPlatform = storager.queryParentPlatByServerGBId(serverGBId);
         return parentPlatform != null;
     }
@@ -400,6 +396,7 @@ public class PlatformController {
             logger.debug("给上级平台删除国标通道API调用");
         }
         int result = storager.delChannelForGB(param.getPlatformId(), param.getChannelReduces());
+
         if (result <= 0) {
             throw new ControllerException(ErrorCode.ERROR100);
         }
@@ -429,6 +426,7 @@ public class PlatformController {
         if (platformId.equals(parentId)) {
             parentId = platform.getDeviceGBId();
         }
+
         return storager.getChildrenCatalogByPlatform(platformId, parentId);
     }
 
@@ -486,6 +484,7 @@ public class PlatformController {
      * 删除目录
      *
      * @param id 目录Id
+     * @param platformId 平台Id
      * @return
      */
     @Operation(summary = "删除目录")
@@ -511,7 +510,6 @@ public class PlatformController {
         if (parentPlatform == null) {
             storager.setDefaultCatalog(platformId, platformId);
         }
-
 
         if (delResult <= 0) {
             throw new ControllerException(ErrorCode.ERROR100.getCode(), "写入数据库失败");

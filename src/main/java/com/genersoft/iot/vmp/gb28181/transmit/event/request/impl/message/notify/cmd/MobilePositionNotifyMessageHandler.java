@@ -6,13 +6,11 @@ import com.genersoft.iot.vmp.gb28181.bean.*;
 import com.genersoft.iot.vmp.gb28181.transmit.event.request.SIPRequestProcessorParent;
 import com.genersoft.iot.vmp.gb28181.transmit.event.request.impl.message.IMessageHandler;
 import com.genersoft.iot.vmp.gb28181.transmit.event.request.impl.message.notify.NotifyMessageHandler;
-import com.genersoft.iot.vmp.gb28181.utils.Coordtransform;
 import com.genersoft.iot.vmp.gb28181.utils.NumericUtil;
 import com.genersoft.iot.vmp.service.IDeviceChannelService;
 import com.genersoft.iot.vmp.storager.IRedisCatchStorage;
 import com.genersoft.iot.vmp.storager.IVideoManagerStorage;
 import com.genersoft.iot.vmp.utils.DateUtil;
-import com.genersoft.iot.vmp.utils.GpsUtil;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.slf4j.Logger;
@@ -39,6 +37,7 @@ public class MobilePositionNotifyMessageHandler extends SIPRequestProcessorParen
 
     private Logger logger = LoggerFactory.getLogger(MobilePositionNotifyMessageHandler.class);
     private final String cmdType = "MobilePosition";
+
     @Autowired
     private NotifyMessageHandler notifyMessageHandler;
 
@@ -58,8 +57,10 @@ public class MobilePositionNotifyMessageHandler extends SIPRequestProcessorParen
     public void afterPropertiesSet() throws Exception {
         notifyMessageHandler.addHandler(cmdType, this);
     }
+
     @Override
     public void handForDevice(RequestEvent evt, Device device, Element rootElement) {
+
         try {
             rootElement = getRootElement(evt, device.getCharset());
             if (rootElement == null) {

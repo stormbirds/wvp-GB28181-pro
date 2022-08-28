@@ -35,7 +35,7 @@ public class GlobalResponseAdvice implements ResponseBodyAdvice<Object> {
         }
 
         if (body instanceof WVPResult) {
-            return JSON.toJSONString(WVPResult.success(body));
+            return body;
         }
 
         if (body instanceof ErrorCode) {
@@ -44,7 +44,7 @@ public class GlobalResponseAdvice implements ResponseBodyAdvice<Object> {
         }
 
         if (body instanceof String) {
-            return JSON.toJSON(WVPResult.success(body));
+            return JSON.toJSONString(WVPResult.success(body));
         }
 
         return WVPResult.success(body);

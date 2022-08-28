@@ -4,14 +4,10 @@ import com.genersoft.iot.vmp.common.StreamInfo;
 import com.genersoft.iot.vmp.conf.exception.ControllerException;
 import com.genersoft.iot.vmp.conf.security.SecurityUtils;
 import com.genersoft.iot.vmp.conf.security.dto.LoginUser;
-import com.genersoft.iot.vmp.media.zlm.dto.OnPublishHookParam;
 import com.genersoft.iot.vmp.media.zlm.dto.StreamAuthorityInfo;
-import com.genersoft.iot.vmp.service.IMediaServerService;
 import com.genersoft.iot.vmp.service.IStreamProxyService;
-import com.genersoft.iot.vmp.service.IStreamPushService;
 import com.genersoft.iot.vmp.service.IMediaService;
 import com.genersoft.iot.vmp.storager.IRedisCatchStorage;
-import com.genersoft.iot.vmp.storager.IVideoManagerStorage;
 import com.genersoft.iot.vmp.vmanager.bean.ErrorCode;
 import com.genersoft.iot.vmp.vmanager.bean.WVPResult;
 import io.swagger.v3.oas.annotations.Operation;
@@ -26,7 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 
 
-@Tag(name = "媒体流相关")
+@Tag(name  = "媒体流相关")
 @Controller
 @CrossOrigin
 @RequestMapping(value = "/api/media")
@@ -92,7 +88,7 @@ public class MediaController {
 
         WVPResult<StreamInfo> result = new WVPResult<>();
         if (streamInfo != null){
-            return streamInfo;
+            return  streamInfo;
         }else {
             //获取流失败，重启拉流后重试一次
             streamProxyService.stop(app,stream);
@@ -111,7 +107,7 @@ public class MediaController {
                 streamInfo = mediaService.getStreamInfoByAppAndStreamWithCheck(app, stream, mediaServerId, authority);
             }
             if (streamInfo != null){
-                return streamInfo;
+                return  streamInfo;
             }else {
                 throw new ControllerException(ErrorCode.ERROR100);
             }
