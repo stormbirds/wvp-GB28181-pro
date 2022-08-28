@@ -65,6 +65,7 @@ import com.genersoft.iot.vmp.vmanager.gb28181.play.bean.PlayResult;
 
 import gov.nist.javax.sip.stack.SIPDialog;
 
+import static cn.hutool.core.date.DatePattern.NORM_DATETIME_FORMATTER;
 import static com.genersoft.iot.vmp.skyeye.constant.RecordTask.playbackRecordDownloadCompletableFutureMap;
 
 @SuppressWarnings(value = {"rawtypes", "unchecked"})
@@ -409,6 +410,79 @@ public class PlayServiceImpl implements IPlayService {
     }
 
     @Override
+    public DeferredResult<String> playBack(String deviceId, String channelId, String startTime,
+                                           String endTime,
+                                           PlayBackCallback playBackCallback) {
+        Device device = storager.queryVideoDevice(deviceId);
+        if (device == null) {
+            throw new ControllerException(ErrorCode.ERROR100.getCode(), "设备： " + deviceId + "不存在");
+        }
+        MediaServerItem newMediaServerItem = getNewMediaServerItem(device);
+        SSRCInfo ssrcInfo = mediaServerService.openRTPServer(newMediaServerItem, null, true, true);
+
+        if (newMediaServerItem == null || ssrcInfo == null) {
+            throw new ControllerException(ErrorCode.ERROR100.getCode(), "媒体服务器： " + deviceId + "不存在");
+        }
+        String uuid = UUID.randomUUID().toString();
+        String key = DeferredResultHolder.CALLBACK_CMD_PLAYBACK + deviceId + channelId;
+
+        DeferredResult<String> result = new DeferredResult<>(30000L);
+        resultHolder.put(DeferredResultHolder.CALLBACK_CMD_PLAYBACK + deviceId + channelId, uuid, result);
+        RequestMessage requestMessage = new RequestMessage();
+        requestMessage.setId(uuid);
+        requestMessage.setKey(key);
+        PlayBackResult<RequestMessage> playBackResult = new PlayBackResult<>();
+        String playBackTimeOutTaskKey = UUID.randomUUID().toString();
+        dynamicTask.startDelay(playBackTimeOutTaskKey, ()->{
+            logger.warn(String.format("设备回放超时，deviceId：%s ，channelId：%s", deviceId, channelId));
+            playBackResult.setCode(-1);
+            playBackResult.setData(requestMessage);
+            SIPDialog dialog = streamSession.getDialogByStream(deviceId, channelId, ssrcInfo.getStream());
+            // 点播超时回复BYE 同时释放ssrc以及此次点播的资源
+            if (dialog != null) {
+                // 点播超时回复BYE 同时释放ssrc以及此次点播的资源
+                cmder.streamByeCmd(device.getDeviceId(), channelId, ssrcInfo.getStream(), null);
+            }else {
+                mediaServerService.releaseSsrc(newMediaServerItem.getId(), ssrcInfo.getSsrc());
+                mediaServerService.closeRTPServer(deviceId, channelId, ssrcInfo.getStream());
+                streamSession.remove(deviceId, channelId, ssrcInfo.getStream());
+            }
+            cmder.streamByeCmd(device.getDeviceId(), channelId, ssrcInfo.getStream(), null);
+            // 回复之前所有的点播请求
+            playBackCallback.call(playBackResult);
+        }, userSetting.getPlayTimeout());
+
+        cmder.playbackStreamCmd(newMediaServerItem, ssrcInfo, device, channelId, startTime, endTime, null,
+                (InviteStreamInfo inviteStreamInfo) -> {
+                    logger.info("收到订阅消息： " + inviteStreamInfo.getResponse().toJSONString());
+                    dynamicTask.stop(playBackTimeOutTaskKey);
+                    StreamInfo streamInfo = onPublishHandler(inviteStreamInfo.getMediaServerItem(), inviteStreamInfo.getResponse(), deviceId, channelId);
+                    if (streamInfo == null) {
+                        logger.warn("设备回放API调用失败！");
+                        playBackResult.setCode(-1);
+                        playBackCallback.call(playBackResult);
+                        return;
+                    }
+                    redisCatchStorage.startPlayback(streamInfo, inviteStreamInfo.getCallId());
+                    WVPResult<StreamInfo> success = WVPResult.success(streamInfo);
+                    requestMessage.setData(success);
+                    playBackResult.setCode(0);
+                    playBackResult.setData(requestMessage);
+                    playBackResult.setMediaServerItem(inviteStreamInfo.getMediaServerItem());
+                    playBackResult.setResponse(inviteStreamInfo.getResponse());
+                    playBackCallback.call(playBackResult);
+                }, event -> {
+                    dynamicTask.stop(playBackTimeOutTaskKey);
+                    requestMessage.setData(WVPResult.fail(ErrorCode.ERROR100.getCode(), String.format("回放失败， 错误码： %s, %s", event.statusCode, event.msg)));
+                    playBackResult.setCode(-1);
+                    playBackResult.setData(requestMessage);
+                    playBackResult.setEvent(event);
+                    playBackCallback.call(playBackResult);
+                    streamSession.remove(device.getDeviceId(), channelId, ssrcInfo.getStream());
+                });
+        return result;
+    }
+    @Override
     public DeferredResult<String> playBack(MediaServerItem mediaServerItem, SSRCInfo ssrcInfo,
                                                            String deviceId, String channelId, String startTime,
                                                            String endTime, InviteStreamCallback infoCallBack,
@@ -487,8 +561,8 @@ public class PlayServiceImpl implements IPlayService {
         }
         MediaServerItem newMediaServerItem = getNewMediaServerItem(device);
         String streamId = deviceId+"_"+channelId+"_"+
-                LocalDateTimeUtil.parse(startTime).format(DatePattern.PURE_DATETIME_FORMATTER) +"-"+
-                LocalDateTimeUtil.parse(endTime).format(DatePattern.PURE_DATETIME_FORMATTER)+"_playback";
+                LocalDateTimeUtil.parse(startTime,NORM_DATETIME_FORMATTER).format(DatePattern.PURE_DATETIME_FORMATTER) +"-"+
+                LocalDateTimeUtil.parse(endTime,NORM_DATETIME_FORMATTER).format(DatePattern.PURE_DATETIME_FORMATTER)+"_playback";
         SSRCInfo ssrcInfo = mediaServerService.openRTPServer(newMediaServerItem, streamId, true, true);
 
         return download(newMediaServerItem, ssrcInfo, deviceId, channelId, startTime, endTime, downloadSpeed,infoCallBack, hookCallBack);

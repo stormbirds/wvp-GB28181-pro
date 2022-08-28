@@ -173,18 +173,7 @@ public class ApiStreamController {
                 logger.info("[请求截图]: " + fileName);
                 zlmresTfulUtils.getSnap(mediaInfo, streamUrl, 15, 1, path, fileName);
             });
-//            Class<?> aClass = responseEntity.getClass().getSuperclass();
-//            Field body = null;
-//            try {
-//                // 使用反射动态修改返回的body
-//                body = aClass.getDeclaredField("body");
-//                body.setAccessible(true);
-//                body.set(responseEntity, result);
-//            } catch (NoSuchFieldException e) {
-//                e.printStackTrace();
-//            } catch (IllegalAccessException e) {
-//                e.printStackTrace();
-//            }
+
         }, (eventResult) -> {
             JSONObject result = new JSONObject();
             result.put("error", "channel[ " + code + " ] " + eventResult.msg);

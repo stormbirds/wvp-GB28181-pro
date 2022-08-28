@@ -10,5 +10,5 @@ import org.springframework.web.context.request.async.DeferredResult;
  * @ Date 2022/8/17 0:39
  */
 public interface IPlaybackService {
-    DeferredResult<ResponseEntity<String>> download(String serial, String code, String starttime, String endtime, Integer download_speed);
+    DeferredResult<String> download(String serial, String code, String starttime, String endtime, Integer download_speed);
 }

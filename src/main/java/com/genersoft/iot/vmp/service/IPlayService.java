@@ -33,7 +33,9 @@ public interface IPlayService {
 
     DeferredResult<String> playBack(String deviceId, String channelId, String startTime, String endTime, InviteStreamCallback infoCallBack, PlayBackCallback hookCallBack);
     DeferredResult<String> playBack(MediaServerItem mediaServerItem, SSRCInfo ssrcInfo,String deviceId, String channelId, String startTime, String endTime, InviteStreamCallback infoCallBack, PlayBackCallback hookCallBack);
-
+    public DeferredResult<String> playBack(String deviceId, String channelId, String startTime,
+                                           String endTime,
+                                           PlayBackCallback playBackCallback);
     void zlmServerOffline(String mediaServerId);
 
     DeferredResult<String> download(String deviceId, String channelId, String startTime, String endTime, int downloadSpeed, InviteStreamCallback infoCallBack, PlayBackCallback hookCallBack);

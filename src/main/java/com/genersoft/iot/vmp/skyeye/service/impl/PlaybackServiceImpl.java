@@ -29,7 +29,7 @@ public class PlaybackServiceImpl implements IPlaybackService {
     private IPlayService playService;
 
     @Override
-    public DeferredResult<ResponseEntity<String>> download(String serial, String code, String starttime, String endtime, Integer download_speed) {
+    public DeferredResult<String> download(String serial, String code, String starttime, String endtime, Integer download_speed) {
         if(download_speed==null){
             download_speed = 4;
         }

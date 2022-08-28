@@ -121,7 +121,7 @@ private IPlayService playService;
     }
 
     @GetMapping("/start")
-    public DeferredResult<ResponseEntity<String>> start(@RequestParam String serial,
+    public DeferredResult<String> start(@RequestParam String serial,
                                           @RequestParam(required = false) Integer channel,
                                           @RequestParam(required = false) String code,
                                           @RequestParam(required = false) String starttime,
@@ -142,8 +142,8 @@ private IPlayService playService;
         if(download!=null && download){
             return playbackService.download(serial, code, starttime, endtime, download_speed);
         }
-        return playService.playBack(serial, code, starttime, endtime, null, wvpResult->{
-            String jsonStr = String.valueOf(wvpResult.getData().getData());
+        return playService.playBack(serial, code, starttime, endtime,  wvpResult->{
+            String jsonStr = JSON.toJSONString(((WVPResult<StreamInfo>)wvpResult.getData().getData()).getData());
             JSONObject streamInfo = JSON.parseObject(jsonStr,JSONObject.class);
             streamInfo.put("StreamID",streamInfo.get("stream"));
             streamInfo.put("DeviceID",streamInfo.get("deviceID"));
@@ -153,7 +153,7 @@ private IPlayService playService;
             streamInfo.put("WS_FLV",streamInfo.get("ws_flv"));
             streamInfo.put("RTMP",streamInfo.get("rtmp"));
             streamInfo.put("HLS",streamInfo.get("hls"));
-            wvpResult.getData().setData(streamInfo);
+            (wvpResult.getData()).setData(streamInfo);
             resultHolder.invokeResult(wvpResult.getData());
         });
     }
@@ -163,7 +163,8 @@ private IPlayService playService;
         log.info("手动停止回放推流");
 
         StreamInfo streamInfo = mediaService. getStreamInfoByAppAndStreamWithCheck("rtp",streamid,null,true);
-        cmder.streamByeCmd(streamInfo.getDeviceID(), streamInfo.getChannelId(), streamInfo.getStream(), null);
+        if(streamInfo!=null)
+            cmder.streamByeCmd(streamInfo.getDeviceID(), streamInfo.getChannelId(), streamInfo.getStream(), null);
         return "";
     }
 
