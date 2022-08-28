@@ -66,7 +66,7 @@ public class DeviceConfig {
 	@Parameter(name = "expiration", description = "到期时间")
 	@Parameter(name = "heartBeatInterval", description = "心跳间隔")
 	@Parameter(name = "heartBeatCount", description = "心跳计数")
-	public DeferredResult<ResponseEntity<String>> homePositionApi(@PathVariable String deviceId,
+	public DeferredResult<String> homePositionApi(@PathVariable String deviceId,
                                                                	String channelId,
                                                                 @RequestParam(required = false) String name,
 																@RequestParam(required = false) String expiration,
@@ -85,7 +85,7 @@ public class DeviceConfig {
 			msg.setData(String.format("设备配置操作失败，错误码： %s, %s", event.statusCode, event.msg));
 			resultHolder.invokeResult(msg);
 		});
-        DeferredResult<ResponseEntity<String>> result = new DeferredResult<ResponseEntity<String>>(3 * 1000L);
+		DeferredResult<String> result = new DeferredResult<String>(3 * 1000L);
 		result.onTimeout(() -> {
 			logger.warn(String.format("设备配置操作超时, 设备未返回应答指令"));
 			// 释放rtpserver
@@ -115,7 +115,7 @@ public class DeviceConfig {
 	@Parameter(name = "channelId", description = "通道国标编号", required = true)
 	@Parameter(name = "configType", description = "配置类型")
 	@GetMapping("/query/{deviceId}/{configType}")
-    public DeferredResult<ResponseEntity<String>> configDownloadApi(@PathVariable String deviceId, 
+    public DeferredResult<String> configDownloadApi(@PathVariable String deviceId,
                                                                 @PathVariable String configType,
                                                                 @RequestParam(required = false) String channelId) {
 		if (logger.isDebugEnabled()) {
@@ -131,7 +131,7 @@ public class DeviceConfig {
 			msg.setData(String.format("获取设备配置失败，错误码： %s, %s", event.statusCode, event.msg));
 			resultHolder.invokeResult(msg);
 		});
-        DeferredResult<ResponseEntity<String>> result = new DeferredResult<ResponseEntity<String >> (3 * 1000L);
+		DeferredResult<String> result = new DeferredResult<String > (3 * 1000L);
 		result.onTimeout(()->{
 			logger.warn(String.format("获取设备配置超时"));
 			// 释放rtpserver

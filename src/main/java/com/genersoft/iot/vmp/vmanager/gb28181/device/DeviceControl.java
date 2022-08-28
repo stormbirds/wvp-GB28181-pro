@@ -8,12 +8,14 @@
 package com.genersoft.iot.vmp.vmanager.gb28181.device;
 
 import com.alibaba.fastjson.JSONObject;
+import com.genersoft.iot.vmp.conf.exception.ControllerException;
 import com.genersoft.iot.vmp.gb28181.bean.Device;
 import com.genersoft.iot.vmp.gb28181.transmit.callback.DeferredResultHolder;
 import com.genersoft.iot.vmp.gb28181.transmit.callback.RequestMessage;
 import com.genersoft.iot.vmp.gb28181.transmit.cmd.impl.SIPCommander;
 import com.genersoft.iot.vmp.storager.IVideoManagerStorage;
 
+import com.genersoft.iot.vmp.vmanager.bean.ErrorCode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -54,7 +56,7 @@ public class DeviceControl {
 	@Operation(summary = "远程启动控制命令")
 	@Parameter(name = "deviceId", description = "设备国标编号", required = true)
     @GetMapping("/teleboot/{deviceId}")
-    public ResponseEntity<String> teleBootApi(@PathVariable String deviceId) {
+    public String teleBootApi(@PathVariable String deviceId) {
         if (logger.isDebugEnabled()) {
             logger.debug("设备远程启动API调用");
         }
@@ -64,10 +66,10 @@ public class DeviceControl {
             JSONObject json = new JSONObject();
             json.put("DeviceID", deviceId);
             json.put("Result", "OK");
-            return new ResponseEntity<>(json.toJSONString(), HttpStatus.OK);
+            return json.toJSONString();
         } else {
             logger.warn("设备远程启动API调用失败！");
-            return new ResponseEntity<String>("设备远程启动API调用失败！", HttpStatus.INTERNAL_SERVER_ERROR);
+			throw new ControllerException(ErrorCode.ERROR100.getCode(), "设备远程启动API调用失败！");
         }
     }
 

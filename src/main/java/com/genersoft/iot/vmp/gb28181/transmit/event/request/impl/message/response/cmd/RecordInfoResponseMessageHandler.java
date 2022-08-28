@@ -178,17 +178,13 @@ public class RecordInfoResponseMessageHandler extends SIPRequestProcessorParent 
 
     public void releaseRequest(String deviceId, String sn){
         String key = DeferredResultHolder.CALLBACK_CMD_RECORDINFO + deviceId + sn;
-        WVPResult<RecordInfo> wvpResult = new WVPResult<>();
-        wvpResult.setCode(0);
-        wvpResult.setMsg("success");
         // 对数据进行排序
         Collections.sort(recordDataCatch.getRecordInfo(deviceId, sn).getRecordList());
-        wvpResult.setData(recordDataCatch.getRecordInfo(deviceId, sn));
-        JSONObject tmpJson = JSON.parseObject(JSON.toJSONString(wvpResult));
-        tmpJson.put("DeviceID",wvpResult.getData().getDeviceId());
-        tmpJson.put("Name",wvpResult.getData().getName());
-        tmpJson.put("SumNum",wvpResult.getData().getSumNum());
-        tmpJson.put("RecordList",wvpResult.getData().getRecordList().stream().map(
+        JSONObject tmpJson = JSON.parseObject(JSON.toJSONString(recordDataCatch.getRecordInfo(deviceId, sn)));
+        tmpJson.put("DeviceID",recordDataCatch.getRecordInfo(deviceId, sn).getDeviceId());
+        tmpJson.put("Name",recordDataCatch.getRecordInfo(deviceId, sn).getName());
+        tmpJson.put("SumNum",recordDataCatch.getRecordInfo(deviceId, sn).getSumNum());
+        tmpJson.put("RecordList",recordDataCatch.getRecordInfo(deviceId, sn).getRecordList().stream().map(
                 recordItem ->
                 {
                     DeviceRecord.DeviceRecordBuilder builder = DeviceRecord.builder();

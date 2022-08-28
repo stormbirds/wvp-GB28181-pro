@@ -1,6 +1,7 @@
 package com.genersoft.iot.vmp.vmanager.gb28181.media;
 
 import com.genersoft.iot.vmp.common.StreamInfo;
+import com.genersoft.iot.vmp.conf.exception.ControllerException;
 import com.genersoft.iot.vmp.conf.security.SecurityUtils;
 import com.genersoft.iot.vmp.conf.security.dto.LoginUser;
 import com.genersoft.iot.vmp.media.zlm.dto.OnPublishHookParam;
@@ -11,6 +12,7 @@ import com.genersoft.iot.vmp.service.IStreamPushService;
 import com.genersoft.iot.vmp.service.IMediaService;
 import com.genersoft.iot.vmp.storager.IRedisCatchStorage;
 import com.genersoft.iot.vmp.storager.IVideoManagerStorage;
+import com.genersoft.iot.vmp.vmanager.bean.ErrorCode;
 import com.genersoft.iot.vmp.vmanager.bean.WVPResult;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -55,7 +57,7 @@ public class MediaController {
     @Parameter(name = "useSourceIpAsStreamIp", description = "是否使用请求IP作为返回的地址IP")
     @GetMapping(value = "/stream_info_by_app_and_stream")
     @ResponseBody
-    public WVPResult<StreamInfo> getStreamInfoByAppAndStream(HttpServletRequest request, @RequestParam String app,
+    public StreamInfo getStreamInfoByAppAndStream(HttpServletRequest request, @RequestParam String app,
                                                              @RequestParam String stream,
                                                              @RequestParam(required = false) String mediaServerId,
                                                              @RequestParam(required = false) String callId,
@@ -67,10 +69,7 @@ public class MediaController {
             if (streamAuthorityInfo.getCallId().equals(callId)) {
                 authority = true;
             }else {
-                WVPResult<StreamInfo> result = new WVPResult<>();
-                result.setCode(401);
-                result.setMsg("fail");
-                return result;
+                throw new ControllerException(ErrorCode.ERROR400);
             }
         }else {
             // 是否登陆用户, 登陆用户返回完整信息
@@ -93,9 +92,7 @@ public class MediaController {
 
         WVPResult<StreamInfo> result = new WVPResult<>();
         if (streamInfo != null){
-            result.setCode(0);
-            result.setMsg("scccess");
-            result.setData(streamInfo);
+            return streamInfo;
         }else {
             //获取流失败，重启拉流后重试一次
             streamProxyService.stop(app,stream);
@@ -114,14 +111,10 @@ public class MediaController {
                 streamInfo = mediaService.getStreamInfoByAppAndStreamWithCheck(app, stream, mediaServerId, authority);
             }
             if (streamInfo != null){
-                result.setCode(0);
-                result.setMsg("scccess");
-                result.setData(streamInfo);
+                return streamInfo;
             }else {
-                result.setCode(-1);
-                result.setMsg("fail");
+                throw new ControllerException(ErrorCode.ERROR100);
             }
         }
-        return result;
     }
 }

@@ -23,11 +23,12 @@ spring:
     datasource:
         # 使用mysql 打开23-28行注释， 删除29-36行
          name: wvp
-         url: jdbc:mysql://127.0.0.1:3306/wvp?useUnicode=true&serverTimezone=Asia/Shanghai&characterEncoding=UTF8&rewriteBatchedStatements=true&allowMultiQueries=true&useSSL=false&allowMultiQueries=true
+         url: jdbc:p6spy:mysql://127.0.0.1:3306/wvp?useUnicode=true&serverTimezone=Asia/Shanghai&characterEncoding=UTF8&rewriteBatchedStatements=true&allowMultiQueries=true&useSSL=false&allowMultiQueries=true
          username: root
          password: root123456
          type: com.alibaba.druid.pool.DruidDataSource
-         driver-class-name: com.mysql.cj.jdbc.Driver
+#         driver-class-name: com.mysql.cj.jdbc.Driver
+         driver-class-name: com.p6spy.engine.spy.P6SpyDriver
          druid:
              initialSize: 10                       # 连接池初始化连接数
              maxActive: 200                        # 连接池最大连接数
@@ -61,9 +62,9 @@ sip:
     # 后两位为行业编码，定义参照附录D.3
     # 3701020049标识山东济南历下区 信息行业接入
     # [可选]
-    domain: ${WVP_DOMAIN:6101000000}
+    domain: ${WVP_DOMAIN:3402000000}
     # [可选]
-    id: ${WVP_ID:61010000002000000001}
+    id: ${WVP_ID:34020000002000000001}
     # [可选] 默认设备认证密码，后续扩展使用设备单独密码, 移除密码将不进行校验
     password: ${WVP_PWD:12345678}
     # 是否存储alarm信息
@@ -96,6 +97,9 @@ media:
 # [可选] 日志配置, 一般不需要改
 logging:
     config: classpath:logback-spring-local.xml
+#    level:
+#        com.genersoft.iot.vmp.storager.dao: debug
+#        com.genersoft.iot.vmp.skyeye.mapper: debug
 
 # [根据业务需求配置]
 user-settings:
@@ -110,6 +114,8 @@ user-settings:
     record-path: E:/dev/ZLMediaKit/release/windows/Debug/www/record/
     #云端录像路径
     cloud-record-path: E:/video/
+    # 是否将日志存储进数据库
+    logInDatebase: false
 #通道封面截图文件路径
 snap:
     path: E:/dev/ZLMediaKit/release/windows/Debug/www/snap

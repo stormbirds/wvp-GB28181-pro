@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.genersoft.iot.vmp.common.StreamInfo;
 import com.genersoft.iot.vmp.conf.UserSetting;
+import com.genersoft.iot.vmp.conf.exception.ControllerException;
 import com.genersoft.iot.vmp.gb28181.bean.GbStream;
 import com.genersoft.iot.vmp.gb28181.bean.ParentPlatform;
 import com.genersoft.iot.vmp.gb28181.bean.TreeType;
@@ -24,6 +25,7 @@ import com.genersoft.iot.vmp.storager.dao.PlatformGbStreamMapper;
 import com.genersoft.iot.vmp.storager.dao.StreamProxyMapper;
 import com.genersoft.iot.vmp.service.IStreamProxyService;
 import com.genersoft.iot.vmp.utils.DateUtil;
+import com.genersoft.iot.vmp.vmanager.bean.ErrorCode;
 import com.genersoft.iot.vmp.vmanager.bean.WVPResult;
 import com.github.pagehelper.PageInfo;
 import org.slf4j.Logger;
@@ -94,10 +96,8 @@ public class StreamProxyServiceImpl implements IStreamProxyService {
 
 
     @Override
-    public WVPResult<StreamInfo> save(StreamProxyItem param) {
+    public StreamInfo save(StreamProxyItem param) {
         MediaServerItem mediaInfo;
-        WVPResult<StreamInfo> wvpResult = new WVPResult<>();
-        wvpResult.setCode(0);
         if (param.getMediaServerId() == null || "auto".equals(param.getMediaServerId())){
             mediaInfo = mediaServerService.getMediaServerForMinimumLoad();
         }else {
@@ -105,14 +105,12 @@ public class StreamProxyServiceImpl implements IStreamProxyService {
         }
         if (mediaInfo == null) {
             logger.warn("保存代理未找到在线的ZLM...");
-            wvpResult.setMsg("保存失败");
-            return wvpResult;
+            throw new ControllerException(ErrorCode.ERROR100.getCode(), "保存代理未找到在线的ZLM");
         }
-
         String dstUrl = String.format("rtmp://%s:%s/%s/%s", "127.0.0.1", mediaInfo.getRtmpPort(), param.getApp(),
                 param.getStream() );
         param.setDst_url(dstUrl);
-        StringBuffer result = new StringBuffer();
+        StringBuffer resultMsg = new StringBuffer();
         boolean streamLive = false;
         param.setMediaServerId(mediaInfo.getId());
         boolean saveResult;
@@ -122,43 +120,45 @@ public class StreamProxyServiceImpl implements IStreamProxyService {
         }else { // 新增
             saveResult = addStreamProxy(param);
         }
-        if (saveResult) {
-            result.append("保存成功");
-            if (param.isEnable()) {
-                JSONObject jsonObject = addStreamProxyToZlm(param);
-                if (jsonObject == null || jsonObject.getInteger("code") != 0) {
-                    streamLive = false;
-                    result.append(", 但是启用失败，请检查流地址是否可用");
-                    param.setEnable(false);
-                    // 直接移除
-                    if (param.isEnable_remove_none_reader()) {
-                        del(param.getApp(), param.getStream());
-                    }else {
-                        updateStreamProxy(param);
-                    }
+        if (!saveResult) {
+            throw new ControllerException(ErrorCode.ERROR100.getCode(),"保存失败");
+        }
+        StreamInfo resultForStreamInfo = null;
+        resultMsg.append("保存成功");
+        if (param.isEnable()) {
+            JSONObject jsonObject = addStreamProxyToZlm(param);
+            if (jsonObject == null || jsonObject.getInteger("code") != 0) {
+                streamLive = false;
+                resultMsg.append(", 但是启用失败，请检查流地址是否可用");
+                param.setEnable(false);
+                // 直接移除
+                if (param.isEnable_remove_none_reader()) {
+                    del(param.getApp(), param.getStream());
 
                 }else {
-                    streamLive = true;
-                    StreamInfo streamInfo = mediaService.getStreamInfoByAppAndStream(
-                            mediaInfo, param.getApp(), param.getStream(), null, null);
-                    wvpResult.setData(streamInfo);
-
+                    updateStreamProxy(param);
                 }
             }
         }else {
-            result.append("保存失败");
+            streamLive = true;
+            resultForStreamInfo = mediaService.getStreamInfoByAppAndStream(
+                    mediaInfo, param.getApp(), param.getStream(), null, null);
         }
         if ( !ObjectUtils.isEmpty(param.getPlatformGbId()) && streamLive) {
             List<GbStream> gbStreams = new ArrayList<>();
             gbStreams.add(param);
             if (gbStreamService.addPlatformInfo(gbStreams, param.getPlatformGbId(), param.getCatalogId())){
-                result.append(",  关联国标平台[ " + param.getPlatformGbId() + " ]成功");
+                return resultForStreamInfo;
             }else {
-                result.append(",  关联国标平台[ " + param.getPlatformGbId() + " ]失败");
+                resultMsg.append(",  关联国标平台[ " + param.getPlatformGbId() + " ]失败");
+                throw new ControllerException(ErrorCode.ERROR100.getCode(), resultMsg.toString());
+            }
+        }else {
+            if (!streamLive) {
+                throw new ControllerException(ErrorCode.ERROR100.getCode(), resultMsg.toString());
             }
         }
-        wvpResult.setMsg(result.toString());
-        return wvpResult;
+        return resultForStreamInfo;
     }
 
     /**

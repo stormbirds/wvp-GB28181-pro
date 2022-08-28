@@ -8,7 +8,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.genersoft.iot.vmp.conf.exception.ControllerException;
 import com.genersoft.iot.vmp.media.zlm.ZLMRunner;
+import com.genersoft.iot.vmp.vmanager.bean.ErrorCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -288,8 +290,7 @@ public class MediaServerServiceImpl implements IMediaServerService {
     }
 
     @Override
-    public WVPResult<String> add(MediaServerItem mediaServerItem) {
-        WVPResult<String> result = new WVPResult<>();
+    public void add(MediaServerItem mediaServerItem) {
         mediaServerItem.setCreateTime(DateUtil.getNow());
         mediaServerItem.setUpdateTime(DateUtil.getNow());
         mediaServerItem.setHookAliveInterval(120);
@@ -299,26 +300,19 @@ public class MediaServerServiceImpl implements IMediaServerService {
             if (data != null && data.size() > 0) {
                 ZLMServerConfig zlmServerConfig= JSON.parseObject(JSON.toJSONString(data.get(0)), ZLMServerConfig.class);
                 if (mediaServerMapper.queryOne(zlmServerConfig.getGeneralMediaServerId()) != null) {
-                    result.setCode(-1);
-                    result.setMsg("保存失败，媒体服务ID [ " + zlmServerConfig.getGeneralMediaServerId() + " ] 已存在，请修改媒体服务器配置");
-                    return result;
+                    throw new ControllerException(ErrorCode.ERROR100.getCode(),"保存失败，媒体服务ID [ " + zlmServerConfig.getGeneralMediaServerId() + " ] 已存在，请修改媒体服务器配置");
                 }
                 mediaServerItem.setId(zlmServerConfig.getGeneralMediaServerId());
                 zlmServerConfig.setIp(mediaServerItem.getIp());
                 mediaServerMapper.add(mediaServerItem);
                 zlmServerOnline(zlmServerConfig);
-                result.setCode(0);
-                result.setMsg("success");
             }else {
-                result.setCode(-1);
-                result.setMsg("连接失败");
+                throw new ControllerException(ErrorCode.ERROR100.getCode(),"连接失败");
             }
 
         }else {
-            result.setCode(-1);
-            result.setMsg("连接失败");
+            throw new ControllerException(ErrorCode.ERROR100.getCode(),"连接失败");
         }
-       return result;
     }
 
     @Override
@@ -548,12 +542,9 @@ public class MediaServerServiceImpl implements IMediaServerService {
 
 
     @Override
-    public WVPResult<MediaServerItem> checkMediaServer(String ip, int port, String secret) {
-        WVPResult<MediaServerItem> result = new WVPResult<>();
+    public MediaServerItem checkMediaServer(String ip, int port, String secret) {
         if (mediaServerMapper.queryOneByHostAndPort(ip, port) != null) {
-            result.setCode(-1);
-            result.setMsg("此连接已存在");
-            return result;
+            throw new ControllerException(ErrorCode.ERROR100.getCode(), "此连接已存在");
         }
         MediaServerItem mediaServerItem = new MediaServerItem();
         mediaServerItem.setIp(ip);
@@ -561,21 +552,15 @@ public class MediaServerServiceImpl implements IMediaServerService {
         mediaServerItem.setSecret(secret);
         JSONObject responseJSON = zlmresTfulUtils.getMediaServerConfig(mediaServerItem);
         if (responseJSON == null) {
-            result.setCode(-1);
-            result.setMsg("连接失败");
-            return result;
+            throw new ControllerException(ErrorCode.ERROR100.getCode(), "连接失败");
         }
         JSONArray data = responseJSON.getJSONArray("data");
         ZLMServerConfig zlmServerConfig = JSON.parseObject(JSON.toJSONString(data.get(0)), ZLMServerConfig.class);
         if (zlmServerConfig == null) {
-            result.setCode(-1);
-            result.setMsg("读取配置失败");
-            return result;
+            throw new ControllerException(ErrorCode.ERROR100.getCode(), "读取配置失败");
         }
         if (mediaServerMapper.queryOne(zlmServerConfig.getGeneralMediaServerId()) != null) {
-            result.setCode(-1);
-            result.setMsg("媒体服务ID [" + zlmServerConfig.getGeneralMediaServerId() + " ] 已存在，请修改媒体服务器配置");
-            return result;
+            throw new ControllerException(ErrorCode.ERROR100.getCode(), "媒体服务ID [" + zlmServerConfig.getGeneralMediaServerId() + " ] 已存在，请修改媒体服务器配置");
         }
         mediaServerItem.setHttpSSlPort(zlmServerConfig.getHttpPort());
         mediaServerItem.setRtmpPort(zlmServerConfig.getRtmpPort());
@@ -587,10 +572,7 @@ public class MediaServerServiceImpl implements IMediaServerService {
         mediaServerItem.setHookIp(sipConfig.getIp());
         mediaServerItem.setSdpIp(ip);
         mediaServerItem.setStreamNoneReaderDelayMS(zlmServerConfig.getGeneralStreamNoneReaderDelayMS());
-        result.setCode(0);
-        result.setMsg("成功");
-        result.setData(mediaServerItem);
-        return result;
+        return mediaServerItem;
     }
 
     @Override

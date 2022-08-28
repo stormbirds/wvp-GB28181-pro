@@ -287,14 +287,16 @@ public class VideoManagerStorageImpl implements IVideoManagerStorage {
 
 	@Override
 	public List<Device> queryVideoDeviceList(int page, int count, String q, Boolean online, String sort, String order) {
-		PageHelper.startPage(page, count);
-		List<Device> all = deviceMapper.getDevices();
 		QueryWrapper<Device> queryWrapper = new QueryWrapper<>();
 		queryWrapper
-				.like(StringUtils.hasText(q), "id", q)
+				.like(StringUtils.hasText(q), "deviceId", q)
 				.or()
 				.like(StringUtils.hasText(q), "manufacturer", q)
-				.eq(online != null, "online", online);
+				.or()
+				.like(StringUtils.hasText(q), "name", q)
+				.or()
+				.like(StringUtils.hasText(q), "ip", q);
+		queryWrapper.eq(online != null, "online", online);
 		if (StringUtils.hasText(sort) && StringUtils.hasText(order))
 			queryWrapper.orderBy(StringUtils.hasText(sort) && StringUtils.hasText(order), order.startsWith("asc"), sort);
 		return deviceMapper.selectPage(

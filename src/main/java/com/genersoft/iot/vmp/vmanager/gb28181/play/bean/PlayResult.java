@@ -1,21 +1,21 @@
 package com.genersoft.iot.vmp.vmanager.gb28181.play.bean;
 
 import com.genersoft.iot.vmp.gb28181.bean.Device;
-import org.springframework.http.ResponseEntity;
+import com.genersoft.iot.vmp.vmanager.bean.WVPResult;
 import org.springframework.web.context.request.async.DeferredResult;
 
 public class PlayResult {
 
-    private DeferredResult<ResponseEntity<String>> result;
+    private DeferredResult<WVPResult<String>> result;
     private String uuid;
 
     private Device device;
 
-    public DeferredResult<ResponseEntity<String>> getResult() {
+    public DeferredResult<WVPResult<String>> getResult() {
         return result;
     }
 
-    public void setResult(DeferredResult<ResponseEntity<String>> result) {
+    public void setResult(DeferredResult<WVPResult<String>> result) {
         this.result = result;
     }
 

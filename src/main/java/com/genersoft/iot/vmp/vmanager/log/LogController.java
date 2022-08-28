@@ -1,9 +1,11 @@
 package com.genersoft.iot.vmp.vmanager.log;
 
 import com.genersoft.iot.vmp.conf.UserSetting;
+import com.genersoft.iot.vmp.conf.exception.ControllerException;
 import com.genersoft.iot.vmp.service.ILogService;
 import com.genersoft.iot.vmp.storager.dao.dto.LogDto;
 import com.genersoft.iot.vmp.utils.DateUtil;
+import com.genersoft.iot.vmp.vmanager.bean.ErrorCode;
 import com.genersoft.iot.vmp.vmanager.bean.WVPResult;
 import com.github.pagehelper.PageInfo;
 import io.swagger.v3.oas.annotations.Operation;
@@ -53,7 +55,7 @@ public class LogController {
     @Parameter(name = "startTime", description = "开始时间", required = true)
     @Parameter(name = "endTime", description = "结束时间", required = true)
     @GetMapping("/all")
-    public ResponseEntity<PageInfo<LogDto>> getAll(
+    public PageInfo<LogDto> getAll(
             @RequestParam int page,
             @RequestParam int count,
             @RequestParam(required = false)  String query,
@@ -75,11 +77,9 @@ public class LogController {
         }
 
         if (!DateUtil.verification(startTime, DateUtil.formatter) || !DateUtil.verification(endTime, DateUtil.formatter)){
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+            throw new ControllerException(ErrorCode.ERROR400);
         }
-
-        PageInfo<LogDto> allLog = logService.getAll(page, count, query, type, startTime, endTime);
-        return new ResponseEntity<>(allLog, HttpStatus.OK);
+        return logService.getAll(page, count, query, type, startTime, endTime);
     }
 
     /**
@@ -88,14 +88,8 @@ public class LogController {
      */
     @Operation(summary = "清空日志")
     @DeleteMapping("/clear")
-    public ResponseEntity<WVPResult<String>> clear() {
-
-        int count = logService.clear();
-        WVPResult wvpResult = new WVPResult();
-        wvpResult.setCode(0);
-        wvpResult.setMsg("success");
-        wvpResult.setData(count);
-        return new ResponseEntity<WVPResult<String>>(wvpResult, HttpStatus.OK);
+    public void clear() {
+        logService.clear();
     }
 
 }
