@@ -1,6 +1,11 @@
 package com.genersoft.iot.vmp.skyeye.service;
 
+import com.genersoft.iot.vmp.common.StreamInfo;
 import com.genersoft.iot.vmp.skyeye.domain.SkyEyeStreamInfo;
+import com.genersoft.iot.vmp.skyeye.vo.StreamInfoVo;
+import com.genersoft.iot.vmp.vmanager.gb28181.play.bean.PlayResult;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.context.request.async.DeferredResult;
 import reactor.core.publisher.Mono;
 
 /**
@@ -17,6 +22,9 @@ public interface IStreamService {
      * @return 平台流信息
      */
     Mono<SkyEyeStreamInfo> getStreamInfoByStreamName(String streamName);
+
+    PlayResult play(String serial , Integer channel , String code, String sms_id, String sms_group_id, String cdn, String audio,
+                    String transport , String transportmode, Boolean checkchannelstatus, Long timeout);
 
     /**
      * 获取平台流信息
