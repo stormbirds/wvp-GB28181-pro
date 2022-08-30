@@ -1,4 +1,4 @@
-package com.genersoft.iot.vmp.conf;
+package com.genersoft.iot.vmp.conf.redis;
 
 import com.genersoft.iot.vmp.conf.UserSetting;
 import org.springframework.data.redis.connection.RedisConnection;

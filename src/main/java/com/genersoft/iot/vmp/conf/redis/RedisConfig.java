@@ -1,4 +1,4 @@
-package com.genersoft.iot.vmp.conf;
+package com.genersoft.iot.vmp.conf.redis;
 
 import com.alibaba.fastjson.parser.ParserConfig;
 import com.genersoft.iot.vmp.common.VideoManagerConstants;

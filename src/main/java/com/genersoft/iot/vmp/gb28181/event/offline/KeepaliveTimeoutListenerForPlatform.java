@@ -1,10 +1,9 @@
 package com.genersoft.iot.vmp.gb28181.event.offline;
 
-import com.genersoft.iot.vmp.common.VideoManagerConstants;
-import com.genersoft.iot.vmp.conf.RedisKeyExpirationEventMessageListener;
 import com.genersoft.iot.vmp.conf.UserSetting;
+import com.genersoft.iot.vmp.conf.redis.RedisKeyExpirationEventMessageListener;
+import com.genersoft.iot.vmp.gb28181.bean.Device;
 import com.genersoft.iot.vmp.gb28181.bean.ParentPlatform;
-import com.genersoft.iot.vmp.gb28181.event.EventPublisher;
 import com.genersoft.iot.vmp.gb28181.event.SipSubscribe;
 import com.genersoft.iot.vmp.storager.IVideoManagerStorage;
 import org.slf4j.Logger;
@@ -14,7 +13,10 @@ import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.stereotype.Component;
 
-/**    
+import com.genersoft.iot.vmp.common.VideoManagerConstants;
+import com.genersoft.iot.vmp.gb28181.event.EventPublisher;
+
+/**
  * 设备心跳超时监听,借助redis过期特性，进行监听，监听到说明设备心跳超时，发送离线事件
  * @author swwheihei
  */
