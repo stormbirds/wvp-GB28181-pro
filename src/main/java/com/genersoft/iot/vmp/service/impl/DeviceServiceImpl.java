@@ -8,7 +8,6 @@ import com.genersoft.iot.vmp.gb28181.session.VideoStreamSessionManager;
 import com.genersoft.iot.vmp.gb28181.task.ISubscribeTask;
 import com.genersoft.iot.vmp.gb28181.transmit.cmd.ISIPCommander;
 import com.genersoft.iot.vmp.gb28181.transmit.event.request.impl.message.response.cmd.CatalogResponseMessageHandler;
-import com.genersoft.iot.vmp.gb28181.utils.Coordtransform;
 import com.genersoft.iot.vmp.service.IDeviceChannelService;
 import com.genersoft.iot.vmp.service.IDeviceService;
 import com.genersoft.iot.vmp.gb28181.task.impl.CatalogSubscribeTask;
@@ -27,10 +26,8 @@ import com.genersoft.iot.vmp.vmanager.bean.BaseTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.support.incrementer.AbstractIdentityColumnMaxValueIncrementer;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
-import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import java.time.Instant;
@@ -111,11 +108,10 @@ public class DeviceServiceImpl extends ServiceImpl<DeviceMapper, Device> impleme
             statusLogsService.deviceOnRegister(device.getDeviceId());
 
             commander.deviceInfoQuery(device);
-            sync(device);
         }else {
             if(device.getOnline() == 0){
                 device.setOnline(1);
-                device.setCreateTime(now);
+                device.setUpdateTime(now);
                 logger.info("[设备上线,离线状态下重新注册]: {}，查询设备信息以及通道信息", device.getDeviceId());
                 deviceMapper.update(device);
                 redisCatchStorage.updateDevice(device);
@@ -124,7 +120,6 @@ public class DeviceServiceImpl extends ServiceImpl<DeviceMapper, Device> impleme
                 statusLogsService.deviceHeartbeatOnline(device.getDeviceId());
 
                 commander.deviceInfoQuery(device);
-                sync(device);
                 // TODO 如果设备下的通道级联到了其他平台，那么需要发送事件或者notify给上级平台
             }else {
                 deviceMapper.update(device);
@@ -132,6 +127,7 @@ public class DeviceServiceImpl extends ServiceImpl<DeviceMapper, Device> impleme
             }
 
         }
+        sync(device);
 
         // 上线添加订阅
         if (device.getSubscribeCycleForCatalog() > 0) {
@@ -302,7 +298,7 @@ public class DeviceServiceImpl extends ServiceImpl<DeviceMapper, Device> impleme
     }
 
     @Override
-    public Device getDeviceByHostAndPort(String host, int port) {
+    public List<Device> getDeviceByHostAndPort(String host, int port) {
         return deviceMapper.getDeviceByHostAndPort(host, port);
     }
 
@@ -491,6 +487,7 @@ public class DeviceServiceImpl extends ServiceImpl<DeviceMapper, Device> impleme
         try {
             deviceChannelService.remove(Wrappers.<DeviceChannel>lambdaQuery().eq(DeviceChannel::getDeviceId, serial));
             baseMapper.del(serial);
+            redisMsgPublisher.sendMsg(RedisTopicEnums.TOPIC_DEVICE, serial.concat(" ").concat("DEL"));
             return true;
         }catch (Exception e){
             log.error("删除设备出错",e);

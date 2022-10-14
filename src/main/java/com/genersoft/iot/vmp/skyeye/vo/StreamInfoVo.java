@@ -9,6 +9,7 @@ import com.genersoft.iot.vmp.utils.DateUtil;
 import lombok.*;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * <p>
@@ -157,7 +158,8 @@ public class StreamInfoVo implements Serializable {
 
         setChannelID(streamInfo.getChannelId());
         setDeviceID(streamInfo.getDeviceID());
-        setDuration(DateUtil.betweenFromNow(streamInfo.getStartTime()).getSeconds() );
+
+        setDuration(DateUtil.betweenFromNow(streamInfo.getStartTime()==null?LocalDateTimeUtil.formatNormal(LocalDateTime.now()):streamInfo.getStartTime()).getSeconds() );
         setFlv(streamInfo.getFlv());
         setHls(streamInfo.getHls());
         setRtmp(streamInfo.getRtmp());

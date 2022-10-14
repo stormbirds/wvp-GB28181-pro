@@ -114,7 +114,7 @@ public interface IDeviceService extends IService<Device> {
      * @param port 端口
      * @return 设备信息
      */
-    Device getDeviceByHostAndPort(String host, int port);
+    List<Device> getDeviceByHostAndPort(String host, int port);
 
     /**
      * 更新设备

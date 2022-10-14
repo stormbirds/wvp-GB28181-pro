@@ -184,42 +184,47 @@ public class StreamServiceImpl implements IStreamService {
             JSONObject rtpInfo = zlmresTfulUtils.getRtpInfo(mediaInfo, streamId);
             if(rtpInfo.getInteger("code") == 0){
                 if (rtpInfo.getBoolean("exist")) {
+                    StreamInfoVo streamInfoVo = new StreamInfoVo(streamInfo);
+                    streamInfoVo.setChannelName(deviceChannel.getName());
+                    streamInfoVo.setSnapURL(String.format("http://%s:%s/snap/%s.jpg", sipIp, serverPort, streamInfo.getStream()));
+                    streamInfoVo.setTransport(device.getTransport());
+                    streamInfoVo.setChannelPTZType(0);
 
-                    JSONObject jsonObject = new JSONObject();
-                    jsonObject.put("StreamID", streamInfo.getStream());
-                    jsonObject.put("DeviceID", device.getDeviceId());
-                    jsonObject.put("ChannelID", channel_id);
-                    jsonObject.put("ChannelName", deviceChannel.getName());
-                    jsonObject.put("ChannelCustomName", "");
-                    jsonObject.put("FLV", streamInfo.getFlv());
-                    jsonObject.put("WS_FLV", streamInfo.getWs_flv());
-                    jsonObject.put("RTMP", streamInfo.getRtmp());
-                    jsonObject.put("HLS", streamInfo.getHls());
-                    jsonObject.put("RTSP", streamInfo.getRtsp());
-                    jsonObject.put("WEBRTC", streamInfo.getRtc());
-                    jsonObject.put("CDN", "");
-                    jsonObject.put("SnapURL", String.format("http://%s:%s/snap/%s.jpg", sipIp, serverPort, streamInfo.getStream()));
-                    jsonObject.put("Transport", device.getTransport());
-                    jsonObject.put("StartAt", "");
-                    jsonObject.put("RecordStartAt", streamInfo.getRecordStartAt());
-                    jsonObject.put("SMSID",streamInfo.getMediaServerId());
-                    jsonObject.put("Duration", "");
-                    jsonObject.put("SourceVideoCodecName", "");
-                    jsonObject.put("SourceVideoWidth", "");
-                    jsonObject.put("SourceVideoHeight", "");
-                    jsonObject.put("SourceVideoFrameRate", "");
-                    jsonObject.put("SourceAudioCodecName", "");
-                    jsonObject.put("SourceAudioSampleRate", "");
-                    jsonObject.put("AudioEnable", "");
-                    jsonObject.put("Ondemand", "");
-                    jsonObject.put("InBytes", "");
-                    jsonObject.put("InBitRate", "");
-                    jsonObject.put("OutBytes", "");
-                    jsonObject.put("NumOutputs", "");
-                    jsonObject.put("CascadeSize", "");
-                    jsonObject.put("RelaySize", "");
-                    jsonObject.put("ChannelPTZType", "0");
-                    msg.setData(jsonObject);
+//                    JSONObject jsonObject = new JSONObject();
+//                    jsonObject.put("StreamID", streamInfo.getStream());
+//                    jsonObject.put("DeviceID", device.getDeviceId());
+//                    jsonObject.put("ChannelID", channel_id);
+//                    jsonObject.put("ChannelName", deviceChannel.getName());
+//                    jsonObject.put("ChannelCustomName", "");
+//                    jsonObject.put("FLV", streamInfo.getFlv());
+//                    jsonObject.put("WS_FLV", streamInfo.getWs_flv());
+//                    jsonObject.put("RTMP", streamInfo.getRtmp());
+//                    jsonObject.put("HLS", streamInfo.getHls());
+//                    jsonObject.put("RTSP", streamInfo.getRtsp());
+//                    jsonObject.put("WEBRTC", streamInfo.getRtc());
+//                    jsonObject.put("CDN", "");
+//                    jsonObject.put("SnapURL", String.format("http://%s:%s/snap/%s.jpg", sipIp, serverPort, streamInfo.getStream()));
+//                    jsonObject.put("Transport", device.getTransport());
+//                    jsonObject.put("StartAt", "");
+//                    jsonObject.put("RecordStartAt", streamInfo.getRecordStartAt());
+//                    jsonObject.put("SMSID",streamInfo.getMediaServerId());
+//                    jsonObject.put("Duration", "");
+//                    jsonObject.put("SourceVideoCodecName", "");
+//                    jsonObject.put("SourceVideoWidth", "");
+//                    jsonObject.put("SourceVideoHeight", "");
+//                    jsonObject.put("SourceVideoFrameRate", "");
+//                    jsonObject.put("SourceAudioCodecName", "");
+//                    jsonObject.put("SourceAudioSampleRate", "");
+//                    jsonObject.put("AudioEnable", "");
+//                    jsonObject.put("Ondemand", "");
+//                    jsonObject.put("InBytes", "");
+//                    jsonObject.put("InBitRate", "");
+//                    jsonObject.put("OutBytes", "");
+//                    jsonObject.put("NumOutputs", "");
+//                    jsonObject.put("CascadeSize", "");
+//                    jsonObject.put("RelaySize", "");
+//                    jsonObject.put("ChannelPTZType", "0");
+                    msg.setData(streamInfoVo);
 
                     resultHolder.invokeAllResult(msg);
 //                    if (hookEvent != null) {
@@ -254,7 +259,9 @@ public class StreamServiceImpl implements IStreamService {
                 // sip error错误
                 WVPResult wvpResult = new WVPResult();
                 wvpResult.setCode(ErrorCode.ERROR100.getCode());
-                wvpResult.setMsg(String.format("点播失败， 错误码： %s, %s", event.statusCode, event.msg));
+//                wvpResult.setMsg(String.format("点播失败， 错误码： %s, %s", event.statusCode, event.msg));
+                wvpResult.setMsg("点播失败");
+
                 msg.setData(wvpResult);
                 resultHolder.invokeAllResult(msg);
 //                if (errorEvent != null) {
@@ -432,7 +439,13 @@ public class StreamServiceImpl implements IStreamService {
             jsonObject.put("CascadeSize", "");
             jsonObject.put("RelaySize", "");
             jsonObject.put("ChannelPTZType", "0");
-            msg.setData(jsonObject);
+            Device device = storager.queryVideoDevice(deviceId);
+            StreamInfoVo streamInfoVo = new StreamInfoVo(streamInfo);
+            streamInfoVo.setChannelName(deviceChannel.getName());
+            streamInfoVo.setSnapURL(String.format("http://%s:%s/snap/%s.jpg", sipIp, serverPort, streamInfo.getStream()));
+            streamInfoVo.setTransport(device.getTransport());
+            streamInfoVo.setChannelPTZType(0);
+            msg.setData(streamInfoVo);
 
             resultHolder.invokeAllResult(msg);
         } else {

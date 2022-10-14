@@ -147,7 +147,7 @@ public class VideoManagerStorageImpl implements IVideoManagerStorage {
 					stringBuilder.append(deviceChannel.getChannelId()).append(",");
 				}
 			}
-			if (channels.size() > 0) {
+			if (!channels.isEmpty()) {
 				for (DeviceChannel channel : channels) {
 					if (subContMap.get(channel.getChannelId()) != null){
 						channel.setSubCount(subContMap.get(channel.getChannelId()));

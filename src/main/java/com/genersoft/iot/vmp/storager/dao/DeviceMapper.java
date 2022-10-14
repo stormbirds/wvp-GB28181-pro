@@ -111,7 +111,7 @@ public interface DeviceMapper extends BaseMapper<Device> {
     @Select("SELECT * FROM device WHERE online = 1")
     List<Device> getOnlineDevices();
     @Select("SELECT * FROM device WHERE ip = #{host} AND port=${port}")
-    Device getDeviceByHostAndPort(String host, int port);
+    List<Device> getDeviceByHostAndPort(String host, int port);
 
     List<DeviceTree> deviceTree(String serial);
 }

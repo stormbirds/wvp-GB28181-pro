@@ -1,6 +1,8 @@
 package com.genersoft.iot.vmp.skyeye.controller;
 
+import com.genersoft.iot.vmp.gb28181.bean.Device;
 import com.genersoft.iot.vmp.service.IDeviceService;
+import com.genersoft.iot.vmp.skyeye.vo.ChannelListVo;
 import com.genersoft.iot.vmp.skyeye.vo.DeviceTree;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiParam;
@@ -8,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Mono;
 
 
 import javax.annotation.Resource;
@@ -65,5 +68,16 @@ public class DevicesController {
     @GetMapping("/remove")
     public String remove(@ApiParam String serial) {
         return deviceService.removeDeviceById(serial)?"ok":"failure";
+    }
+
+    @GetMapping("/fetchcatalog")
+    public Mono<ChannelListVo> fetchcatalog(@ApiParam String serial,
+                                            @ApiParam(required = false) Integer timeout) {
+        Device device = deviceService.queryDevice(serial);
+        if(device==null)
+            return Mono.just(new ChannelListVo());
+        deviceService.sync(device);
+
+        return Mono.just(new ChannelListVo());
     }
 }

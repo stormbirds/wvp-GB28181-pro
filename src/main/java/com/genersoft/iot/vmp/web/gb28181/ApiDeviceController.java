@@ -71,15 +71,17 @@ public class ApiDeviceController {
         limit = limit == null?10:limit;
 
         List<Device> devices = storager.queryVideoDeviceList(start, limit,q,online,sort,order);
+
         result.put("DeviceCount", devices.size());
 
         JSONArray deviceJSONList = new JSONArray();
         for (Device device : devices) {
+            List<DeviceChannel> allDeviceChannelList = storager.queryChannelsByDeviceId(device.getDeviceId());
             JSONObject deviceJsonObject = new JSONObject();
             deviceJsonObject.put("ID", device.getDeviceId());
             deviceJsonObject.put("Name", device.getName());
             deviceJsonObject.put("Type", "GB");
-            deviceJsonObject.put("ChannelCount", device.getChannelCount());
+            deviceJsonObject.put("ChannelCount", allDeviceChannelList.size());
             deviceJsonObject.put("RecvStreamIP", "");
             deviceJsonObject.put("CatalogInterval", 3600); // 通道目录抓取周期
             deviceJsonObject.put("SubscribeInterval", device.getSubscribeCycleForCatalog()); // 订阅周期(秒), 0 表示后台不周期订阅
