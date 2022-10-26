@@ -1,8 +1,10 @@
 package com.genersoft.iot.vmp.vmanager.gb28181.MobilePosition;
 
+import java.text.ParseException;
 import java.util.List;
 import java.util.UUID;
 
+import com.genersoft.iot.vmp.conf.exception.ControllerException;
 import com.genersoft.iot.vmp.gb28181.bean.Device;
 import com.genersoft.iot.vmp.gb28181.bean.MobilePosition;
 import com.genersoft.iot.vmp.gb28181.transmit.callback.DeferredResultHolder;
@@ -10,6 +12,7 @@ import com.genersoft.iot.vmp.gb28181.transmit.callback.RequestMessage;
 import com.genersoft.iot.vmp.gb28181.transmit.cmd.impl.SIPCommander;
 import com.genersoft.iot.vmp.service.IDeviceService;
 import com.genersoft.iot.vmp.storager.IVideoManagerStorage;
+import com.genersoft.iot.vmp.vmanager.bean.ErrorCode;
 import com.genersoft.iot.vmp.vmanager.bean.WVPResult;
 import com.github.pagehelper.util.StringUtil;
 
@@ -28,6 +31,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
+
+import javax.sip.InvalidArgumentException;
+import javax.sip.SipException;
 
 /**
  *  位置信息管理
@@ -103,13 +109,18 @@ public class MobilePositionController {
         Device device = storager.queryVideoDevice(deviceId);
         String uuid = UUID.randomUUID().toString();
         String key = DeferredResultHolder.CALLBACK_CMD_MOBILEPOSITION + deviceId;
-        cmder.mobilePostitionQuery(device, event -> {
-			RequestMessage msg = new RequestMessage();
-			msg.setId(uuid);
-            msg.setKey(key);
-			msg.setData(String.format("获取移动位置信息失败，错误码： %s, %s", event.statusCode, event.msg));
-			resultHolder.invokeResult(msg);
-		});
+        try {
+            cmder.mobilePostitionQuery(device, event -> {
+                RequestMessage msg = new RequestMessage();
+                msg.setId(uuid);
+                msg.setKey(key);
+                msg.setData(String.format("获取移动位置信息失败，错误码： %s, %s", event.statusCode, event.msg));
+                resultHolder.invokeResult(msg);
+            });
+        } catch (InvalidArgumentException | SipException | ParseException e) {
+            logger.error("[命令发送失败] 获取移动位置信息: {}", e.getMessage());
+            throw new ControllerException(ErrorCode.ERROR100.getCode(), "命令发送失败: " + e.getMessage());
+        }
         DeferredResult<MobilePosition> result = new DeferredResult<MobilePosition>(5*1000L);
 		result.onTimeout(()->{
 			logger.warn(String.format("获取移动位置信息超时"));
@@ -136,13 +147,9 @@ public class MobilePositionController {
     @Parameter(name = "expires", description = "订阅超时时间", required = true)
     @Parameter(name = "interval", description = "上报时间间隔", required = true)
     @GetMapping("/subscribe/{deviceId}")
-    public String positionSubscribe(@PathVariable String deviceId,
+    public void positionSubscribe(@PathVariable String deviceId,
                                                     @RequestParam String expires,
                                                     @RequestParam String interval) {
-        String msg = ((expires.equals("0")) ? "取消" : "") + "订阅设备" + deviceId + "的移动位置";
-        if (logger.isDebugEnabled()) {
-            logger.debug(msg);
-        }
 
         if (StringUtil.isEmpty(interval)) {
             interval = "5";
@@ -151,13 +158,8 @@ public class MobilePositionController {
         device.setSubscribeCycleForMobilePosition(Integer.parseInt(expires));
         device.setMobilePositionSubmissionInterval(Integer.parseInt(interval));
         deviceService.updateDevice(device);
-        String result = msg;
-        if (deviceService.removeMobilePositionSubscribe(device)) {
-            result += "，成功";
-        } else {
-            result += "，失败";
+        if (!deviceService.removeMobilePositionSubscribe(device)) {
+            throw new ControllerException(ErrorCode.ERROR100);
         }
-
-        return result;
     }
 }

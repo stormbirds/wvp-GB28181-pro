@@ -1,7 +1,6 @@
 package com.genersoft.iot.vmp.gb28181.bean;
 
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
@@ -15,7 +14,6 @@ public class Device {
 	 * 设备国标编号
 	 */
 	@Schema(description = "设备国标编号")
-	@TableField("deviceId")
 	private String deviceId;
 
 	/**
@@ -56,7 +54,6 @@ public class Device {
 	 * TCP-PASSIVE：tcp被动模式
 	 */
 	@Schema(description = "数据流传输模式")
-	@TableField("streamMode")
 	private String streamMode;
 
 	/**
@@ -75,7 +72,6 @@ public class Device {
 	 * wan地址
 	 */
 	@Schema(description = "wan地址")
-	@TableField("hostAddress")
 	private String  hostAddress;
 	
 	/**
@@ -89,7 +85,6 @@ public class Device {
 	 * 注册时间
 	 */
 	@Schema(description = "注册时间")
-	@TableField("registerTime")
 	private String registerTime;
 
 
@@ -97,14 +92,12 @@ public class Device {
 	 * 心跳时间
 	 */
 	@Schema(description = "心跳时间")
-	@TableField("keepaliveTime")
 	private String keepaliveTime;
 
 	/**
 	 * 通道个数
 	 */
 	@Schema(description = "通道个数")
-	@TableField(exist = false)
 	private int channelCount;
 
 	/**
@@ -117,21 +110,18 @@ public class Device {
 	 * 创建时间
 	 */
 	@Schema(description = "创建时间")
-	@TableField("createTime")
 	private String createTime;
 
 	/**
 	 * 更新时间
 	 */
 	@Schema(description = "更新时间")
-	@TableField("updateTime")
 	private String updateTime;
 
 	/**
 	 * 设备使用的媒体id, 默认为null
 	 */
 	@Schema(description = "设备使用的媒体id, 默认为null")
-	@TableField(exist = false)
 	private String mediaServerId;
 
 	/**
@@ -144,50 +134,49 @@ public class Device {
 	 * 目录订阅周期，0为不订阅
 	 */
 	@Schema(description = "目录订阅周期，0为不订阅")
-	@TableField("subscribeCycleForCatalog")
-	private int subscribeCycleForCatalog;
+	private int subscribeCycleForCatalog = 300;
 
 	/**
 	 * 移动设备位置订阅周期，0为不订阅
 	 */
 	@Schema(description = "移动设备位置订阅周期，0为不订阅")
-	@TableField("subscribeCycleForMobilePosition")
 	private int subscribeCycleForMobilePosition;
 
 	/**
 	 * 移动设备位置信息上报时间间隔,单位:秒,默认值5
 	 */
 	@Schema(description = "移动设备位置信息上报时间间隔,单位:秒,默认值5")
-	@TableField("mobilePositionSubmissionInterval")
 	private int mobilePositionSubmissionInterval = 5;
 
 	/**
 	 * 报警订阅周期，0为不订阅
 	 */
 	@Schema(description = "报警心跳时间订阅周期，0为不订阅")
-	@TableField("subscribeCycleForAlarm")
-	private int subscribeCycleForAlarm;
+	private int subscribeCycleForAlarm = 60;
 
 	/**
 	 * 是否开启ssrc校验，默认关闭，开启可以防止串流
 	 */
 	@Schema(description = "是否开启ssrc校验，默认关闭，开启可以防止串流")
-	@TableField("ssrcCheck")
 	private boolean ssrcCheck = true;
 
 	/**
-	 * 地理坐标系， 目前支持 WGS84,GCJ02 TODO CGCS2000
+	 * 地理坐标系， 目前支持 WGS84,GCJ02
 	 */
 	@Schema(description = "地理坐标系， 目前支持 WGS84,GCJ02")
-	@TableField("geoCoordSys")
 	private String geoCoordSys;
 
 	/**
 	 * 树类型 国标规定了两种树的展现方式 行政区划：CivilCode 和业务分组:BusinessGroup
 	 */
 	@Schema(description = "树类型 国标规定了两种树的展现方式 行政区划：CivilCode 和业务分组:BusinessGroup")
-	@TableField("treeType")
 	private String treeType;
+
+	@Schema(description = "密码")
+	private String password;
+
+	@Schema(description = "收流IP")
+	private String sdpIp;
 
 
 	public String getDeviceId() {
@@ -396,5 +385,21 @@ public class Device {
 
 	public void setTreeType(String treeType) {
 		this.treeType = treeType;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
+	public String getSdpIp() {
+		return sdpIp;
+	}
+
+	public void setSdpIp(String sdpIp) {
+		this.sdpIp = sdpIp;
 	}
 }

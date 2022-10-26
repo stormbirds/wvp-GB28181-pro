@@ -3,36 +3,38 @@ package com.genersoft.iot.vmp.vmanager.server;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.genersoft.iot.vmp.VManageBootstrap;
+import com.genersoft.iot.vmp.common.SystemAllInfo;
 import com.genersoft.iot.vmp.common.VersionPo;
 import com.genersoft.iot.vmp.conf.SipConfig;
 import com.genersoft.iot.vmp.conf.UserSetting;
 import com.genersoft.iot.vmp.conf.VersionInfo;
 import com.genersoft.iot.vmp.conf.exception.ControllerException;
-import com.genersoft.iot.vmp.media.zlm.ZLMHttpHookSubscribe;
+import com.genersoft.iot.vmp.media.zlm.ZlmHttpHookSubscribe;
 import com.genersoft.iot.vmp.media.zlm.dto.IHookSubscribe;
 import com.genersoft.iot.vmp.media.zlm.dto.MediaServerItem;
-import com.genersoft.iot.vmp.service.IMediaServerService;
+import com.genersoft.iot.vmp.service.*;
+import com.genersoft.iot.vmp.service.bean.MediaServerLoad;
+import com.genersoft.iot.vmp.storager.IRedisCatchStorage;
 import com.genersoft.iot.vmp.utils.SpringBeanFactory;
 import com.genersoft.iot.vmp.vmanager.bean.ErrorCode;
-import com.genersoft.iot.vmp.vmanager.bean.WVPResult;
+import com.genersoft.iot.vmp.vmanager.bean.ResourceBaceInfo;
+import com.genersoft.iot.vmp.vmanager.bean.ResourceInfo;
+import com.genersoft.iot.vmp.vmanager.bean.SystemConfigInfo;
 import gov.nist.javax.sip.SipStackImpl;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.ehcache.xml.model.ThreadPoolsType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.util.ObjectUtils;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.sip.ListeningPoint;
 import javax.sip.ObjectInUseException;
 import javax.sip.SipProvider;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 @SuppressWarnings("rawtypes")
 @Tag(name = "服务控制")
@@ -42,7 +44,7 @@ import java.util.List;
 public class ServerController {
 
     @Autowired
-    private ZLMHttpHookSubscribe zlmHttpHookSubscribe;
+    private ZlmHttpHookSubscribe zlmHttpHookSubscribe;
 
     @Autowired
     private IMediaServerService mediaServerService;
@@ -56,12 +58,29 @@ public class ServerController {
     @Autowired
     private UserSetting userSetting;
 
+    @Autowired
+    private IDeviceService deviceService;
+
+    @Autowired
+    private IDeviceChannelService channelService;
+
+    @Autowired
+    private IStreamPushService pushService;
+
+
+    @Autowired
+    private IStreamProxyService proxyService;
+
+
     @Value("${server.port}")
     private int serverPort;
 
 
     @Autowired
     private ThreadPoolTaskExecutor taskExecutor;
+
+    @Autowired
+    private IRedisCatchStorage redisCatchStorage;
 
 
     @GetMapping(value = "/media_server/list")
@@ -166,6 +185,18 @@ public class ServerController {
         });
     };
 
+    @Operation(summary = "获取系统信息信息")
+    @GetMapping(value = "/system/configInfo")
+    @ResponseBody
+    public SystemConfigInfo getConfigInfo() {
+        SystemConfigInfo systemConfigInfo = new SystemConfigInfo();
+        systemConfigInfo.setVersion(versionInfo.getVersion());
+        systemConfigInfo.setSip(sipConfig);
+        systemConfigInfo.setAddOn(userSetting);
+        systemConfigInfo.setServerPort(serverPort);
+        return systemConfigInfo;
+    }
+
     @Operation(summary = "获取版本信息")
     @GetMapping(value = "/version")
     @ResponseBody
@@ -204,5 +235,47 @@ public class ServerController {
     @Operation(summary = "获取当前所有hook")
     public List<IHookSubscribe> getHooks() {
         return zlmHttpHookSubscribe.getAll();
+    }
+
+    @GetMapping(value = "/system/info")
+    @ResponseBody
+    @Operation(summary = "获取系统信息")
+    public SystemAllInfo getSystemInfo() {
+        SystemAllInfo systemAllInfo = redisCatchStorage.getSystemInfo();
+
+        return systemAllInfo;
+    }
+
+    @GetMapping(value = "/media_server/load")
+    @ResponseBody
+    @Operation(summary = "获取负载信息")
+    public List<MediaServerLoad> getMediaLoad() {
+        List<MediaServerLoad> result = new ArrayList<>();
+        List<MediaServerItem> allOnline = mediaServerService.getAllOnline();
+        if (allOnline.size() == 0) {
+            return result;
+        }else {
+            for (MediaServerItem mediaServerItem : allOnline) {
+                result.add(mediaServerService.getLoad(mediaServerItem));
+            }
+        }
+        return result;
+    }
+
+    @GetMapping(value = "/resource/info")
+    @ResponseBody
+    @Operation(summary = "获取负载信息")
+    public ResourceInfo getResourceInfo() {
+        ResourceInfo result = new ResourceInfo();
+        ResourceBaceInfo deviceInfo = deviceService.getOverview();
+        result.setDevice(deviceInfo);
+        ResourceBaceInfo channelInfo = channelService.getOverview();
+        result.setChannel(channelInfo);
+        ResourceBaceInfo pushInfo = pushService.getOverview();
+        result.setPush(pushInfo);
+        ResourceBaceInfo proxyInfo = proxyService.getOverview();
+        result.setProxy(proxyInfo);
+
+        return result;
     }
 }

@@ -1,17 +1,14 @@
 package com.genersoft.iot.vmp.service;
 
-import com.baomidou.mybatisplus.extension.service.IService;
 import com.genersoft.iot.vmp.gb28181.bean.DeviceAlarm;
-import com.genersoft.iot.vmp.skyeye.enttity.Alarms;
 import com.github.pagehelper.PageInfo;
-import org.apache.ibatis.annotations.Update;
 
 import java.util.List;
 
 /**
  * 报警相关业务处理
  */
-public interface IDeviceAlarmService extends IService<DeviceAlarm> {
+public interface IDeviceAlarmService {
 
     /**
      * 根据多个添加获取报警列表
@@ -43,9 +40,4 @@ public interface IDeviceAlarmService extends IService<DeviceAlarm> {
      */
     int clearAlarmBeforeTime(Integer id, List<String> deviceIdList, String time);
 
-    void truncate();
-
-    List<Alarms> list(String serial, String code, String starttime, String endtime, Integer priority, Integer method, Integer start, Integer limit, String q);
-
-    int countList(String serial, String code, String starttime, String endtime, Integer priority, Integer method, String q);
 }

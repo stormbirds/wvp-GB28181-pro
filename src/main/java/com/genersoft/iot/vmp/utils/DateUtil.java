@@ -1,9 +1,10 @@
 package com.genersoft.iot.vmp.utils;
 
 
-import cn.hutool.core.date.LocalDateTimeUtil;
-
-import java.time.*;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.TemporalAccessor;
@@ -85,9 +86,5 @@ public class DateUtil {
     public static String getNowForISO8601() {
         LocalDateTime nowDateTime = LocalDateTime.now();
         return formatterISO8601.format(nowDateTime);
-    }
-
-    public static Duration betweenFromNow(String startTime){
-        return LocalDateTimeUtil.between(LocalDateTimeUtil.parse(startTime,PATTERN),LocalDateTime.now());
     }
 }

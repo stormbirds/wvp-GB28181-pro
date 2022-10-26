@@ -1,6 +1,5 @@
 package com.genersoft.iot.vmp.gb28181.transmit.event.request.impl;
 
-import cn.hutool.core.util.IdUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.genersoft.iot.vmp.conf.SipConfig;
 import com.genersoft.iot.vmp.conf.UserSetting;
@@ -12,18 +11,16 @@ import com.genersoft.iot.vmp.gb28181.transmit.callback.DeferredResultHolder;
 import com.genersoft.iot.vmp.gb28181.transmit.cmd.impl.SIPCommander;
 import com.genersoft.iot.vmp.gb28181.transmit.event.request.ISIPRequestProcessor;
 import com.genersoft.iot.vmp.gb28181.transmit.event.request.SIPRequestProcessorParent;
+import com.genersoft.iot.vmp.gb28181.utils.Coordtransform;
 import com.genersoft.iot.vmp.gb28181.utils.NumericUtil;
 import com.genersoft.iot.vmp.gb28181.utils.SipUtils;
 import com.genersoft.iot.vmp.gb28181.utils.XmlUtil;
 import com.genersoft.iot.vmp.service.IDeviceChannelService;
-import com.genersoft.iot.vmp.skyeye.enttity.StatusLogs;
-import com.genersoft.iot.vmp.skyeye.redis.RedisMsgPublisher;
-import com.genersoft.iot.vmp.skyeye.redis.RedisTopicEnums;
-import com.genersoft.iot.vmp.skyeye.service.IStatusLogsService;
 import com.genersoft.iot.vmp.storager.IRedisCatchStorage;
 import com.genersoft.iot.vmp.storager.IVideoManagerStorage;
 import com.genersoft.iot.vmp.utils.DateUtil;
 import com.genersoft.iot.vmp.utils.redis.RedisUtil;
+import gov.nist.javax.sip.message.SIPRequest;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.slf4j.Logger;
@@ -34,19 +31,16 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 
-import javax.annotation.Resource;
 import javax.sip.InvalidArgumentException;
 import javax.sip.RequestEvent;
 import javax.sip.SipException;
 import javax.sip.header.FromHeader;
 import javax.sip.message.Response;
 import java.text.ParseException;
-import java.time.LocalDateTime;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedQueue;
-
-import static cn.hutool.core.date.DatePattern.NORM_DATETIME_FORMATTER;
 
 /**
  * SIP命令类型： NOTIFY请求,这是作为上级发送订阅请求后，设备才会响应的
@@ -83,14 +77,9 @@ public class NotifyRequestProcessor extends SIPRequestProcessorParent implements
 	@Autowired
 	private IDeviceChannelService deviceChannelService;
 
-	@Resource
-	private RedisMsgPublisher redisMsgPublisher;
-	@Resource
-	private IStatusLogsService statusLogsService;
-
 	private boolean taskQueueHandlerRun = false;
 
-	private final ConcurrentLinkedQueue<HandlerCatchData> taskQueue = new ConcurrentLinkedQueue<>();
+	private ConcurrentLinkedQueue<HandlerCatchData> taskQueue = new ConcurrentLinkedQueue<>();
 
 	@Qualifier("taskExecutor")
 	@Autowired
@@ -105,45 +94,42 @@ public class NotifyRequestProcessor extends SIPRequestProcessorParent implements
 	@Override
 	public void process(RequestEvent evt) {
 		try {
-			taskQueue.offer(new HandlerCatchData(evt, null, null));
-			responseAck(evt, Response.OK);
-			if (!taskQueueHandlerRun) {
-				taskQueueHandlerRun = true;
-				taskExecutor.execute(()-> {
-					while (!taskQueue.isEmpty()) {
-						try {
-							HandlerCatchData take = taskQueue.poll();
-							Element rootElement = getRootElement(take.getEvt());
-							if (rootElement == null) {
-								logger.error("处理NOTIFY消息时未获取到消息体,{}", take.getEvt().getRequest());
-								continue;
-							}
-							String cmd = XmlUtil.getText(rootElement, "CmdType");
-
-							if (CmdType.CATALOG.equals(cmd)) {
-								logger.info("接收到Catalog通知");
-								processNotifyCatalogList(take.getEvt());
-							} else if (CmdType.ALARM.equals(cmd)) {
-								logger.info("接收到Alarm通知");
-								processNotifyAlarm(take.getEvt());
-							} else if (CmdType.MOBILE_POSITION.equals(cmd)) {
-								logger.info("接收到MobilePosition通知");
-								processNotifyMobilePosition(take.getEvt());
-							} else {
-								logger.info("接收到消息：" + cmd);
-							}
-						} catch (DocumentException e) {
-							logger.error("处理NOTIFY消息时错误", e);
-						} finally {
-							taskQueueHandlerRun = false;
-						}
-					}
-				});
-			}
-		} catch (SipException | InvalidArgumentException | ParseException e) {
+			responseAck((SIPRequest) evt.getRequest(), Response.OK, null, null);
+		}catch (SipException | InvalidArgumentException | ParseException e) {
 			e.printStackTrace();
-		} finally {
-			taskQueueHandlerRun = false;
+		}
+		taskQueue.offer(new HandlerCatchData(evt, null, null));
+		if (!taskQueueHandlerRun) {
+			taskQueueHandlerRun = true;
+			taskExecutor.execute(()-> {
+				while (!taskQueue.isEmpty()) {
+					try {
+						HandlerCatchData take = taskQueue.poll();
+						Element rootElement = getRootElement(take.getEvt());
+						if (rootElement == null) {
+							logger.error("处理NOTIFY消息时未获取到消息体,{}", take.getEvt().getRequest());
+							continue;
+						}
+						String cmd = XmlUtil.getText(rootElement, "CmdType");
+
+						if (CmdType.CATALOG.equals(cmd)) {
+							logger.info("接收到Catalog通知");
+							processNotifyCatalogList(take.getEvt());
+						} else if (CmdType.ALARM.equals(cmd)) {
+							logger.info("接收到Alarm通知");
+							processNotifyAlarm(take.getEvt());
+						} else if (CmdType.MOBILE_POSITION.equals(cmd)) {
+							logger.info("接收到MobilePosition通知");
+							processNotifyMobilePosition(take.getEvt());
+						} else {
+							logger.info("接收到消息：" + cmd);
+						}
+					} catch (DocumentException e) {
+						logger.error("处理NOTIFY消息时错误", e);
+					}
+				}
+				taskQueueHandlerRun = false;
+			});
 		}
 	}
 
@@ -391,37 +377,16 @@ public class NotifyRequestProcessor extends SIPRequestProcessorParent implements
 					DeviceChannel channel = XmlUtil.channelContentHander(itemDevice, device, event);
 					channel.setDeviceId(device.getDeviceId());
 					logger.info("[收到目录订阅]：{}/{}", device.getDeviceId(), channel.getChannelId());
-					StatusLogs statusLogs;
 					switch (event) {
 						case CatalogEvent.ON:
 							// 上线
 							logger.info("[收到通道上线通知] 来自设备: {}, 通道 {}", device.getDeviceId(), channel.getChannelId());
 							storager.deviceChannelOnline(deviceId, channel.getChannelId());
-							statusLogs = StatusLogs.builder()
-									.id(IdUtil.nanoId(9))
-									.serial(deviceId)
-									.code(channel.getChannelId())
-									.status("ON")
-									.description("通道通知状态 "+"ON")
-									.createdAt(LocalDateTime.now().format(NORM_DATETIME_FORMATTER))
-									.build();
-							statusLogsService.save(statusLogs);
-							redisMsgPublisher.sendMsg(RedisTopicEnums.TOPIC_DEVICE, deviceId.concat(":").concat(channel.getChannelId()).concat(" ").concat("ON"));
 							break;
 						case CatalogEvent.OFF :
 							// 离线
 							logger.info("[收到通道离线通知] 来自设备: {}, 通道 {}", device.getDeviceId(), channel.getChannelId());
 							storager.deviceChannelOffline(deviceId, channel.getChannelId());
-							statusLogs = StatusLogs.builder()
-									.id(IdUtil.nanoId(9))
-									.serial(deviceId)
-									.code(channel.getChannelId())
-									.status("OFF")
-									.description("通道通知状态 "+"OFF")
-									.createdAt(LocalDateTime.now().format(NORM_DATETIME_FORMATTER))
-									.build();
-							statusLogsService.save(statusLogs);
-							redisMsgPublisher.sendMsg(RedisTopicEnums.TOPIC_DEVICE, deviceId.concat(":").concat(channel.getChannelId()).concat(" ").concat("OFF"));
 							break;
 						case CatalogEvent.VLOST:
 							// 视频丢失
@@ -435,31 +400,11 @@ public class NotifyRequestProcessor extends SIPRequestProcessorParent implements
 							// 增加
 							logger.info("[收到增加通道通知] 来自设备: {}, 通道 {}", device.getDeviceId(), channel.getChannelId());
 							deviceChannelService.updateChannel(deviceId, channel);
-							statusLogs = StatusLogs.builder()
-									.id(IdUtil.nanoId(9))
-									.serial(deviceId)
-									.code(channel.getChannelId())
-									.status("ON")
-									.description("通道通知状态 "+"ON")
-									.createdAt(LocalDateTime.now().format(NORM_DATETIME_FORMATTER))
-									.build();
-							statusLogsService.save(statusLogs);
-							redisMsgPublisher.sendMsg(RedisTopicEnums.TOPIC_DEVICE, deviceId.concat(":").concat(channel.getChannelId()).concat(" ").concat("ON"));
 							break;
 						case CatalogEvent.DEL:
 							// 删除
 							logger.info("[收到删除通道通知] 来自设备: {}, 通道 {}", device.getDeviceId(), channel.getChannelId());
 							storager.delChannel(deviceId, channel.getChannelId());
-							statusLogs = StatusLogs.builder()
-									.id(IdUtil.nanoId(9))
-									.serial(deviceId)
-									.code(channel.getChannelId())
-									.status("OFF")
-									.description("通道通知状态 "+"OFF")
-									.createdAt(LocalDateTime.now().format(NORM_DATETIME_FORMATTER))
-									.build();
-							statusLogsService.save(statusLogs);
-							redisMsgPublisher.sendMsg(RedisTopicEnums.TOPIC_DEVICE, deviceId.concat(":").concat(channel.getChannelId()).concat(" ").concat("OFF"));
 							break;
 						case CatalogEvent.UPDATE:
 							// 更新

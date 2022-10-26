@@ -31,16 +31,13 @@ public class UserSetting {
 
     private Boolean logInDatebase = Boolean.TRUE;
 
-    private Boolean redisConfig = Boolean.TRUE;
+    private Boolean usePushingAsStatus = Boolean.TRUE;
+
+    private Boolean streamOnDemand = Boolean.TRUE;
 
     private String serverId = "000000";
 
     private String thirdPartyGBIdReg = "[\\s\\S]*";
-
-    //ZLM服务器录像目录
-    private String recordPath;
-
-    private String cloudRecordPath;
 
     private List<String> interfaceAuthenticationExcludes = new ArrayList<>();
 
@@ -128,14 +125,6 @@ public class UserSetting {
         this.thirdPartyGBIdReg = thirdPartyGBIdReg;
     }
 
-    public Boolean getRedisConfig() {
-        return redisConfig;
-    }
-
-    public void setRedisConfig(Boolean redisConfig) {
-        this.redisConfig = redisConfig;
-    }
-
     public Boolean getRecordSip() {
         return recordSip;
     }
@@ -152,19 +141,19 @@ public class UserSetting {
         this.platformPlayTimeout = platformPlayTimeout;
     }
 
-    public String getRecordPath() {
-        return recordPath;
+    public Boolean isUsePushingAsStatus() {
+        return usePushingAsStatus;
     }
 
-    public void setRecordPath(String recordPath) {
-        this.recordPath = recordPath;
+    public void setUsePushingAsStatus(Boolean usePushingAsStatus) {
+        this.usePushingAsStatus = usePushingAsStatus;
     }
 
-    public String getCloudRecordPath() {
-        return cloudRecordPath;
+    public Boolean getStreamOnDemand() {
+        return streamOnDemand;
     }
 
-    public void setCloudRecordPath(String cloudRecordPath) {
-        this.cloudRecordPath = cloudRecordPath;
+    public void setStreamOnDemand(Boolean streamOnDemand) {
+        this.streamOnDemand = streamOnDemand;
     }
 }

@@ -1,6 +1,5 @@
 package com.genersoft.iot.vmp.gb28181.bean;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "通道信息")
@@ -119,7 +118,7 @@ public class DeviceChannel {
 	 * 保密属性 缺省为0; 0:不涉密, 1:涉密
 	 */
 	@Schema(description = "保密属性 缺省为0; 0:不涉密, 1:涉密")
-	private Integer secrecy = 0;
+	private String secrecy;
 	
 	/**
 	 * IP地址
@@ -143,13 +142,12 @@ public class DeviceChannel {
 	 * 云台类型
 	 */
 	@Schema(description = "云台类型")
-	private int ptzType;
+	private int PTZType;
 
 	/**
 	 * 云台类型描述字符串
 	 */
 	@Schema(description = "云台类型描述字符串")
-	@TableField(exist = false)
 	private String PTZTypeText;
 
 	/**
@@ -192,28 +190,24 @@ public class DeviceChannel {
 	 * 经度 GCJ02
 	 */
 	@Schema(description = "GCJ02坐标系经度")
-	@TableField("longitudeGcj02")
 	private double longitudeGcj02;
 
 	/**
 	 * 纬度 GCJ02
 	 */
 	@Schema(description = "GCJ02坐标系纬度")
-	@TableField("latitudeGcj02")
 	private double latitudeGcj02;
 
 	/**
 	 * 经度 WGS84
 	 */
 	@Schema(description = "WGS84坐标系经度")
-	@TableField("longitudeWgs84")
 	private double longitudeWgs84;
 
 	/**
 	 * 纬度 WGS84
 	 */
 	@Schema(description = "WGS84坐标系纬度")
-	@TableField("latitudeWgs84")
 	private double latitudeWgs84;
 
 	/**
@@ -232,14 +226,12 @@ public class DeviceChannel {
 	 *  是否含有音频
 	 */
 	@Schema(description = "是否含有音频")
-	@TableField("audio_enable")
 	private boolean hasAudio;
 
 	/**
 	 * 标记通道的类型，0->国标通道 1->直播流通道 2->业务分组/虚拟组织/行政区划
 	 */
 	@Schema(description = "标记通道的类型，0->国标通道 1->直播流通道 2->业务分组/虚拟组织/行政区划")
-	@TableField(exist = false)
 	private int channelType;
 
 	/**
@@ -247,11 +239,6 @@ public class DeviceChannel {
 	 */
 	@Schema(description = "业务分组")
 	private String businessGroupId;
-
-	/**
-	 * 通道序号
-	 */
-	private Integer channel;
 
 	/**
 	 * GPS的更新时间
@@ -276,7 +263,7 @@ public class DeviceChannel {
 	}
 
 	public void setPTZType(int PTZType) {
-		this.ptzType = PTZType;
+		this.PTZType = PTZType;
 		switch (PTZType) {
 			case 0:
 				this.PTZTypeText = "未知";
@@ -424,11 +411,11 @@ public class DeviceChannel {
 		this.endTime = endTime;
 	}
 
-	public Integer getSecrecy() {
+	public String getSecrecy() {
 		return secrecy;
 	}
 
-	public void setSecrecy(Integer secrecy) {
+	public void setSecrecy(String secrecy) {
 		this.secrecy = secrecy;
 	}
 
@@ -456,8 +443,8 @@ public class DeviceChannel {
 		this.password = password;
 	}
 
-	public int getPtzType() {
-		return ptzType;
+	public int getPTZType() {
+		return PTZType;
 	}
 
 	public String getPTZTypeText() {
@@ -586,13 +573,5 @@ public class DeviceChannel {
 
 	public void setGpsTime(String gpsTime) {
 		this.gpsTime = gpsTime;
-	}
-
-	public Integer getChannel() {
-		return channel;
-	}
-
-	public void setChannel(Integer channel) {
-		this.channel = channel;
 	}
 }

@@ -2,6 +2,9 @@ package com.genersoft.iot.vmp.gb28181.bean;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+/**
+ * @author lin
+ */
 @Schema(description = "平台信息")
 public class ParentPlatform {
 
@@ -50,7 +53,7 @@ public class ParentPlatform {
     /**
      * 设备国标编号
      */
-    @Schema(description = "11111")
+    @Schema(description = "设备国标编号")
     private String deviceGBId;
 
     /**
@@ -81,13 +84,13 @@ public class ParentPlatform {
      * 注册周期 (秒)
      */
     @Schema(description = "注册周期 (秒)")
-    private String expires;
+    private int expires;
 
     /**
      * 心跳周期(秒)
      */
     @Schema(description = "心跳周期(秒)")
-    private String keepTimeout;
+    private int keepTimeout;
 
     /**
      * 传输协议
@@ -110,7 +113,6 @@ public class ParentPlatform {
 
     /**
      * RTCP流保活
-     * TODO 预留, 暂不实现
      */
     @Schema(description = "RTCP流保活")
     private boolean rtcp;
@@ -283,19 +285,19 @@ public class ParentPlatform {
         this.password = password;
     }
 
-    public String getExpires() {
+    public int getExpires() {
         return expires;
     }
 
-    public void setExpires(String expires) {
+    public void setExpires(int expires) {
         this.expires = expires;
     }
 
-    public String getKeepTimeout() {
+    public int getKeepTimeout() {
         return keepTimeout;
     }
 
-    public void setKeepTimeout(String keepTimeout) {
+    public void setKeepTimeout(int keepTimeout) {
         this.keepTimeout = keepTimeout;
     }
 

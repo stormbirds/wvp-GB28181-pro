@@ -15,7 +15,7 @@ import com.genersoft.iot.vmp.gb28181.session.VideoStreamSessionManager;
 import com.genersoft.iot.vmp.gb28181.transmit.callback.DeferredResultHolder;
 import com.genersoft.iot.vmp.gb28181.transmit.callback.RequestMessage;
 import com.genersoft.iot.vmp.gb28181.transmit.cmd.impl.SIPCommander;
-import com.genersoft.iot.vmp.media.zlm.ZLMHttpHookSubscribe;
+import com.genersoft.iot.vmp.media.zlm.ZlmHttpHookSubscribe;
 import com.genersoft.iot.vmp.media.zlm.ZLMRESTfulUtils;
 import com.genersoft.iot.vmp.media.zlm.dto.HookSubscribeFactory;
 import com.genersoft.iot.vmp.media.zlm.dto.HookSubscribeForStreamChange;
@@ -40,13 +40,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.async.DeferredResult;
 import reactor.core.publisher.Mono;
 
-import javax.annotation.Resource;
 import javax.sip.ResponseEvent;
 import java.util.Objects;
 import java.util.UUID;
@@ -92,7 +90,7 @@ public class StreamServiceImpl implements IStreamService {
     @Autowired
     private ThreadPoolTaskExecutor taskExecutor;
     @Autowired
-    private ZLMHttpHookSubscribe subscribe;
+    private ZlmHttpHookSubscribe subscribe;
 
     @Value("${sip.ip}")
     private String sipIp;
@@ -285,7 +283,7 @@ public class StreamServiceImpl implements IStreamService {
     }
 
     public void play(MediaServerItem mediaServerItem, SSRCInfo ssrcInfo, Device device, String channelId,
-                     ZLMHttpHookSubscribe.Event hookEvent, SipSubscribe.Event errorEvent,
+                     ZlmHttpHookSubscribe.Event hookEvent, SipSubscribe.Event errorEvent,
                      InviteTimeOutCallback timeoutCallback, String uuid) {
 
         String streamId = null;

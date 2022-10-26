@@ -1,9 +1,8 @@
 package com.genersoft.iot.vmp.storager.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.genersoft.iot.vmp.common.StreamInfo;
 import com.genersoft.iot.vmp.conf.SipConfig;
+import com.genersoft.iot.vmp.conf.UserSetting;
 import com.genersoft.iot.vmp.gb28181.bean.*;
 import com.genersoft.iot.vmp.gb28181.event.EventPublisher;
 import com.genersoft.iot.vmp.gb28181.event.subscribe.catalog.CatalogEvent;
@@ -86,6 +85,9 @@ public class VideoManagerStorageImpl implements IVideoManagerStorage {
     private GbStreamMapper gbStreamMapper;
 
 	@Autowired
+    private UserSetting userSetting;
+
+	@Autowired
     private PlatformCatalogMapper catalogMapper;
 
 	@Autowired
@@ -113,11 +115,11 @@ public class VideoManagerStorageImpl implements IVideoManagerStorage {
 		if (CollectionUtils.isEmpty(deviceChannelList)) {
 			return false;
 		}
-		List<DeviceChannel> allChannelInPlay = deviceChannelMapper.getAllChannelInPlay();
-		Map<String,DeviceChannel> allChannelMapInPlay = new ConcurrentHashMap<>();
-		if (allChannelInPlay.size() > 0) {
-			for (DeviceChannel deviceChannel : allChannelInPlay) {
-				allChannelMapInPlay.put(deviceChannel.getChannelId(), deviceChannel);
+		List<DeviceChannel> allChannels = deviceChannelMapper.queryAllChannels(deviceId);
+		Map<String,DeviceChannel> allChannelMap = new ConcurrentHashMap<>();
+		if (allChannels.size() > 0) {
+			for (DeviceChannel deviceChannel : allChannels) {
+				allChannelMap.put(deviceChannel.getChannelId(), deviceChannel);
 			}
 		}
 		TransactionStatus transactionStatus = dataSourceTransactionManager.getTransaction(transactionDefinition);
@@ -125,14 +127,15 @@ public class VideoManagerStorageImpl implements IVideoManagerStorage {
 		List<DeviceChannel> channels = new ArrayList<>();
 		StringBuilder stringBuilder = new StringBuilder();
 		Map<String, Integer> subContMap = new HashMap<>();
-		if (deviceChannelList.size() > 1) {
+		if (deviceChannelList.size() > 0) {
 			// 数据去重
 			Set<String> gbIdSet = new HashSet<>();
 			for (DeviceChannel deviceChannel : deviceChannelList) {
 				if (!gbIdSet.contains(deviceChannel.getChannelId())) {
 					gbIdSet.add(deviceChannel.getChannelId());
-					if (allChannelMapInPlay.containsKey(deviceChannel.getChannelId())) {
-						deviceChannel.setStreamId(allChannelMapInPlay.get(deviceChannel.getChannelId()).getStreamId());
+					if (allChannelMap.containsKey(deviceChannel.getChannelId())) {
+						deviceChannel.setStreamId(allChannelMap.get(deviceChannel.getChannelId()).getStreamId());
+						deviceChannel.setHasAudio(allChannelMap.get(deviceChannel.getChannelId()).isHasAudio());
 					}
 					channels.add(deviceChannel);
 					if (!ObjectUtils.isEmpty(deviceChannel.getParentId())) {
@@ -147,7 +150,7 @@ public class VideoManagerStorageImpl implements IVideoManagerStorage {
 					stringBuilder.append(deviceChannel.getChannelId()).append(",");
 				}
 			}
-			if (!channels.isEmpty()) {
+			if (channels.size() > 0) {
 				for (DeviceChannel channel : channels) {
 					if (subContMap.get(channel.getChannelId()) != null){
 						channel.setSubCount(subContMap.get(channel.getChannelId()));
@@ -155,8 +158,6 @@ public class VideoManagerStorageImpl implements IVideoManagerStorage {
 				}
 			}
 
-		}else {
-			channels = deviceChannelList;
 		}
 		if (stringBuilder.length() > 0) {
 			logger.info("[目录查询]收到的数据存在重复： {}" , stringBuilder);
@@ -286,24 +287,6 @@ public class VideoManagerStorageImpl implements IVideoManagerStorage {
 		return new PageInfo<>(all);
 	}
 
-	@Override
-	public List<Device> queryVideoDeviceList(int page, int count, String q, Boolean online, String sort, String order) {
-		QueryWrapper<Device> queryWrapper = new QueryWrapper<>();
-		queryWrapper
-				.like(StringUtils.hasText(q), "deviceId", q)
-				.or()
-				.like(StringUtils.hasText(q), "manufacturer", q)
-				.or()
-				.like(StringUtils.hasText(q), "name", q)
-				.or()
-				.like(StringUtils.hasText(q), "ip", q);
-		queryWrapper.eq(online != null, "online", online);
-		if (StringUtils.hasText(sort) && StringUtils.hasText(order))
-			queryWrapper.orderBy(StringUtils.hasText(sort) && StringUtils.hasText(order), order.startsWith("asc"), sort);
-		return deviceMapper.selectPage(
-				new Page<>(page+1, count), queryWrapper).getRecords();
-	}
-
 	/**
 	 * 获取多个设备
 	 *
@@ -314,79 +297,6 @@ public class VideoManagerStorageImpl implements IVideoManagerStorage {
 
 		List<Device> deviceList =  deviceMapper.getDevices();
 		return deviceList;
-	}
-
-	/**
-	 * 删除设备
-	 *
-	 * @param deviceId 设备ID
-	 * @return true：删除成功  false：删除失败
-	 */
-	@Override
-	public boolean delete(String deviceId) {
-		TransactionStatus transactionStatus = dataSourceTransactionManager.getTransaction(transactionDefinition);
-		boolean result = false;
-		try {
-			platformChannelMapper.delChannelForDeviceId(deviceId);
-			deviceChannelMapper.cleanChannelsByDeviceId(deviceId);
-			if ( deviceMapper.del(deviceId) < 0 ) {
-				//事务回滚
-				dataSourceTransactionManager.rollback(transactionStatus);
-			}
-			result = true;
-			dataSourceTransactionManager.commit(transactionStatus);     //手动提交
-		}catch (Exception e) {
-			dataSourceTransactionManager.rollback(transactionStatus);
-		}
-		return result;
-	}
-
-	/**
-	 * 更新设备在线
-	 *
-	 * @param deviceId 设备ID
-	 * @return true：更新成功  false：更新失败
-	 */
-	@Override
-	public synchronized boolean online(String deviceId) {
-		Device device = deviceMapper.getDeviceByDeviceId(deviceId);
-		if (device == null) {
-			return false;
-		}
-		device.setOnline(1);
-		logger.info("更新设备在线: " + deviceId);
-		redisCatchStorage.updateDevice(device);
-		return deviceMapper.update(device) > 0;
-	}
-
-	/**
-	 * 更新设备离线
-	 *
-	 * @param deviceId 设备ID
-	 * @return true：更新成功  false：更新失败
-	 */
-	@Override
-	public synchronized boolean outline(String deviceId) {
-		logger.info("更新设备离线: " + deviceId);
-		Device device = deviceMapper.getDeviceByDeviceId(deviceId);
-		if (device == null) {
-			return false;
-		}
-		device.setOnline(0);
-		redisCatchStorage.updateDevice(device);
-		return deviceMapper.update(device) > 0;
-	}
-
-	/**
-	 * 更新所有设备离线
-	 *
-	 * @return true：更新成功  false：更新失败
-	 */
-	@Override
-	public synchronized boolean outlineForAll() {
-		logger.info("更新所有设备离线");
-		int result = deviceMapper.outlineForAll();
-		return result > 0;
 	}
 
 	/**
@@ -475,13 +385,6 @@ public class VideoManagerStorageImpl implements IVideoManagerStorage {
 		// 删除关联的通道
 		platformChannelMapper.cleanChannelForGB(parentPlatform.getServerGBId());
 		return result > 0;
-	}
-
-	@Override
-	public PageInfo<ParentPlatform> queryParentPlatformList(int page, int count) {
-		PageHelper.startPage(page, count);
-		List<ParentPlatform> all = platformMapper.getParentPlatformList();
-		return new PageInfo<>(all);
 	}
 
 	@Override
@@ -642,7 +545,7 @@ public class VideoManagerStorageImpl implements IVideoManagerStorage {
 	 */
 	@Override
 	public List<DeviceChannel> queryGbStreamListInPlatform(String platformId) {
-		return gbStreamMapper.queryGbStreamListInPlatform(platformId);
+		return gbStreamMapper.queryGbStreamListInPlatform(platformId, userSetting.isUsePushingAsStatus());
 	}
 
 	/**
@@ -723,7 +626,7 @@ public class VideoManagerStorageImpl implements IVideoManagerStorage {
 			return 0;
 		}
 		if (platform.getTreeType().equals(TreeType.BUSINESS_GROUP)) {
-			if (platformCatalog.getPlatformId().equals(platformCatalog.getParentId())) {
+			if (platform.getDeviceGBId().equals(platformCatalog.getParentId())) {
 				// 第一层节点
 				platformCatalog.setBusinessGroupId(platformCatalog.getId());
 				platformCatalog.setParentId(platform.getDeviceGBId());
@@ -892,7 +795,7 @@ public class VideoManagerStorageImpl implements IVideoManagerStorage {
 
 		deviceChannel.setModel("live");
 		deviceChannel.setOwner("wvp-pro");
-		deviceChannel.setSecrecy(0);
+		deviceChannel.setSecrecy("0");
 		return deviceChannel;
 	}
 

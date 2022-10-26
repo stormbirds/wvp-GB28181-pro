@@ -1,38 +1,29 @@
 package com.genersoft.iot.vmp.service.impl;
 
-import cn.hutool.core.util.IdUtil;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.genersoft.iot.vmp.common.StreamInfo;
 import com.genersoft.iot.vmp.gb28181.bean.Device;
 import com.genersoft.iot.vmp.gb28181.bean.DeviceChannel;
 import com.genersoft.iot.vmp.gb28181.utils.Coordtransform;
 import com.genersoft.iot.vmp.service.IDeviceChannelService;
-import com.genersoft.iot.vmp.skyeye.enttity.StatusLogs;
-import com.genersoft.iot.vmp.skyeye.redis.RedisMsgPublisher;
-import com.genersoft.iot.vmp.skyeye.redis.RedisTopicEnums;
-import com.genersoft.iot.vmp.skyeye.service.IStatusLogsService;
 import com.genersoft.iot.vmp.storager.IRedisCatchStorage;
 import com.genersoft.iot.vmp.storager.dao.DeviceChannelMapper;
 import com.genersoft.iot.vmp.storager.dao.DeviceMapper;
 import com.genersoft.iot.vmp.utils.DateUtil;
+import com.genersoft.iot.vmp.vmanager.bean.ResourceBaceInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-
-import static cn.hutool.core.date.DatePattern.NORM_DATETIME_FORMATTER;
 
 /**
  * @author lin
  */
 @Service
-public class DeviceChannelServiceImpl extends ServiceImpl<DeviceChannelMapper, DeviceChannel> implements IDeviceChannelService {
+public class DeviceChannelServiceImpl implements IDeviceChannelService {
 
     private final static Logger logger = LoggerFactory.getLogger(DeviceChannelServiceImpl.class);
 
@@ -44,11 +35,6 @@ public class DeviceChannelServiceImpl extends ServiceImpl<DeviceChannelMapper, D
 
     @Autowired
     private DeviceMapper deviceMapper;
-
-    @Resource
-    private RedisMsgPublisher redisMsgPublisher;
-    @Resource
-    private IStatusLogsService statusLogsService;
 
     @Override
     public DeviceChannel updateGps(DeviceChannel deviceChannel, Device device) {
@@ -100,19 +86,6 @@ public class DeviceChannelServiceImpl extends ServiceImpl<DeviceChannelMapper, D
             channel.setCreateTime(now);
             channelMapper.add(channel);
         }else {
-            if(deviceChannel.getStatus()!=channel.getStatus()){
-                String nowStatus = deviceChannel.getStatus()==1?"OFF":"ON";
-                StatusLogs statusLogs = StatusLogs.builder()
-                        .id(IdUtil.nanoId(9))
-                        .serial(deviceId)
-                        .code(channel.getChannelId())
-                        .status(nowStatus)
-                        .description("通道通知状态 "+nowStatus)
-                        .createdAt(LocalDateTime.now().format(NORM_DATETIME_FORMATTER))
-                        .build();
-                statusLogsService.save(statusLogs);
-                redisMsgPublisher.sendMsg(RedisTopicEnums.TOPIC_DEVICE, deviceId.concat(":").concat(channel.getChannelId()).concat(" ").concat(nowStatus));
-            }
             channelMapper.update(channel);
         }
         channelMapper.updateChannelSubCount(deviceId,channel.getParentId());
@@ -189,5 +162,10 @@ public class DeviceChannelServiceImpl extends ServiceImpl<DeviceChannelMapper, D
             }
         }
         return addChannels.size() + updateChannels.size();
+    }
+
+    @Override
+    public ResourceBaceInfo getOverview() {
+        return channelMapper.getOverview();
     }
 }

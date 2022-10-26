@@ -4,6 +4,10 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
+/**
+ * 通道关联参数
+ * @author lin
+ */
 @Schema(description = "通道关联参数")
 public class UpdateChannelParam {
 

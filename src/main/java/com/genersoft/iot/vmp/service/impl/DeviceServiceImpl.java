@@ -1,35 +1,39 @@
 package com.genersoft.iot.vmp.service.impl;
 
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.genersoft.iot.vmp.conf.DynamicTask;
 import com.genersoft.iot.vmp.gb28181.bean.*;
 import com.genersoft.iot.vmp.gb28181.session.VideoStreamSessionManager;
 import com.genersoft.iot.vmp.gb28181.task.ISubscribeTask;
 import com.genersoft.iot.vmp.gb28181.transmit.cmd.ISIPCommander;
 import com.genersoft.iot.vmp.gb28181.transmit.event.request.impl.message.response.cmd.CatalogResponseMessageHandler;
+import com.genersoft.iot.vmp.gb28181.utils.Coordtransform;
 import com.genersoft.iot.vmp.service.IDeviceChannelService;
 import com.genersoft.iot.vmp.service.IDeviceService;
 import com.genersoft.iot.vmp.gb28181.task.impl.CatalogSubscribeTask;
 import com.genersoft.iot.vmp.gb28181.task.impl.MobilePositionSubscribeTask;
 import com.genersoft.iot.vmp.service.IMediaServerService;
-import com.genersoft.iot.vmp.skyeye.redis.RedisMsgPublisher;
-import com.genersoft.iot.vmp.skyeye.redis.RedisTopicEnums;
-import com.genersoft.iot.vmp.skyeye.service.IStatusLogsService;
-import com.genersoft.iot.vmp.skyeye.vo.DeviceTree;
 import com.genersoft.iot.vmp.storager.IRedisCatchStorage;
 import com.genersoft.iot.vmp.storager.IVideoManagerStorage;
 import com.genersoft.iot.vmp.storager.dao.DeviceChannelMapper;
 import com.genersoft.iot.vmp.storager.dao.DeviceMapper;
+import com.genersoft.iot.vmp.storager.dao.PlatformChannelMapper;
 import com.genersoft.iot.vmp.utils.DateUtil;
 import com.genersoft.iot.vmp.vmanager.bean.BaseTree;
+import com.genersoft.iot.vmp.vmanager.bean.ResourceBaceInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.jdbc.support.incrementer.AbstractIdentityColumnMaxValueIncrementer;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.TransactionStatus;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 
-import javax.annotation.Resource;
+import javax.sip.InvalidArgumentException;
+import javax.sip.SipException;
+import java.text.ParseException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,7 +44,7 @@ import java.util.concurrent.TimeUnit;
  * 设备业务（目录订阅）
  */
 @Service
-public class DeviceServiceImpl extends ServiceImpl<DeviceMapper, Device> implements IDeviceService {
+public class DeviceServiceImpl implements IDeviceService {
 
     private final static Logger logger = LoggerFactory.getLogger(DeviceServiceImpl.class);
 
@@ -62,10 +66,19 @@ public class DeviceServiceImpl extends ServiceImpl<DeviceMapper, Device> impleme
     private DeviceMapper deviceMapper;
 
     @Autowired
+    private PlatformChannelMapper platformChannelMapper;
+
+    @Autowired
     private IDeviceChannelService deviceChannelService;
 
     @Autowired
     private DeviceChannelMapper deviceChannelMapper;
+
+    @Autowired
+    DataSourceTransactionManager dataSourceTransactionManager;
+
+    @Autowired
+    TransactionDefinition transactionDefinition;
 
     @Autowired
     private IVideoManagerStorage storage;
@@ -78,10 +91,6 @@ public class DeviceServiceImpl extends ServiceImpl<DeviceMapper, Device> impleme
 
     @Autowired
     private IMediaServerService mediaServerService;
-    @Resource
-    private RedisMsgPublisher redisMsgPublisher;
-    @Resource
-    private IStatusLogsService statusLogsService;
 
     @Override
     public void online(Device device) {
@@ -103,31 +112,38 @@ public class DeviceServiceImpl extends ServiceImpl<DeviceMapper, Device> impleme
             logger.info("[设备上线,首次注册]: {}，查询设备信息以及通道信息", device.getDeviceId());
             deviceMapper.add(device);
             redisCatchStorage.updateDevice(device);
-
-            redisMsgPublisher.sendMsg(RedisTopicEnums.TOPIC_DEVICE, device.getDeviceId().concat(" ").concat("ON"));
-            statusLogsService.deviceOnRegister(device.getDeviceId());
-
-            commander.deviceInfoQuery(device);
+            try {
+                commander.deviceInfoQuery(device);
+            } catch (InvalidArgumentException | SipException | ParseException e) {
+                logger.error("[命令发送失败] 查询设备信息: {}", e.getMessage());
+            }
+            sync(device);
         }else {
+
             if(device.getOnline() == 0){
                 device.setOnline(1);
-                device.setUpdateTime(now);
+                device.setCreateTime(now);
                 logger.info("[设备上线,离线状态下重新注册]: {}，查询设备信息以及通道信息", device.getDeviceId());
                 deviceMapper.update(device);
                 redisCatchStorage.updateDevice(device);
-
-                redisMsgPublisher.sendMsg(RedisTopicEnums.TOPIC_DEVICE, device.getDeviceId().concat(" ").concat("ON"));
-                statusLogsService.deviceHeartbeatOnline(device.getDeviceId());
-
-                commander.deviceInfoQuery(device);
+                try {
+                    commander.deviceInfoQuery(device);
+                } catch (InvalidArgumentException | SipException | ParseException e) {
+                    logger.error("[命令发送失败] 查询设备信息: {}", e.getMessage());
+                }
+                sync(device);
                 // TODO 如果设备下的通道级联到了其他平台，那么需要发送事件或者notify给上级平台
             }else {
+                if (deviceChannelMapper.queryAllChannels(device.getDeviceId()).size() == 0) {
+                    logger.info("[设备上线]: {}，通道数为0,查询通道信息", device.getDeviceId());
+                    sync(device);
+                }
+
                 deviceMapper.update(device);
                 redisCatchStorage.updateDevice(device);
             }
 
         }
-        sync(device);
 
         // 上线添加订阅
         if (device.getSubscribeCycleForCatalog() > 0) {
@@ -144,22 +160,11 @@ public class DeviceServiceImpl extends ServiceImpl<DeviceMapper, Device> impleme
 
     @Override
     public void offline(String deviceId) {
-        offline(deviceId,false);
-    }
-
-    @Override
-    public void offline(String deviceId, boolean positive) {
+        logger.info("[设备离线]， device：{}", deviceId);
         Device device = deviceMapper.getDeviceByDeviceId(deviceId);
         if (device == null) {
             return;
         }
-        if(positive){
-            statusLogsService.doUnRegister(deviceId);
-        }else {
-            statusLogsService.deviceTimeoutOffline(deviceId);
-        }
-        redisMsgPublisher.sendMsg(RedisTopicEnums.TOPIC_DEVICE, deviceId.concat(" ").concat("OFF"));
-
         String registerExpireTaskKey = registerExpireTaskKeyPrefix + deviceId;
         dynamicTask.stop(registerExpireTaskKey);
         device.setOnline(0);
@@ -172,7 +177,7 @@ public class DeviceServiceImpl extends ServiceImpl<DeviceMapper, Device> impleme
         if (ssrcTransactions != null && ssrcTransactions.size() > 0) {
             for (SsrcTransaction ssrcTransaction : ssrcTransactions) {
                 mediaServerService.releaseSsrc(ssrcTransaction.getMediaServerId(), ssrcTransaction.getSsrc());
-                mediaServerService.closeRTPServer(deviceId, ssrcTransaction.getChannelId(), ssrcTransaction.getStream());
+                mediaServerService.closeRTPServer(ssrcTransaction.getMediaServerId(), ssrcTransaction.getStream());
                 streamSession.remove(deviceId, ssrcTransaction.getChannelId(), ssrcTransaction.getStream());
             }
         }
@@ -265,15 +270,28 @@ public class DeviceServiceImpl extends ServiceImpl<DeviceMapper, Device> impleme
         }
         int sn = (int)((Math.random()*9+1)*100000);
         catalogResponseMessageHandler.setChannelSyncReady(device, sn);
-        sipCommander.catalogQuery(device, sn, event -> {
-            String errorMsg = String.format("同步通道失败，错误码： %s, %s", event.statusCode, event.msg);
+        try {
+            sipCommander.catalogQuery(device, sn, event -> {
+                String errorMsg = String.format("同步通道失败，错误码： %s, %s", event.statusCode, event.msg);
+                catalogResponseMessageHandler.setChannelSyncEnd(device.getDeviceId(), errorMsg);
+            });
+        } catch (SipException | InvalidArgumentException | ParseException e) {
+            logger.error("[同步通道], 信令发送失败：{}", e.getMessage() );
+            String errorMsg = String.format("同步通道失败，信令发送失败： %s", e.getMessage());
             catalogResponseMessageHandler.setChannelSyncEnd(device.getDeviceId(), errorMsg);
-        });
+        }
     }
 
     @Override
-    public Device queryDevice(String deviceId) {
-        return deviceMapper.getDeviceByDeviceId(deviceId);
+    public Device getDevice(String deviceId) {
+        Device device = redisCatchStorage.getDevice(deviceId);
+        if (device == null) {
+            device = deviceMapper.getDeviceByDeviceId(deviceId);
+            if (device != null) {
+                redisCatchStorage.updateDevice(device);
+            }
+        }
+        return device;
     }
 
     @Override
@@ -293,66 +311,21 @@ public class DeviceServiceImpl extends ServiceImpl<DeviceMapper, Device> impleme
         if (device == null || device.getOnline() == 0) {
             return;
         }
-        sipCommander.deviceStatusQuery(device, null);
+        try {
+            sipCommander.deviceStatusQuery(device, null);
+        } catch (InvalidArgumentException | SipException | ParseException e) {
+            logger.error("[命令发送失败] 设备状态查询: {}", e.getMessage());
+        }
 
     }
 
     @Override
-    public List<Device> getDeviceByHostAndPort(String host, int port) {
+    public Device getDeviceByHostAndPort(String host, int port) {
         return deviceMapper.getDeviceByHostAndPort(host, port);
     }
 
     @Override
     public void updateDevice(Device device) {
-
-        Device deviceInStore = deviceMapper.getDeviceByDeviceId(device.getDeviceId());
-        if (deviceInStore == null) {
-            logger.warn("更新设备时未找到设备信息");
-            return;
-        }
-        if (!ObjectUtils.isEmpty(device.getName())) {
-            deviceInStore.setName(device.getName());
-        }
-        if (!ObjectUtils.isEmpty(device.getCharset())) {
-            deviceInStore.setCharset(device.getCharset());
-        }
-        if (!ObjectUtils.isEmpty(device.getMediaServerId())) {
-            deviceInStore.setMediaServerId(device.getMediaServerId());
-        }
-
-        //  目录订阅相关的信息
-        if (device.getSubscribeCycleForCatalog() > 0) {
-            if (deviceInStore.getSubscribeCycleForCatalog() == 0 || deviceInStore.getSubscribeCycleForCatalog() != device.getSubscribeCycleForCatalog()) {
-                deviceInStore.setSubscribeCycleForCatalog(device.getSubscribeCycleForCatalog());
-                // 开启订阅
-                addCatalogSubscribe(deviceInStore);
-            }
-        }else if (device.getSubscribeCycleForCatalog() == 0) {
-            if (deviceInStore.getSubscribeCycleForCatalog() != 0) {
-                deviceInStore.setSubscribeCycleForCatalog(device.getSubscribeCycleForCatalog());
-                // 取消订阅
-                removeCatalogSubscribe(deviceInStore);
-            }
-        }
-
-        // 移动位置订阅相关的信息
-        if (device.getSubscribeCycleForMobilePosition() > 0) {
-            if (deviceInStore.getSubscribeCycleForMobilePosition() == 0 || deviceInStore.getSubscribeCycleForMobilePosition() != device.getSubscribeCycleForMobilePosition()) {
-                deviceInStore.setMobilePositionSubmissionInterval(device.getMobilePositionSubmissionInterval());
-                deviceInStore.setSubscribeCycleForMobilePosition(device.getSubscribeCycleForMobilePosition());
-                // 开启订阅
-                addMobilePositionSubscribe(deviceInStore);
-            }
-        }else if (device.getSubscribeCycleForMobilePosition() == 0) {
-            if (deviceInStore.getSubscribeCycleForMobilePosition() != 0) {
-                // 取消订阅
-                removeMobilePositionSubscribe(deviceInStore);
-            }
-        }
-        // 坐标系变化，需要重新计算GCJ02坐标和WGS84坐标
-        if (!deviceInStore.getGeoCoordSys().equals(device.getGeoCoordSys())) {
-            updateDeviceChannelGeoCoordSys(device);
-        }
 
         String now = DateUtil.getNow();
         device.setUpdateTime(now);
@@ -396,10 +369,10 @@ public class DeviceServiceImpl extends ServiceImpl<DeviceMapper, Device> impleme
                 return null;
             }
             // 使用行政区划展示树
-            if (parentId.length() > 10) {
-                // TODO 可能是行政区划与业务分组混杂的情形
-                return null;
-            }
+//            if (parentId.length() > 10) {
+//                // TODO 可能是行政区划与业务分组混杂的情形
+//                return null;
+//            }
 
             if (parentId.length() == 10 ) {
                 if (onlyCatalog) {
@@ -414,7 +387,18 @@ public class DeviceServiceImpl extends ServiceImpl<DeviceMapper, Device> impleme
             List<DeviceChannel> channelsForCivilCode = deviceChannelMapper.getChannelsWithCivilCodeAndLength(deviceId, parentId, parentId.length() + 2);
             if (!onlyCatalog) {
                 List<DeviceChannel> channels = deviceChannelMapper.getChannelsByCivilCode(deviceId, parentId);
-                channelsForCivilCode.addAll(channels);
+
+                for(DeviceChannel channel : channels) {
+                    boolean flag = false;
+                    for(DeviceChannel deviceChannel : channelsForCivilCode) {
+                        if(channel.getChannelId().equals(deviceChannel.getChannelId())) {
+                            flag = true;
+                        }
+                    }
+                    if(!flag) {
+                        channelsForCivilCode.add(channel);
+                    }
+                }
             }
             List<BaseTree<DeviceChannel>> trees = transportChannelsToTree(channelsForCivilCode, parentId);
             return trees;
@@ -475,24 +459,6 @@ public class DeviceServiceImpl extends ServiceImpl<DeviceMapper, Device> impleme
         }
 
         return null;
-    }
-
-    @Override
-    public List<DeviceTree> channeltree(String serial, Boolean subfetch, String pcode, Integer limit) {
-        return baseMapper.deviceTree(serial);
-    }
-
-    @Override
-    public boolean removeDeviceById(String serial) {
-        try {
-            deviceChannelService.remove(Wrappers.<DeviceChannel>lambdaQuery().eq(DeviceChannel::getDeviceId, serial));
-            baseMapper.del(serial);
-            redisMsgPublisher.sendMsg(RedisTopicEnums.TOPIC_DEVICE, serial.concat(" ").concat("DEL"));
-            return true;
-        }catch (Exception e){
-            log.error("删除设备出错",e);
-        }
-        return false;
     }
 
     private List<BaseTree<DeviceChannel>> transportChannelsToTree(List<DeviceChannel> channels, String parentId) {
@@ -571,4 +537,98 @@ public class DeviceServiceImpl extends ServiceImpl<DeviceMapper, Device> impleme
         return result;
     }
 
+    @Override
+    public boolean isExist(String deviceId) {
+        return deviceMapper.getDeviceByDeviceId(deviceId) != null;
+    }
+
+    @Override
+    public void addDevice(Device device) {
+        device.setOnline(0);
+        device.setCreateTime(DateUtil.getNow());
+        device.setUpdateTime(DateUtil.getNow());
+        deviceMapper.addCustomDevice(device);
+    }
+
+    @Override
+    public void updateCustomDevice(Device device) {
+        Device deviceInStore = deviceMapper.getDeviceByDeviceId(device.getDeviceId());
+        if (deviceInStore == null) {
+            logger.warn("更新设备时未找到设备信息");
+            return;
+        }
+        if (!ObjectUtils.isEmpty(device.getName())) {
+            deviceInStore.setName(device.getName());
+        }
+        if (!ObjectUtils.isEmpty(device.getCharset())) {
+            deviceInStore.setCharset(device.getCharset());
+        }
+        if (!ObjectUtils.isEmpty(device.getMediaServerId())) {
+            deviceInStore.setMediaServerId(device.getMediaServerId());
+        }
+        deviceInStore.setSdpIp(device.getSdpIp());
+        deviceInStore.setCharset(device.getCharset());
+        deviceInStore.setTreeType(device.getTreeType());
+
+        //  目录订阅相关的信息
+        if (device.getSubscribeCycleForCatalog() > 0) {
+            if (deviceInStore.getSubscribeCycleForCatalog() == 0 || deviceInStore.getSubscribeCycleForCatalog() != device.getSubscribeCycleForCatalog()) {
+                deviceInStore.setSubscribeCycleForCatalog(device.getSubscribeCycleForCatalog());
+                // 开启订阅
+                addCatalogSubscribe(deviceInStore);
+            }
+        }else if (device.getSubscribeCycleForCatalog() == 0) {
+            if (deviceInStore.getSubscribeCycleForCatalog() != 0) {
+                deviceInStore.setSubscribeCycleForCatalog(device.getSubscribeCycleForCatalog());
+                // 取消订阅
+                removeCatalogSubscribe(deviceInStore);
+            }
+        }
+
+        // 移动位置订阅相关的信息
+        if (device.getSubscribeCycleForMobilePosition() > 0) {
+            if (deviceInStore.getSubscribeCycleForMobilePosition() == 0 || deviceInStore.getSubscribeCycleForMobilePosition() != device.getSubscribeCycleForMobilePosition()) {
+                deviceInStore.setMobilePositionSubmissionInterval(device.getMobilePositionSubmissionInterval());
+                deviceInStore.setSubscribeCycleForMobilePosition(device.getSubscribeCycleForMobilePosition());
+                // 开启订阅
+                addMobilePositionSubscribe(deviceInStore);
+            }
+        }else if (device.getSubscribeCycleForMobilePosition() == 0) {
+            if (deviceInStore.getSubscribeCycleForMobilePosition() != 0) {
+                // 取消订阅
+                removeMobilePositionSubscribe(deviceInStore);
+            }
+        }
+        // 坐标系变化，需要重新计算GCJ02坐标和WGS84坐标
+        if (!deviceInStore.getGeoCoordSys().equals(device.getGeoCoordSys())) {
+            updateDeviceChannelGeoCoordSys(device);
+        }
+        // 更新redis
+        redisCatchStorage.updateDevice(device);
+        deviceMapper.updateCustom(device);
+    }
+
+    @Override
+    public boolean delete(String deviceId) {
+        TransactionStatus transactionStatus = dataSourceTransactionManager.getTransaction(transactionDefinition);
+        boolean result = false;
+        try {
+            platformChannelMapper.delChannelForDeviceId(deviceId);
+            deviceChannelMapper.cleanChannelsByDeviceId(deviceId);
+            if ( deviceMapper.del(deviceId) < 0 ) {
+                //事务回滚
+                dataSourceTransactionManager.rollback(transactionStatus);
+            }
+            result = true;
+            dataSourceTransactionManager.commit(transactionStatus);     //手动提交
+        }catch (Exception e) {
+            dataSourceTransactionManager.rollback(transactionStatus);
+        }
+        return result;
+    }
+
+    @Override
+    public ResourceBaceInfo getOverview() {
+        return deviceMapper.getOverview();
+    }
 }

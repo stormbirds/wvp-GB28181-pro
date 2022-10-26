@@ -102,8 +102,6 @@ export default {
       this.device = device;
       if (data.channelId && !isCatalog) {
         // 点击通道
-        console.log("data[this.longitudeStr]:" + data[this.longitudeStr])
-        console.log("data[this.latitudeStr]:" + data[this.latitudeStr])
         if (data[this.longitudeStr] * data[this.latitudeStr] === 0) {
           this.$message.error('未获取到位置信息');
         } else {

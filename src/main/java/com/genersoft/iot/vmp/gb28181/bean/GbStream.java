@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * 直播流关联国标上级平台
+ * @author lin
  */
 @Schema(description = "直播流关联国标上级平台")
 public class GbStream extends PlatformGbStream{

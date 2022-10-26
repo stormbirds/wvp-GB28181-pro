@@ -88,7 +88,7 @@ public class LogController {
      *  清空日志
      *
      */
-    @Operation(summary = "清空日志")
+    @Operation(summary = "停止视频回放")
     @DeleteMapping("/clear")
     public void clear() {
         logService.clear();
