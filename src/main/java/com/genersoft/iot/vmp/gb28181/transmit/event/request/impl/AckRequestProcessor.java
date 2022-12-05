@@ -1,6 +1,7 @@
 package com.genersoft.iot.vmp.gb28181.transmit.event.request.impl;
 
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
 import com.genersoft.iot.vmp.conf.DynamicTask;
 import com.genersoft.iot.vmp.gb28181.bean.ParentPlatform;
 import com.genersoft.iot.vmp.gb28181.bean.SendRtpItem;
@@ -9,8 +10,8 @@ import com.genersoft.iot.vmp.gb28181.transmit.cmd.ISIPCommander;
 import com.genersoft.iot.vmp.gb28181.transmit.cmd.ISIPCommanderForPlatform;
 import com.genersoft.iot.vmp.gb28181.transmit.event.request.ISIPRequestProcessor;
 import com.genersoft.iot.vmp.gb28181.transmit.event.request.SIPRequestProcessorParent;
-import com.genersoft.iot.vmp.media.zlm.ZlmHttpHookSubscribe;
 import com.genersoft.iot.vmp.media.zlm.ZLMRTPServerFactory;
+import com.genersoft.iot.vmp.media.zlm.ZlmHttpHookSubscribe;
 import com.genersoft.iot.vmp.media.zlm.dto.MediaServerItem;
 import com.genersoft.iot.vmp.service.IMediaServerService;
 import com.genersoft.iot.vmp.service.bean.RequestPushStreamMsg;
@@ -32,7 +33,8 @@ import javax.sip.header.FromHeader;
 import javax.sip.header.HeaderAddress;
 import javax.sip.header.ToHeader;
 import java.text.ParseException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * SIP命令类型： ACK请求
@@ -60,6 +62,9 @@ public class AckRequestProcessor extends SIPRequestProcessorParent implements In
 
 	@Autowired
 	private ZLMRTPServerFactory zlmrtpServerFactory;
+
+	@Autowired
+	private ZlmHttpHookSubscribe hookSubscribe;
 
 	@Autowired
 	private IMediaServerService mediaServerService;
@@ -115,9 +120,9 @@ public class AckRequestProcessor extends SIPRequestProcessorParent implements In
 		param.put("pt", sendRtpItem.getPt());
 		param.put("use_ps", sendRtpItem.isUsePs() ? "1" : "0");
 		param.put("only_audio", sendRtpItem.isOnlyAudio() ? "1" : "0");
-		if (!sendRtpItem.isTcp() && parentPlatform.isRtcp()) {
+		if (!sendRtpItem.isTcp()) {
 			// 开启rtcp保活
-			param.put("udp_rtcp_timeout", "1");
+			param.put("udp_rtcp_timeout", sendRtpItem.isRtcp()? "1":"0");
 		}
 
 		if (mediaInfo == null) {
@@ -129,8 +134,18 @@ public class AckRequestProcessor extends SIPRequestProcessorParent implements In
 				startSendRtpStreamHand(evt, sendRtpItem, parentPlatform, jsonObject, param, callIdHeader);
 			});
 		}else {
-			JSONObject jsonObject = zlmrtpServerFactory.startSendRtpStream(mediaInfo, param);
-			startSendRtpStreamHand(evt, sendRtpItem, parentPlatform, jsonObject, param, callIdHeader);
+			// 如果是非严格模式，需要关闭端口占用
+			JSONObject startSendRtpStreamResult = null;
+			if (sendRtpItem.getLocalPort() != 0) {
+				if (zlmrtpServerFactory.releasePort(mediaInfo, sendRtpItem.getSsrc())) {
+					startSendRtpStreamResult = zlmrtpServerFactory.startSendRtpStream(mediaInfo, param);
+				}
+			}else {
+				startSendRtpStreamResult = zlmrtpServerFactory.startSendRtpStream(mediaInfo, param);
+			}
+			if (startSendRtpStreamResult != null) {
+				startSendRtpStreamHand(evt, sendRtpItem, parentPlatform, startSendRtpStreamResult, param, callIdHeader);
+			}
 		}
 	}
 	private void startSendRtpStreamHand(RequestEvent evt, SendRtpItem sendRtpItem, ParentPlatform parentPlatform,
@@ -141,7 +156,7 @@ public class AckRequestProcessor extends SIPRequestProcessorParent implements In
 			logger.info("调用ZLM推流接口, 结果： {}",  jsonObject);
 			logger.info("RTP推流成功[ {}/{} ]，{}->{}:{}, " ,param.get("app"), param.get("stream"), jsonObject.getString("local_port"), param.get("dst_url"), param.get("dst_port"));
 		} else {
-			logger.error("RTP推流失败: {}, 参数：{}",jsonObject.getString("msg"),JSONObject.toJSON(param));
+			logger.error("RTP推流失败: {}, 参数：{}",jsonObject.getString("msg"), JSON.toJSONString(param));
 			if (sendRtpItem.isOnlyAudio()) {
 				// TODO 可能是语音对讲
 			}else {

@@ -1,7 +1,7 @@
 package com.genersoft.iot.vmp.vmanager.server;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
 import com.genersoft.iot.vmp.VManageBootstrap;
 import com.genersoft.iot.vmp.common.SystemAllInfo;
 import com.genersoft.iot.vmp.common.VersionPo;
@@ -135,14 +135,8 @@ public class ServerController {
         MediaServerItem mediaServerItemInDatabase = mediaServerService.getOne(mediaServerItem.getId());
 
         if (mediaServerItemInDatabase != null) {
-            if (ObjectUtils.isEmpty(mediaServerItemInDatabase.getSendRtpPortRange()) && ObjectUtils.isEmpty(mediaServerItem.getSendRtpPortRange())) {
-                mediaServerItem.setSendRtpPortRange("30000,30500");
-            }
             mediaServerService.update(mediaServerItem);
         } else {
-            if (ObjectUtils.isEmpty(mediaServerItem.getSendRtpPortRange())) {
-                mediaServerItem.setSendRtpPortRange("30000,30500");
-            }
             mediaServerService.add(mediaServerItem);
         }
     }
@@ -164,25 +158,25 @@ public class ServerController {
     @GetMapping(value = "/restart")
     @ResponseBody
     public void restart() {
-        taskExecutor.execute(()-> {
-            try {
-                Thread.sleep(3000);
-                SipProvider up = (SipProvider) SpringBeanFactory.getBean("udpSipProvider");
-                SipStackImpl stack = (SipStackImpl) up.getSipStack();
-                stack.stop();
-                Iterator listener = stack.getListeningPoints();
-                while (listener.hasNext()) {
-                    stack.deleteListeningPoint((ListeningPoint) listener.next());
-                }
-                Iterator providers = stack.getSipProviders();
-                while (providers.hasNext()) {
-                    stack.deleteSipProvider((SipProvider) providers.next());
-                }
-                VManageBootstrap.restart();
-            } catch (InterruptedException | ObjectInUseException e) {
-                throw new ControllerException(ErrorCode.ERROR100.getCode(), e.getMessage());
-            }
-        });
+//        taskExecutor.execute(()-> {
+//            try {
+//                Thread.sleep(3000);
+//                SipProvider up = (SipProvider) SpringBeanFactory.getBean("udpSipProvider");
+//                SipStackImpl stack = (SipStackImpl) up.getSipStack();
+//                stack.stop();
+//                Iterator listener = stack.getListeningPoints();
+//                while (listener.hasNext()) {
+//                    stack.deleteListeningPoint((ListeningPoint) listener.next());
+//                }
+//                Iterator providers = stack.getSipProviders();
+//                while (providers.hasNext()) {
+//                    stack.deleteSipProvider((SipProvider) providers.next());
+//                }
+//                VManageBootstrap.restart();
+//            } catch (InterruptedException | ObjectInUseException e) {
+//                throw new ControllerException(ErrorCode.ERROR100.getCode(), e.getMessage());
+//            }
+//        });
     };
 
     @Operation(summary = "获取系统信息信息")

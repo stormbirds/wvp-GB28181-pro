@@ -53,89 +53,93 @@
                                 更多地址<i class="el-icon-arrow-down el-icon--right"></i>
                               </el-button>
                               <el-dropdown-menu slot="dropdown" >
-                                <el-dropdown-item :command="streamInfo.flv">
+                                <el-dropdown-item v-if="streamInfo.flv" :command="streamInfo.flv.url">
                                   <el-tag >FLV:</el-tag>
-                                  <span>{{ streamInfo.flv }}</span>
+                                  <span>{{ streamInfo.flv.url }}</span>
                                 </el-dropdown-item>
-                                <el-dropdown-item :command="streamInfo.https_flv">
+                                <el-dropdown-item v-if="streamInfo.https_flv" :command="streamInfo.https_flv.url">
                                   <el-tag >FLV(https):</el-tag>
-                                  <span>{{ streamInfo.https_flv }}</span>
+                                  <span>{{ streamInfo.https_flv.url }}</span>
                                 </el-dropdown-item>
-                                <el-dropdown-item :command="streamInfo.ws_flv">
+                                <el-dropdown-item v-if="streamInfo.ws_flv" :command="streamInfo.ws_flv.url">
                                   <el-tag  >FLV(ws):</el-tag>
-                                  <span >{{ streamInfo.ws_flv }}</span>
+                                  <span >{{ streamInfo.ws_flv.url }}</span>
                                 </el-dropdown-item>
-                                <el-dropdown-item :command="streamInfo.wss_flv">
+                                <el-dropdown-item v-if="streamInfo.wss_flv" :command="streamInfo.wss_flv.url">
                                   <el-tag  >FLV(wss):</el-tag>
-                                  <span>{{ streamInfo.wss_flv }}</span>
+                                  <span>{{ streamInfo.wss_flv.url }}</span>
                                 </el-dropdown-item>
-                                <el-dropdown-item :command="streamInfo.fmp4">
+                                <el-dropdown-item v-if="streamInfo.fmp4" :command="streamInfo.fmp4.url">
                                   <el-tag >FMP4:</el-tag>
-                                  <span>{{ streamInfo.fmp4 }}</span>
+                                  <span>{{ streamInfo.fmp4.url }}</span>
                                 </el-dropdown-item>
-                                <el-dropdown-item :command="streamInfo.https_fmp4">
+                                <el-dropdown-item v-if="streamInfo.https_fmp4" :command="streamInfo.https_fmp4.url">
                                   <el-tag >FMP4(https):</el-tag>
-                                  <span>{{ streamInfo.https_fmp4 }}</span>
+                                  <span>{{ streamInfo.https_fmp4.url }}</span>
                                 </el-dropdown-item>
-                                <el-dropdown-item :command="streamInfo.ws_fmp4">
+                                <el-dropdown-item v-if="streamInfo.ws_fmp4" :command="streamInfo.ws_fmp4.url">
                                   <el-tag >FMP4(ws):</el-tag>
-                                  <span>{{ streamInfo.ws_fmp4 }}</span>
+                                  <span>{{ streamInfo.ws_fmp4.url }}</span>
                                 </el-dropdown-item>
-                                <el-dropdown-item :command="streamInfo.wss_fmp4">
+                                <el-dropdown-item v-if="streamInfo.wss_fmp4" :command="streamInfo.wss_fmp4.url">
                                   <el-tag >FMP4(wss):</el-tag>
-                                  <span>{{ streamInfo.wss_fmp4 }}</span>
+                                  <span>{{ streamInfo.wss_fmp4.url }}</span>
                                 </el-dropdown-item>
-                                <el-dropdown-item :command="streamInfo.hls">
+                                <el-dropdown-item v-if="streamInfo.hls" :command="streamInfo.hls.url">
                                   <el-tag>HLS:</el-tag>
-                                  <span>{{ streamInfo.hls }}</span>
+                                  <span>{{ streamInfo.hls.url }}</span>
                                 </el-dropdown-item>
-                                <el-dropdown-item :command="streamInfo.https_hls">
+                                <el-dropdown-item v-if="streamInfo.https_hls" :command="streamInfo.https_hls.url">
                                   <el-tag >HLS(https):</el-tag>
-                                  <span>{{ streamInfo.https_hls }}</span>
+                                  <span>{{ streamInfo.https_hls.url }}</span>
                                 </el-dropdown-item>
-                                <el-dropdown-item :command="streamInfo.ws_hls">
+                                <el-dropdown-item v-if="streamInfo.ws_hls" :command="streamInfo.ws_hls.url">
                                   <el-tag >HLS(ws):</el-tag>
-                                  <span>{{ streamInfo.ws_hls }}</span>
+                                  <span>{{ streamInfo.ws_hls.url }}</span>
                                 </el-dropdown-item>
-                                <el-dropdown-item :command="streamInfo.wss_hls">
+                                <el-dropdown-item v-if="streamInfo.wss_hls"  :command="streamInfo.wss_hls.url">
                                   <el-tag >HLS(wss):</el-tag>
-                                  <span>{{ streamInfo.wss_hls }}</span>
+                                  <span>{{ streamInfo.wss_hls.url }}</span>
                                 </el-dropdown-item>
-                                <el-dropdown-item :command="streamInfo.ts">
+                                <el-dropdown-item v-if="streamInfo.ts"  :command="streamInfo.ts.url">
                                   <el-tag>TS:</el-tag>
-                                  <span>{{ streamInfo.ts }}</span>
+                                  <span>{{ streamInfo.ts.url }}</span>
                                 </el-dropdown-item>
-                                <el-dropdown-item :command="streamInfo.https_ts">
+                                <el-dropdown-item v-if="streamInfo.https_ts" :command="streamInfo.https_ts.url">
                                   <el-tag>TS(https):</el-tag>
-                                  <span>{{ streamInfo.https_ts }}</span>
+                                  <span>{{ streamInfo.https_ts.url }}</span>
                                 </el-dropdown-item>
-                                <el-dropdown-item :command="streamInfo.ws_ts">
+                                <el-dropdown-item v-if="streamInfo.ws_ts" :command="streamInfo.ws_ts.url">
                                   <el-tag>TS(ws):</el-tag>
-                                  <span>{{ streamInfo.ws_ts }}</span>
+                                  <span>{{ streamInfo.ws_ts.url }}</span>
                                 </el-dropdown-item>
-                                <el-dropdown-item :command="streamInfo.wss_ts">
+                                <el-dropdown-item v-if="streamInfo.wss_ts" :command="streamInfo.wss_ts.url">
                                   <el-tag>TS(wss):</el-tag>
-                                  <span>{{ streamInfo.wss_ts }}</span>
+                                  <span>{{ streamInfo.wss_ts.url }}</span>
                                 </el-dropdown-item>
-                                <el-dropdown-item :command="streamInfo.rtc">
+                                <el-dropdown-item v-if="streamInfo.rtc" :command="streamInfo.rtc.url">
                                   <el-tag >RTC:</el-tag>
-                                  <span>{{ streamInfo.rtc }}</span>
+                                  <span>{{ streamInfo.rtc.url }}</span>
                                 </el-dropdown-item>
-                                <el-dropdown-item :command="streamInfo.rtmp">
+                                <el-dropdown-item v-if="streamInfo.rtcs" :command="streamInfo.rtcs.url">
+                                  <el-tag >RTCS:</el-tag>
+                                  <span>{{ streamInfo.rtcs.url }}</span>
+                                </el-dropdown-item>
+                                <el-dropdown-item v-if="streamInfo.rtmp" :command="streamInfo.rtmp.url">
                                   <el-tag >RTMP:</el-tag>
-                                  <span>{{ streamInfo.rtmp }}</span>
+                                  <span>{{ streamInfo.rtmp.url }}</span>
                                 </el-dropdown-item>
-                                <el-dropdown-item :command="streamInfo.rtmps">
+                                <el-dropdown-item v-if="streamInfo.rtmps" :command="streamInfo.rtmps.url">
                                   <el-tag >RTMPS:</el-tag>
-                                  <span>{{ streamInfo.rtmps }}</span>
+                                  <span>{{ streamInfo.rtmps.url }}</span>
                                 </el-dropdown-item>
-                                <el-dropdown-item :command="streamInfo.rtsp">
+                                <el-dropdown-item v-if="streamInfo.rtsp" :command="streamInfo.rtsp.url">
                                   <el-tag >RTSP:</el-tag>
-                                  <span>{{ streamInfo.rtsp }}</span>
+                                  <span>{{ streamInfo.rtsp.url }}</span>
                                 </el-dropdown-item>
-                                <el-dropdown-item :command="streamInfo.rtsps">
+                                <el-dropdown-item v-if="streamInfo.rtsps" :command="streamInfo.rtsps.url">
                                   <el-tag >RTSPS:</el-tag>
-                                  <span>{{ streamInfo.rtsps }}</span>
+                                  <span>{{ streamInfo.rtsps.url }}</span>
                                 </el-dropdown-item>
                               </el-dropdown-menu>
                             </el-dropdown>
@@ -322,7 +326,7 @@ export default {
             player: {
               jessibuca : ["ws_flv", "wss_flv"],
               livePlayer : ["ws_flv", "wss_flv"],
-              webRTC: ["rtc", "rtc"],
+              webRTC: ["rtc", "rtcs"],
             },
             videoHistory: {
                 date: '',
@@ -393,7 +397,7 @@ export default {
         changePlayer: function (tab) {
             console.log(this.player[tab.name][0])
             this.activePlayer = tab.name;
-            this.videoUrl = this.streamInfo[this.player[tab.name][0]]
+            this.videoUrl = this.getUrlByStreamInfo()
             console.log(this.videoUrl)
         },
         openDialog: function (tab, deviceId, channelId, param) {
@@ -446,9 +450,9 @@ export default {
         getUrlByStreamInfo(){
             console.log(this.streamInfo)
             if (location.protocol === "https:") {
-              this.videoUrl = this.streamInfo[this.player[this.activePlayer][1]]
+              this.videoUrl = this.streamInfo[this.player[this.activePlayer][1]].url
             }else {
-              this.videoUrl = this.streamInfo[this.player[this.activePlayer][0]]
+              this.videoUrl = this.streamInfo[this.player[this.activePlayer][0]].url
             }
             return this.videoUrl;
 

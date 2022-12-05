@@ -1,6 +1,6 @@
 package com.genersoft.iot.vmp.service;
 
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson2.JSONObject;
 import com.genersoft.iot.vmp.common.StreamInfo;
 import com.genersoft.iot.vmp.conf.exception.ServiceException;
 import com.genersoft.iot.vmp.gb28181.bean.Device;
@@ -13,7 +13,6 @@ import com.genersoft.iot.vmp.service.bean.InviteTimeOutCallback;
 import com.genersoft.iot.vmp.service.bean.PlayBackCallback;
 import com.genersoft.iot.vmp.service.bean.SSRCInfo;
 import com.genersoft.iot.vmp.vmanager.bean.WVPResult;
-import com.genersoft.iot.vmp.vmanager.gb28181.play.bean.PlayResult;
 import org.springframework.web.context.request.async.DeferredResult;
 
 import javax.sip.InvalidArgumentException;
@@ -25,12 +24,12 @@ import java.text.ParseException;
  */
 public interface IPlayService {
 
-    void onPublishHandlerForPlay(MediaServerItem mediaServerItem, JSONObject resonse, String deviceId, String channelId, String uuid);
+    void onPublishHandlerForPlay(MediaServerItem mediaServerItem, JSONObject resonse, String deviceId, String channelId);
 
     void play(MediaServerItem mediaServerItem, SSRCInfo ssrcInfo, Device device, String channelId,
               ZlmHttpHookSubscribe.Event hookEvent, SipSubscribe.Event errorEvent,
-              InviteTimeOutCallback timeoutCallback, String uuid);
-    PlayResult play(MediaServerItem mediaServerItem, String deviceId, String channelId, ZlmHttpHookSubscribe.Event event, SipSubscribe.Event errorEvent, Runnable timeoutCallback);
+              InviteTimeOutCallback timeoutCallback);
+    void play(MediaServerItem mediaServerItem, String deviceId, String channelId, ZlmHttpHookSubscribe.Event event, SipSubscribe.Event errorEvent, Runnable timeoutCallback);
 
     MediaServerItem getNewMediaServerItem(Device device);
 

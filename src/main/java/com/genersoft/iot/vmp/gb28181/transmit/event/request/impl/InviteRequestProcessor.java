@@ -1,6 +1,6 @@
 package com.genersoft.iot.vmp.gb28181.transmit.event.request.impl;
 
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson2.JSONObject;
 import com.genersoft.iot.vmp.conf.DynamicTask;
 import com.genersoft.iot.vmp.conf.UserSetting;
 import com.genersoft.iot.vmp.gb28181.bean.*;
@@ -8,14 +8,13 @@ import com.genersoft.iot.vmp.gb28181.event.SipSubscribe;
 import com.genersoft.iot.vmp.gb28181.session.VideoStreamSessionManager;
 import com.genersoft.iot.vmp.gb28181.transmit.SIPProcessorObserver;
 import com.genersoft.iot.vmp.gb28181.transmit.SIPSender;
-import com.genersoft.iot.vmp.gb28181.transmit.cmd.ISIPCommander;
 import com.genersoft.iot.vmp.gb28181.transmit.cmd.impl.SIPCommanderFroPlatform;
 import com.genersoft.iot.vmp.gb28181.transmit.event.request.ISIPRequestProcessor;
 import com.genersoft.iot.vmp.gb28181.transmit.event.request.SIPRequestProcessorParent;
 import com.genersoft.iot.vmp.gb28181.utils.SipUtils;
-import com.genersoft.iot.vmp.media.zlm.ZlmHttpHookSubscribe;
 import com.genersoft.iot.vmp.media.zlm.ZLMMediaListManager;
 import com.genersoft.iot.vmp.media.zlm.ZLMRTPServerFactory;
+import com.genersoft.iot.vmp.media.zlm.ZlmHttpHookSubscribe;
 import com.genersoft.iot.vmp.media.zlm.dto.*;
 import com.genersoft.iot.vmp.service.IMediaServerService;
 import com.genersoft.iot.vmp.service.IPlayService;
@@ -39,12 +38,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.sdp.*;
-import javax.sip.*;
+import javax.sip.InvalidArgumentException;
+import javax.sip.RequestEvent;
+import javax.sip.SipException;
 import javax.sip.header.CallIdHeader;
-import javax.sip.message.Request;
 import javax.sip.message.Response;
 import java.text.ParseException;
 import java.time.Instant;
+import java.util.Random;
 import java.util.Vector;
 
 /**
@@ -157,11 +158,6 @@ public class InviteRequestProcessor extends SIPRequestProcessorParent implements
                 StreamProxyItem proxyByAppAndStream =null;
                 // 不是通道可能是直播流
                 if (channel != null && gbStream == null) {
-//                    if (channel.getStatus() == 0) {
-//                        logger.info("通道离线，返回400");
-//                        responseAck(request, Response.BAD_REQUEST, "channel [" + channel.getChannelId() + "] offline");
-//                        return;
-//                    }
                     // 通道存在，发100，TRYING
                     try {
                         responseAck(request, Response.TRYING);
@@ -345,8 +341,7 @@ public class InviteRequestProcessor extends SIPRequestProcessorParent implements
                         return;
                     }
                     SendRtpItem sendRtpItem = zlmrtpServerFactory.createSendRtpItem(mediaServerItem, addressStr, port, ssrc, requesterId,
-                            device.getDeviceId(), channelId,
-                            mediaTransmissionTCP);
+                            device.getDeviceId(), channelId, mediaTransmissionTCP, platform.isRtcp());
 
                     if (tcpActive != null) {
                         sendRtpItem.setTcpActive(tcpActive);
@@ -385,7 +380,12 @@ public class InviteRequestProcessor extends SIPRequestProcessorParent implements
                         } else {
                             content.append("t=0 0\r\n");
                         }
-                        content.append("m=video " + sendRtpItem.getLocalPort() + " RTP/AVP 96\r\n");
+                        int localPort = sendRtpItem.getLocalPort();
+                        if (localPort == 0) {
+                            // 非严格模式端口不统一, 增加兼容性，修改为一个不为0的端口
+                            localPort = new Random().nextInt(65535) + 1;
+                        }
+                        content.append("m=video " + localPort + " RTP/AVP 96\r\n");
                         content.append("a=sendonly\r\n");
                         content.append("a=rtpmap:96 PS/90000\r\n");
                         content.append("y=" + sendRtpItem.getSsrc() + "\r\n");
@@ -417,7 +417,7 @@ public class InviteRequestProcessor extends SIPRequestProcessorParent implements
                         // 未知错误。直接转发设备点播的错误
                         try {
                             Response response = getMessageFactory().createResponse(event.statusCode, evt.getRequest());
-                            sipSender.transmitRequest(response);
+                            sipSender.transmitRequest(request.getLocalAddress().getHostAddress(), response);
                         } catch (ParseException | SipException  e) {
                             e.printStackTrace();
                         }
@@ -476,10 +476,11 @@ public class InviteRequestProcessor extends SIPRequestProcessorParent implements
 
                             // 写入redis， 超时时回复
                             redisCatchStorage.updateSendRTPSever(sendRtpItem);
+                            MediaServerItem finalMediaServerItem = mediaServerItem;
                             playService.play(mediaServerItem, ssrcInfo, device, channelId, hookEvent, errorEvent, (code, msg) -> {
                                 logger.info("[上级点播]超时, 用户：{}， 通道：{}", username, channelId);
                                 redisCatchStorage.deleteSendRTPServer(platform.getServerGBId(), channelId, callIdHeader.getCallId(), null);
-                            }, null);
+                            });
                         } else {
                             sendRtpItem.setStreamId(playTransaction.getStream());
                             // 写入redis， 超时时回复
@@ -535,8 +536,7 @@ public class InviteRequestProcessor extends SIPRequestProcessorParent implements
             if (streamReady) {
                 // 自平台内容
                 SendRtpItem sendRtpItem = zlmrtpServerFactory.createSendRtpItem(mediaServerItem, addressStr, port, ssrc, requesterId,
-                        gbStream.getApp(), gbStream.getStream(), channelId,
-                        mediaTransmissionTCP);
+                        gbStream.getApp(), gbStream.getStream(), channelId, mediaTransmissionTCP, platform.isRtcp());
 
                 if (sendRtpItem == null) {
                     logger.warn("服务器端口资源不足");
@@ -575,8 +575,7 @@ public class InviteRequestProcessor extends SIPRequestProcessorParent implements
             if (streamReady) {
                 // 自平台内容
                 SendRtpItem sendRtpItem = zlmrtpServerFactory.createSendRtpItem(mediaServerItem, addressStr, port, ssrc, requesterId,
-                        gbStream.getApp(), gbStream.getStream(), channelId,
-                        mediaTransmissionTCP);
+                        gbStream.getApp(), gbStream.getStream(), channelId, mediaTransmissionTCP, platform.isRtcp());
 
                 if (sendRtpItem == null) {
                     logger.warn("服务器端口资源不足");
@@ -656,6 +655,7 @@ public class InviteRequestProcessor extends SIPRequestProcessorParent implements
             if (!platform.isStartOfflinePush()) {
                 // 平台设置中关闭了拉起离线的推流则直接回复
                 try {
+                    logger.info("[上级点播] 失败，推流设备未推流，channel: {}, app: {}, stream: {}", gbStream.getGbId(), gbStream.getApp(), gbStream.getStream());
                     responseAck(request, Response.TEMPORARILY_UNAVAILABLE, "channel stream not pushing");
                 } catch (SipException | InvalidArgumentException | ParseException e) {
                     logger.error("[命令发送失败] invite 通道未推流: {}", e.getMessage());
@@ -692,7 +692,7 @@ public class InviteRequestProcessor extends SIPRequestProcessorParent implements
                 dynamicTask.stop(callIdHeader.getCallId());
                 if (serverId.equals(userSetting.getServerId())) {
                     SendRtpItem sendRtpItem = zlmrtpServerFactory.createSendRtpItem(mediaServerItem, addressStr, finalPort, ssrc, requesterId,
-                            app, stream, channelId, mediaTransmissionTCP);
+                            app, stream, channelId, mediaTransmissionTCP, platform.isRtcp());
 
                     if (sendRtpItem == null) {
                         logger.warn("上级点时创建sendRTPItem失败，可能是服务器端口资源不足");
@@ -754,7 +754,7 @@ public class InviteRequestProcessor extends SIPRequestProcessorParent implements
         // 发送redis消息
         redisGbPlayMsgListener.sendMsg(streamPushItem.getServerId(), streamPushItem.getMediaServerId(),
                 streamPushItem.getApp(), streamPushItem.getStream(), addressStr, port, ssrc, requesterId,
-                channelId, mediaTransmissionTCP, null, responseSendItemMsg -> {
+                channelId, mediaTransmissionTCP, platform.isRtcp(),null, responseSendItemMsg -> {
                     SendRtpItem sendRtpItem = responseSendItemMsg.getSendRtpItem();
                     if (sendRtpItem == null || responseSendItemMsg.getMediaServerItem() == null) {
                         logger.warn("服务器端口资源不足");

@@ -105,8 +105,6 @@ sip:
     id: 44010200492000000001
     # [可选] 默认设备认证密码，后续扩展使用设备单独密码, 移除密码将不进行校验
     password: admin123
-    # [可选] 心跳超时时间， 建议设置为心跳周期的三倍
-    keepalive-timeout: 255
     # [可选] 国标级联注册失败，再次发起注册的时间间隔。 默认60秒
     register-time-interval: 60
     # [可选] 云台控制速度
@@ -152,8 +150,6 @@ media:
         enable: true
         # [可选] 在此范围内选择端口用于媒体流传输, 必须提前在zlm上配置该属性，不然自动配置此属性可能不成功
         port-range: 30000,30500 # 端口范围
-        # [可选] 国标级联在此范围内选择端口发送媒体流
-        send-port-range: 30000,30500 # 端口范围
     # 录像辅助服务， 部署此服务可以实现zlm录像的管理与下载， 0 表示不使用
     record-assist-port: 0
 
@@ -188,8 +184,17 @@ user-settings:
     logInDatebase: true
     # 使用推流状态作为推流通道状态
     use-pushing-as-status: true
+    # 使用来源请求ip作为streamIp,当且仅当你只有zlm节点它与wvp在一起的情况下开启
+    use-source-ip-as-stream-ip: true
     # 按需拉流, true：有人观看拉流，无人观看释放， false：拉起后不自动释放
     stream-on-demand: true
+    # 推流鉴权， 默认开启
+    push-authority: true
+    # 国标级联发流严格模式，严格模式会使用与sdp信息中一致的端口发流，端口共享media.rtp.port-range，这会损失一些性能，
+    # 非严格模式使用随机端口发流，性能更好， 默认关闭
+    gb-send-stream-strict: false
+    # 设备上线时是否自动同步通道
+    sync-channel-on-device-online: false
 
 # 关闭在线文档（生产环境建议关闭）
 springdoc:

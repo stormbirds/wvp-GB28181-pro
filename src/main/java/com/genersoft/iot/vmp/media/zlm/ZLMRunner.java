@@ -1,8 +1,8 @@
 package com.genersoft.iot.vmp.media.zlm;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONObject;
 import com.genersoft.iot.vmp.conf.DynamicTask;
 import com.genersoft.iot.vmp.conf.MediaConfig;
 import com.genersoft.iot.vmp.gb28181.event.EventPublisher;
@@ -18,10 +18,14 @@ import org.springframework.core.annotation.Order;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Component
-@Order(value=1)
+@Order(value=2)
 public class ZLMRunner implements CommandLineRunner {
 
     private final static Logger logger = LoggerFactory.getLogger(ZLMRunner.class);
@@ -62,7 +66,7 @@ public class ZLMRunner implements CommandLineRunner {
         // 订阅 zlm启动事件, 新的zlm也会从这里进入系统
         hookSubscribe.addSubscribe(hookSubscribeForServerStarted,
                 (MediaServerItem mediaServerItem, JSONObject response)->{
-            ZLMServerConfig zlmServerConfig = JSONObject.toJavaObject(response, ZLMServerConfig.class);
+            ZLMServerConfig zlmServerConfig = response.to(ZLMServerConfig.class);
             if (zlmServerConfig !=null ) {
                 if (startGetMedia != null) {
                     startGetMedia.remove(zlmServerConfig.getGeneralMediaServerId());
@@ -72,8 +76,6 @@ public class ZLMRunner implements CommandLineRunner {
                 }
             }
         });
-
-
 
         // 获取zlm信息
         logger.info("[zlm] 等待默认zlm中...");
@@ -87,7 +89,7 @@ public class ZLMRunner implements CommandLineRunner {
         }
         for (MediaServerItem mediaServerItem : all) {
             if (startGetMedia == null) {
-                startGetMedia = new HashMap<>();
+                startGetMedia = new ConcurrentHashMap<>();
             }
             startGetMedia.put(mediaServerItem.getId(), true);
             connectZlmServer(mediaServerItem);
@@ -95,7 +97,7 @@ public class ZLMRunner implements CommandLineRunner {
         }
         String taskKey = "zlm-connect-timeout";
         dynamicTask.startDelay(taskKey, ()->{
-            if (startGetMedia != null) {
+            if (startGetMedia != null && startGetMedia.size() > 0) {
                 Set<String> allZlmId = startGetMedia.keySet();
                 for (String id : allZlmId) {
                     logger.error("[ {} ]]主动连接失败，不再尝试连接", id);
