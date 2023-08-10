@@ -2,9 +2,6 @@ package com.genersoft.iot.vmp.gb28181.bean;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
-/**
- * @author lin
- */
 @Schema(description = "报警信息")
 public class DeviceAlarm {
 

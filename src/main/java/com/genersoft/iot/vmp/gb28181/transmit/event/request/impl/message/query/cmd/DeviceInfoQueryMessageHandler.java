@@ -6,7 +6,6 @@ import com.genersoft.iot.vmp.gb28181.transmit.cmd.impl.SIPCommanderFroPlatform;
 import com.genersoft.iot.vmp.gb28181.transmit.event.request.SIPRequestProcessorParent;
 import com.genersoft.iot.vmp.gb28181.transmit.event.request.impl.message.IMessageHandler;
 import com.genersoft.iot.vmp.gb28181.transmit.event.request.impl.message.query.QueryMessageHandler;
-import gov.nist.javax.sip.message.SIPRequest;
 import org.dom4j.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,15 +48,15 @@ public class DeviceInfoQueryMessageHandler extends SIPRequestProcessorParent imp
         FromHeader fromHeader = (FromHeader) evt.getRequest().getHeader(FromHeader.NAME);
         try {
             // 回复200 OK
-            responseAck((SIPRequest) evt.getRequest(), Response.OK);
-        } catch (SipException | InvalidArgumentException | ParseException e) {
-            logger.error("[命令发送失败] DeviceInfo查询回复: {}", e.getMessage());
+            responseAck(evt, Response.OK);
+        } catch (SipException e) {
+            e.printStackTrace();
+        } catch (InvalidArgumentException e) {
+            e.printStackTrace();
+        } catch (ParseException e) {
+            e.printStackTrace();
         }
         String sn = rootElement.element("SN").getText();
-        try {
-            cmderFroPlatform.deviceInfoResponse(parentPlatform, sn, fromHeader.getTag());
-        } catch (SipException | InvalidArgumentException | ParseException e) {
-            logger.error("[命令发送失败] 国标级联 DeviceInfo查询回复: {}", e.getMessage());
-        }
+        cmderFroPlatform.deviceInfoResponse(parentPlatform, sn, fromHeader.getTag());
     }
 }

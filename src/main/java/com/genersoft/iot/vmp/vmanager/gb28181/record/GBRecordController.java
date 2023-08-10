@@ -1,10 +1,10 @@
 package com.genersoft.iot.vmp.vmanager.gb28181.record;
 
+import com.alibaba.fastjson.JSONObject;
 import com.genersoft.iot.vmp.common.StreamInfo;
 import com.genersoft.iot.vmp.conf.exception.ControllerException;
-import com.genersoft.iot.vmp.conf.exception.SsrcTransactionNotFoundException;
 import com.genersoft.iot.vmp.gb28181.transmit.callback.RequestMessage;
-import com.genersoft.iot.vmp.service.IDeviceService;
+import com.genersoft.iot.vmp.service.IMediaServerService;
 import com.genersoft.iot.vmp.service.IPlayService;
 import com.genersoft.iot.vmp.utils.DateUtil;
 import com.genersoft.iot.vmp.vmanager.bean.ErrorCode;
@@ -16,6 +16,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,9 +31,7 @@ import com.genersoft.iot.vmp.gb28181.transmit.callback.DeferredResultHolder;
 import com.genersoft.iot.vmp.gb28181.transmit.cmd.impl.SIPCommander;
 import com.genersoft.iot.vmp.storager.IVideoManagerStorage;
 
-import javax.sip.InvalidArgumentException;
-import javax.sip.SipException;
-import java.text.ParseException;
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Tag(name  = "国标录像")
@@ -53,12 +53,6 @@ public class GBRecordController {
 
 	@Autowired
 	private IPlayService playService;
-
-	@Autowired
-	private IDeviceService deviceService;
-
-
-
 
 	@Operation(summary = "录像查询")
 	@Parameter(name = "deviceId", description = "设备国标编号", required = true)
@@ -87,18 +81,13 @@ public class GBRecordController {
 		RequestMessage msg = new RequestMessage();
 		msg.setId(uuid);
 		msg.setKey(key);
-		try {
-			cmder.recordInfoQuery(device, channelId, startTime, endTime, sn, null, null, null, (eventResult -> {
-				WVPResult<RecordInfo> wvpResult = new WVPResult<>();
-				wvpResult.setCode(ErrorCode.ERROR100.getCode());
-				wvpResult.setMsg("查询录像失败, status: " +  eventResult.statusCode + ", message: " + eventResult.msg);
-				msg.setData(wvpResult);
-				resultHolder.invokeResult(msg);
-			}));
-		} catch (InvalidArgumentException | SipException | ParseException e) {
-			logger.error("[命令发送失败] 查询录像: {}", e.getMessage());
-			throw new ControllerException(ErrorCode.ERROR100.getCode(), "命令发送失败: " +  e.getMessage());
-		}
+		cmder.recordInfoQuery(device, channelId, startTime, endTime, sn, null, null, null, (eventResult -> {
+			WVPResult<RecordInfo> wvpResult = new WVPResult<>();
+			wvpResult.setCode(ErrorCode.ERROR100.getCode());
+			wvpResult.setMsg("查询录像失败, status: " +  eventResult.statusCode + ", message: " + eventResult.msg);
+			msg.setData(wvpResult);
+			resultHolder.invokeResult(msg);
+		}));
 
 		// 录像查询以channelId作为deviceId查询
 		resultHolder.put(key, uuid, result);
@@ -142,24 +131,14 @@ public class GBRecordController {
 	@GetMapping("/download/stop/{deviceId}/{channelId}/{stream}")
 	public void playStop(@PathVariable String deviceId, @PathVariable String channelId, @PathVariable String stream) {
 
+		cmder.streamByeCmd(deviceId, channelId, stream, null);
+
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("设备历史媒体下载停止 API调用，deviceId/channelId：%s_%s", deviceId, channelId));
 		}
 
 		if (deviceId == null || channelId == null) {
-			throw new ControllerException(ErrorCode.ERROR400);
-		}
-
-		Device device = deviceService.getDevice(deviceId);
-		if (device == null) {
-			throw new ControllerException(ErrorCode.ERROR400.getCode(), "设备：" + deviceId + "未找到");
-		}
-
-		try {
-			cmder.streamByeCmd(device, channelId, stream, null);
-		} catch (InvalidArgumentException | ParseException | SipException | SsrcTransactionNotFoundException e) {
-			logger.error("[停止历史媒体下载]停止历史媒体下载，发送BYE失败 {}", e.getMessage());
-			throw new ControllerException(ErrorCode.ERROR100.getCode(), e.getMessage());
+			throw new ControllerException(ErrorCode.ERROR100);
 		}
 	}
 

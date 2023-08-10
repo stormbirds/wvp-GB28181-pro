@@ -5,14 +5,13 @@ import java.util.concurrent.TimeUnit;
 
 import com.alibaba.fastjson.JSONObject;
 import com.genersoft.iot.vmp.utils.SpringBeanFactory;
-import gov.nist.javax.sip.stack.UDPMessageChannel;
 import org.springframework.data.redis.core.*;
 import org.springframework.util.CollectionUtils;
 
 /**    
- * Redis工具类
- * @author swwheihei
- * @date 2020年5月6日 下午8:27:29
+ * @description:Redis工具类
+ * @author: swwheihei
+ * @date:   2020年5月6日 下午8:27:29     
  */
 @SuppressWarnings(value = {"rawtypes", "unchecked"})
 public class RedisUtil {
@@ -889,6 +888,7 @@ public class RedisUtil {
             redisTemplate = SpringBeanFactory.getBean("redisTemplate");
         }
         redisTemplate.convertAndSend(channel, msg);
+
     }
 
 }

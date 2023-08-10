@@ -2,11 +2,8 @@ package com.genersoft.iot.vmp.vmanager.gb28181.playback;
 
 import com.genersoft.iot.vmp.common.StreamInfo;
 import com.genersoft.iot.vmp.conf.exception.ControllerException;
-import com.genersoft.iot.vmp.conf.exception.ServiceException;
-import com.genersoft.iot.vmp.conf.exception.SsrcTransactionNotFoundException;
 import com.genersoft.iot.vmp.gb28181.transmit.callback.DeferredResultHolder;
 import com.genersoft.iot.vmp.gb28181.transmit.callback.RequestMessage;
-import com.genersoft.iot.vmp.media.zlm.ZLMRTPServerFactory;
 import com.genersoft.iot.vmp.storager.IRedisCatchStorage;
 import com.genersoft.iot.vmp.service.IPlayService;
 import com.genersoft.iot.vmp.vmanager.bean.ErrorCode;
@@ -24,18 +21,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.alibaba.fastjson.JSONObject;
 import com.genersoft.iot.vmp.gb28181.bean.Device;
 import com.genersoft.iot.vmp.gb28181.transmit.cmd.impl.SIPCommander;
 import com.genersoft.iot.vmp.storager.IVideoManagerStorage;
 import org.springframework.web.context.request.async.DeferredResult;
 
-import javax.sip.InvalidArgumentException;
-import javax.sip.SipException;
-import java.text.ParseException;
-
-/**
- * @author lin
- */
 @Tag(name = "视频回放")
 @CrossOrigin
 @RestController
@@ -46,9 +37,6 @@ public class PlaybackController {
 
 	@Autowired
 	private SIPCommander cmder;
-
-	@Autowired
-	private ZLMRTPServerFactory zlmrtpServerFactory;
 
 	@Autowired
 	private IVideoManagerStorage storager;
@@ -101,15 +89,7 @@ public class PlaybackController {
 		if (ObjectUtils.isEmpty(deviceId) || ObjectUtils.isEmpty(channelId) || ObjectUtils.isEmpty(stream)) {
 			throw new ControllerException(ErrorCode.ERROR400);
 		}
-		Device device = storager.queryVideoDevice(deviceId);
-		if (device == null) {
-			throw new ControllerException(ErrorCode.ERROR400.getCode(), "设备：" + deviceId + " 未找到");
-		}
-		try {
-			cmder.streamByeCmd(device, channelId, stream, null);
-		} catch (InvalidArgumentException | ParseException | SipException | SsrcTransactionNotFoundException e) {
-			throw new ControllerException(ErrorCode.ERROR100.getCode(), "发送bye失败： " + e.getMessage());
-		}
+		cmder.streamByeCmd(deviceId, channelId, stream, null);
 	}
 
 
@@ -118,14 +98,13 @@ public class PlaybackController {
 	@GetMapping("/pause/{streamId}")
 	public void playPause(@PathVariable String streamId) {
 		logger.info("playPause: "+streamId);
-
-		try {
-			playService.pauseRtp(streamId);
-		} catch (ServiceException e) {
-			throw new ControllerException(ErrorCode.ERROR400.getCode(), e.getMessage());
-		} catch (InvalidArgumentException | ParseException | SipException e) {
-			throw new ControllerException(ErrorCode.ERROR100.getCode(), e.getMessage());
+		StreamInfo streamInfo = redisCatchStorage.queryPlayback(null, null, streamId, null);
+		if (null == streamInfo) {
+			logger.warn("streamId不存在!");
+			throw new ControllerException(ErrorCode.ERROR400.getCode(), "streamId不存在");
 		}
+		Device device = storager.queryVideoDevice(streamInfo.getDeviceID());
+		cmder.playPauseCmd(device, streamInfo);
 	}
 
 
@@ -134,13 +113,13 @@ public class PlaybackController {
 	@GetMapping("/resume/{streamId}")
 	public void playResume(@PathVariable String streamId) {
 		logger.info("playResume: "+streamId);
-		try {
-			playService.resumeRtp(streamId);
-		} catch (ServiceException e) {
-			throw new ControllerException(ErrorCode.ERROR400.getCode(), e.getMessage());
-		} catch (InvalidArgumentException | ParseException | SipException e) {
-			throw new ControllerException(ErrorCode.ERROR100.getCode(), e.getMessage());
+		StreamInfo streamInfo = redisCatchStorage.queryPlayback(null, null, streamId, null);
+		if (null == streamInfo) {
+			logger.warn("streamId不存在!");
+			throw new ControllerException(ErrorCode.ERROR400.getCode(), "streamId不存在");
 		}
+		Device device = storager.queryVideoDevice(streamInfo.getDeviceID());
+		cmder.playResumeCmd(device, streamInfo);
 	}
 
 
@@ -156,11 +135,7 @@ public class PlaybackController {
 			throw new ControllerException(ErrorCode.ERROR400.getCode(), "streamId不存在");
 		}
 		Device device = storager.queryVideoDevice(streamInfo.getDeviceID());
-		try {
-			cmder.playSeekCmd(device, streamInfo, seekTime);
-		} catch (InvalidArgumentException | ParseException | SipException e) {
-			throw new ControllerException(ErrorCode.ERROR100.getCode(), e.getMessage());
-		}
+		cmder.playSeekCmd(device, streamInfo, seekTime);
 	}
 
 	@Operation(summary = "回放倍速播放")
@@ -179,10 +154,6 @@ public class PlaybackController {
 			throw new ControllerException(ErrorCode.ERROR100.getCode(), "不支持的speed（0.25 0.5 1、2、4）");
 		}
 		Device device = storager.queryVideoDevice(streamInfo.getDeviceID());
-		try {
-			cmder.playSpeedCmd(device, streamInfo, speed);
-		} catch (InvalidArgumentException | ParseException | SipException e) {
-			throw new ControllerException(ErrorCode.ERROR100.getCode(), e.getMessage());
-		}
+		cmder.playSpeedCmd(device, streamInfo, speed);
 	}
 }

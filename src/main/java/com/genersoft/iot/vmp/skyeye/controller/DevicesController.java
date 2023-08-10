@@ -67,13 +67,13 @@ public class DevicesController {
 
     @GetMapping("/remove")
     public String remove(@ApiParam String serial) {
-        return deviceService.delete(serial)?"ok":"failure";
+        return deviceService.removeDeviceById(serial)?"ok":"failure";
     }
 
     @GetMapping("/fetchcatalog")
     public Mono<ChannelListVo> fetchcatalog(@ApiParam String serial,
                                             @ApiParam(required = false) Integer timeout) {
-        Device device = deviceService.getDevice(serial);
+        Device device = deviceService.queryDevice(serial);
         if(device==null)
             return Mono.just(new ChannelListVo());
         deviceService.sync(device);

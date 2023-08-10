@@ -48,8 +48,6 @@ public class MessageForPushChannel {
      */
     private String mediaServerId;
 
-
-
     public static MessageForPushChannel getInstance(int type, String app, String stream, String gbId,
                                                     String platFormId, String platFormName, String serverId,
                                                     String mediaServerId){

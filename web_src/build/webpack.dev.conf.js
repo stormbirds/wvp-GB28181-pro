@@ -65,11 +65,6 @@ const devWebpackConfig = merge(baseWebpackConfig, {
         to: config.dev.assetsSubDirectory,
         ignore: ['.*']
       }
-    ]),
-    new CopyWebpackPlugin([
-      { from: 'node_modules/@liveqing/liveplayer/dist/component/crossdomain.xml'},
-      { from: 'node_modules/@liveqing/liveplayer/dist/component/liveplayer.swf'},
-      { from: 'node_modules/@liveqing/liveplayer/dist/component/liveplayer-lib.min.js', to: config.build.assetsSubDirectory + '/js/'},
     ])
   ]
 })

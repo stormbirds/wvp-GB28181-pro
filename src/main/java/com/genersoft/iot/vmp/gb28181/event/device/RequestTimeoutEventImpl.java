@@ -12,6 +12,7 @@ import javax.sip.address.SipURI;
 import javax.sip.header.CallIdHeader;
 import javax.sip.header.ToHeader;
 import javax.sip.message.Request;
+import java.util.List;
 
 /**
  * @author lin
@@ -30,13 +31,12 @@ public class RequestTimeoutEventImpl implements ApplicationListener<RequestTimeo
             if (request != null) {
                 String host = ((SipURI) request.getRequestURI()).getHost();
                 int port = ((SipURI) request.getRequestURI()).getPort();
-                Device device = deviceService.getDeviceByHostAndPort(host, port);
-                if (device == null) {
+                List<Device> devices = deviceService.getDeviceByHostAndPort(host, port);
+                if (devices == null || devices.isEmpty()) {
                     return;
                 }
-                deviceService.offline(device.getDeviceId());
+                devices.forEach(device -> deviceService.offline(device.getDeviceId()));
             }
-
         }
     }
 }

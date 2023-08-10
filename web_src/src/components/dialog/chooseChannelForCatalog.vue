@@ -38,7 +38,7 @@
 import catalogEdit from './catalogEdit.vue'
 export default {
     name: 'chooseChannelForCatalog',
-    props: ['platformId', 'platformDeviceId', 'platformName', 'defaultCatalogId', 'catalogIdChange', 'treeType'],
+    props: ['platformId', 'platformName', 'defaultCatalogId', 'catalogIdChange', 'treeType'],
     created() {
         this.chooseId = this.defaultCatalogId;
         this.defaultCatalogIdSign = this.defaultCatalogId;
@@ -171,7 +171,6 @@ export default {
             });
         },
         loadNode: function(node, resolve){
-          console.log("this.platformDeviceId： " + this.platformDeviceId)
           if (node.level === 0) {
             resolve([
               {
@@ -180,7 +179,7 @@ export default {
               type:  -1
               },{
                 name: this.platformName,
-                id:   this.platformDeviceId,
+                id:  this.platformId,
                 type:  0
               }
             ]);
@@ -299,8 +298,6 @@ export default {
         return false;
       },
       nodeClickHandler: function (data, node, tree){
-          console.log(data)
-          console.log(node)
        this.chooseId = data.id;
        this.chooseName = data.name;
        if (this.catalogIdChange)this.catalogIdChange(this.chooseId, this.chooseName);

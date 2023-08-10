@@ -1,19 +1,13 @@
 package com.genersoft.iot.vmp.web.gb28181;
 
 import com.alibaba.fastjson.JSONObject;
-import com.genersoft.iot.vmp.conf.exception.ControllerException;
 import com.genersoft.iot.vmp.gb28181.bean.Device;
 import com.genersoft.iot.vmp.gb28181.transmit.cmd.impl.SIPCommander;
 import com.genersoft.iot.vmp.storager.IVideoManagerStorage;
-import com.genersoft.iot.vmp.vmanager.bean.ErrorCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
-import javax.sip.InvalidArgumentException;
-import javax.sip.SipException;
-import java.text.ParseException;
 
 /**
  * API兼容：设备控制
@@ -41,7 +35,7 @@ public class ApiControlController {
      * @return
      */
     @RequestMapping(value = "/ptz")
-    private void list(String serial,String command,
+    private JSONObject list(String serial,String command,
                             @RequestParam(required = false)Integer channel,
                             @RequestParam(required = false)String code,
                             @RequestParam(required = false)Integer speed){
@@ -51,10 +45,12 @@ public class ApiControlController {
                     serial, code, command, speed);
         }
         if (channel == null) {channel = 0;}
-        if (speed == null) {speed = 0;}
+        if (speed == null) {speed = 129;}
         Device device = storager.queryVideoDevice(serial);
         if (device == null) {
-            throw new ControllerException(ErrorCode.ERROR100.getCode(), "device[ " + serial + " ]未找到");
+            JSONObject result = new JSONObject();
+            result.put("error","device[ " + serial + " ]未找到");
+            return result;
         }
         int cmdCode = 0;
         switch (command){
@@ -95,11 +91,7 @@ public class ApiControlController {
                 break;
         }
         // 默认值 50
-        try {
-            cmder.frontEndCmd(device, code, cmdCode, speed, speed, speed);
-        } catch (SipException | InvalidArgumentException | ParseException e) {
-            logger.error("[命令发送失败] 云台控制: {}", e.getMessage());
-            throw new ControllerException(ErrorCode.ERROR100.getCode(), "命令发送失败: " + e.getMessage());
-        }
+        cmder.frontEndCmd(device, code, cmdCode, speed, speed, speed);
+        return null;
     }
 }

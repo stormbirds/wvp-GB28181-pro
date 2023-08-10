@@ -2,7 +2,7 @@ import Vue from 'vue'
 import VueRouter from 'vue-router'
 import Layout from "../layout/index.vue"
 
-import console from '../components/console.vue'
+import control from '../components/control.vue'
 import deviceList from '../components/DeviceList.vue'
 import channelList from '../components/channelList.vue'
 import pushVideoList from '../components/PushVideoList.vue'
@@ -37,11 +37,11 @@ export default new VueRouter({
       path: '/',
       name: 'home',
       component: Layout,
-      redirect: '/console',
+      redirect: '/control',
       children: [
         {
-          path: '/console',
-          component: console,
+          path: '/control',
+          component: control,
         },
         {
           path: '/live',

@@ -3,25 +3,28 @@ package com.genersoft.iot.vmp.web.gb28181;
 import com.alibaba.fastjson.JSONObject;
 import com.genersoft.iot.vmp.common.StreamInfo;
 import com.genersoft.iot.vmp.conf.UserSetting;
-import com.genersoft.iot.vmp.conf.exception.SsrcTransactionNotFoundException;
 import com.genersoft.iot.vmp.gb28181.bean.Device;
 import com.genersoft.iot.vmp.gb28181.bean.DeviceChannel;
 import com.genersoft.iot.vmp.gb28181.transmit.cmd.impl.SIPCommander;
+import com.genersoft.iot.vmp.media.zlm.ZLMRESTfulUtils;
 import com.genersoft.iot.vmp.media.zlm.dto.MediaServerItem;
-import com.genersoft.iot.vmp.service.IDeviceService;
+import com.genersoft.iot.vmp.service.IMediaServerService;
 import com.genersoft.iot.vmp.service.IPlayService;
+import com.genersoft.iot.vmp.skyeye.service.IStreamService;
 import com.genersoft.iot.vmp.storager.IRedisCatchStorage;
 import com.genersoft.iot.vmp.storager.IVideoManagerStorage;
+import com.genersoft.iot.vmp.vmanager.bean.WVPResult;
 import com.genersoft.iot.vmp.vmanager.gb28181.play.bean.PlayResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.async.DeferredResult;
 
-import javax.sip.InvalidArgumentException;
-import javax.sip.SipException;
-import java.text.ParseException;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * API兼容：实时直播
@@ -43,116 +46,153 @@ public class ApiStreamController {
     @Autowired
     private UserSetting userSetting;
 
+    @Value("${sip.ip}")
+    private String sipIp;
+    @Value(value = "${snap.path}")
+    private String snapPath;
+    @Value("${server.port}")
+    private int serverPort;
+
     @Autowired
     private IRedisCatchStorage redisCatchStorage;
 
     @Autowired
-    private IDeviceService deviceService;
+    private IPlayService playService;
+
+    @Qualifier("taskExecutor")
+    @Autowired
+    private ThreadPoolTaskExecutor taskExecutor;
+    @Autowired
+    private ZLMRESTfulUtils zlmresTfulUtils;
+    @Autowired
+    private IMediaServerService mediaServerService;
 
     @Autowired
-    private IPlayService playService;
+    private IStreamService streamService;
 
     /**
      * 实时直播 - 开始直播
      * @param serial 设备编号
      * @param channel 通道序号 默认值: 1
      * @param code 通道编号,通过 /api/v1/device/channellist 获取的 ChannelList.ID, 该参数和 channel 二选一传递即可
-     * @param cdn 转推 CDN 地址, 形如: [rtmp|rtsp]://xxx, encodeURIComponent
-     * @param audio 是否开启音频, 默认 开启
+     * @param cdn TODO 转推 CDN 地址, 形如: [rtmp|rtsp]://xxx, encodeURIComponent
+     * @param audio TODO 是否开启音频, 默认 开启
      * @param transport 流传输模式， 默认 UDP
-     * @param checkchannelstatus 是否检查通道状态, 默认 false, 表示 拉流前不检查通道状态是否在线
-     * @param transportmode 当 transport=TCP 时有效, 指示流传输主被动模式, 默认被动
-     * @param timeout 拉流超时(秒),
+     * @param checkchannelstatus TODO 是否检查通道状态, 默认 false, 表示 拉流前不检查通道状态是否在线
+     * @param transportmode TODO 当 transport=TCP 时有效, 指示流传输主被动模式, 默认被动
+     * @param timeout TODO 拉流超时(秒),
      * @return
      */
     @RequestMapping(value = "/start")
-    private DeferredResult<JSONObject> start(String serial ,
-                                             @RequestParam(required = false)Integer channel ,
-                                             @RequestParam(required = false)String code,
-                                             @RequestParam(required = false)String cdn,
-                                             @RequestParam(required = false)String audio,
-                                             @RequestParam(required = false)String transport,
-                                             @RequestParam(required = false)String checkchannelstatus ,
-                                             @RequestParam(required = false)String transportmode,
-                                             @RequestParam(required = false)String timeout
+    private DeferredResult<WVPResult<String>> start(String serial ,
+                                               @RequestParam(required = false)Integer channel ,
+                                               @RequestParam(required = false)String code,
+                                               @RequestParam(required = false)String sms_id,
+                                               @RequestParam(required = false)String sms_group_id,
+                                               @RequestParam(required = false)String cdn,
+                                               @RequestParam(required = false)String audio,
+                                               @RequestParam(required = false)String transport,
+                                               @RequestParam(required = false)String transportmode,
+                                               @RequestParam(required = false)Boolean checkchannelstatus ,
+                                               @RequestParam(required = false)Long timeout
 
     ){
-        DeferredResult<JSONObject> resultDeferredResult = new DeferredResult<>(userSetting.getPlayTimeout().longValue() + 10);
-        Device device = storager.queryVideoDevice(serial);
-        if (device == null ) {
-            JSONObject result = new JSONObject();
-            result.put("error","device[ " + serial + " ]未找到");
-            resultDeferredResult.setResult(result);
-            return resultDeferredResult;
-        }else if (device.getOnline() == 0) {
-            JSONObject result = new JSONObject();
-            result.put("error","device[ " + code + " ]offline");
-            resultDeferredResult.setResult(result);
-            return resultDeferredResult;
-        }
-        resultDeferredResult.onTimeout(()->{
-            logger.info("播放等待超时");
-            JSONObject result = new JSONObject();
-            result.put("error","timeout");
-            resultDeferredResult.setResult(result);
+        return streamService.play(serial,channel,code,sms_id,sms_group_id,cdn,audio,transport,transportmode,checkchannelstatus,timeout).getResult();
 
-             // 清理RTP server
-        });
-
-        DeviceChannel deviceChannel = storager.queryChannel(serial, code);
-        if (deviceChannel == null) {
-            JSONObject result = new JSONObject();
-            result.put("error","channel[ " + code + " ]未找到");
-            resultDeferredResult.setResult(result);
-            return resultDeferredResult;
-        }else if (deviceChannel.getStatus() == 0) {
-            JSONObject result = new JSONObject();
-            result.put("error","channel[ " + code + " ]offline");
-            resultDeferredResult.setResult(result);
-            return resultDeferredResult;
-        }
-        MediaServerItem newMediaServerItem = playService.getNewMediaServerItem(device);
-        PlayResult play = playService.play(newMediaServerItem, serial, code, (mediaServerItem, response)->{
-            StreamInfo streamInfo = redisCatchStorage.queryPlayByDevice(serial, code);
-            JSONObject result = new JSONObject();
-            result.put("StreamID", streamInfo.getStream());
-            result.put("DeviceID", device.getDeviceId());
-            result.put("ChannelID", code);
-            result.put("ChannelName", deviceChannel.getName());
-            result.put("ChannelCustomName", "");
-            result.put("FLV", streamInfo.getFlv());
-            result.put("WS_FLV", streamInfo.getWs_flv());
-            result.put("RTMP", streamInfo.getRtmp());
-            result.put("HLS", streamInfo.getHls());
-            result.put("RTSP", streamInfo.getRtsp());
-            result.put("WEBRTC", streamInfo.getRtc());
-            result.put("CDN", "");
-            result.put("SnapURL", "");
-            result.put("Transport", device.getTransport());
-            result.put("StartAt", "");
-            result.put("Duration", "");
-            result.put("SourceVideoCodecName", "");
-            result.put("SourceVideoWidth", "");
-            result.put("SourceVideoHeight", "");
-            result.put("SourceVideoFrameRate", "");
-            result.put("SourceAudioCodecName", "");
-            result.put("SourceAudioSampleRate", "");
-            result.put("AudioEnable", "");
-            result.put("Ondemand", "");
-            result.put("InBytes", "");
-            result.put("InBitRate", "");
-            result.put("OutBytes", "");
-            result.put("NumOutputs", "");
-            result.put("CascadeSize", "");
-            result.put("RelaySize", "");
-            result.put("ChannelPTZType", "0");
-            resultDeferredResult.setResult(result);
-        }, (eventResult) -> {
-            JSONObject result = new JSONObject();
-            result.put("error", "channel[ " + code + " ] " + eventResult.msg);
-            resultDeferredResult.setResult(result);
-        }, null);
-        return resultDeferredResult;
+//
+////        AtomicReference<StreamInfo> streamInfo = new AtomicReference<>(redisCatchStorage.queryPlayByDevice(serial, code));
+//        DeferredResult<JSONObject> resultDeferredResult = new DeferredResult<>(userSetting.getPlayTimeout().longValue() + 10);
+//
+//
+//        Device device = storager.queryVideoDevice(serial);
+//        if (device == null ) {
+//            JSONObject result = new JSONObject();
+//            result.put("error","device[ " + serial + " ]未找到");
+//            resultDeferredResult.setResult(result);
+//        }else if (device.getOnline() == 0) {
+//            JSONObject result = new JSONObject();
+//            result.put("error","device[ " + code + " ]offline");
+//            resultDeferredResult.setResult(result);
+//        }
+//        resultDeferredResult.onTimeout(()->{
+//            logger.info("播放等待超时");
+//            JSONObject result = new JSONObject();
+//            result.put("error","timeout");
+//            resultDeferredResult.setResult(result);
+//
+//             // 清理RTP server
+//        });
+//
+//        DeviceChannel deviceChannel = storager.queryChannel(serial, code);
+//        if (deviceChannel == null) {
+//            JSONObject result = new JSONObject();
+//            result.put("error","channel[ " + code + " ]未找到");
+//            resultDeferredResult.setResult(result);
+//        }else if (deviceChannel.getStatus() == 0) {
+//            JSONObject result = new JSONObject();
+//            result.put("error","channel[ " + code + " ]offline");
+//            resultDeferredResult.setResult(result);
+//        }
+//
+////        if(streamInfo.get() !=null && streamInfo.get().getStream()!=null){
+////            JSONObject result = new JSONObject();
+////            result.put("StreamID", streamInfo.get().getStream());
+////            result.put("DeviceID", device.getDeviceId());
+////            result.put("ChannelID", code);
+////            result.put("ChannelName", deviceChannel.getName());
+////            result.put("ChannelCustomName", "");
+////            result.put("FLV", streamInfo.get().getFlv());
+////            result.put("WS_FLV", streamInfo.get().getWs_flv());
+////            result.put("RTMP", streamInfo.get().getRtmp());
+////            result.put("HLS", streamInfo.get().getHls());
+////            result.put("RTSP", streamInfo.get().getRtsp());
+////            result.put("WEBRTC", streamInfo.get().getRtc());
+////            result.put("CDN", "");
+////            result.put("SnapURL", String.format("http://%s:%s/snap/%s.jpg", sipIp, serverPort, streamInfo.get().getStream()));
+////            result.put("Transport", device.getTransport());
+////            result.put("StartAt", "");
+////            result.put("RecordStartAt", streamInfo.get().getRecordStartAt());
+////            result.put("Duration", "");
+////            result.put("SourceVideoCodecName", "");
+////            result.put("SourceVideoWidth", "");
+////            result.put("SourceVideoHeight", "");
+////            result.put("SourceVideoFrameRate", "");
+////            result.put("SourceAudioCodecName", "");
+////            result.put("SourceAudioSampleRate", "");
+////            result.put("AudioEnable", "");
+////            result.put("Ondemand", "");
+////            result.put("InBytes", "");
+////            result.put("InBitRate", "");
+////            result.put("OutBytes", "");
+////            result.put("NumOutputs", "");
+////            result.put("CascadeSize", "");
+////            result.put("RelaySize", "");
+////            result.put("ChannelPTZType", "0");
+////            resultDeferredResult.setResult(result);
+////        }
+//        MediaServerItem newMediaServerItem = playService.getNewMediaServerItem(device);
+//        StreamInfo streamInfo = ((WVPResult)( playService.play(newMediaServerItem, serial, code, (mediaServerItem, response)->{
+//
+//
+//            // 点播结束时调用截图接口
+//            taskExecutor.execute(()->{
+//                // TODO 应该在上流时调用更好，结束也可能是错误结束
+//                String path =  snapPath;
+//                String fileName =  streamInfo.get().getStream() + ".jpg";
+//
+//                MediaServerItem mediaInfo = mediaServerService.getOne(streamInfo.get().getMediaServerId());
+//                String streamUrl = streamInfo.get().getFmp4();
+//                // 请求截图
+//                logger.info("[请求截图]: " + fileName);
+//                zlmresTfulUtils.getSnap(mediaInfo, streamUrl, 15, 1, path, fileName);
+//            });
+//
+//        }, (eventResult) -> {
+//            JSONObject result = new JSONObject();
+//            result.put("error", "channel[ " + code + " ] " + eventResult.msg);
+//            resultDeferredResult.setResult(result);
+//        }, null).getResult()).getResult()).getData();
+//        return resultDeferredResult;
     }
 
     /**
@@ -178,19 +218,7 @@ public class ApiStreamController {
             result.put("error","未找到流信息");
             return result;
         }
-        Device device = deviceService.getDevice(serial);
-        if (device == null) {
-            JSONObject result = new JSONObject();
-            result.put("error","未找到设备");
-            return result;
-        }
-        try {
-            cmder.streamByeCmd(device, code, streamInfo.getStream(), null);
-        } catch (InvalidArgumentException | ParseException | SipException | SsrcTransactionNotFoundException e) {
-            JSONObject result = new JSONObject();
-            result.put("error","发送BYE失败：" + e.getMessage());
-            return result;
-        }
+        cmder.streamByeCmd(serial, code, streamInfo.getStream(), null);
         redisCatchStorage.stopPlay(streamInfo);
         storager.stopPlay(streamInfo.getDeviceID(), streamInfo.getChannelId());
         return null;

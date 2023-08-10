@@ -6,22 +6,17 @@ import com.genersoft.iot.vmp.gb28181.bean.SubscribeHolder;
 import com.genersoft.iot.vmp.gb28181.transmit.SIPProcessorObserver;
 import com.genersoft.iot.vmp.gb28181.transmit.cmd.ISIPCommanderForPlatform;
 import com.genersoft.iot.vmp.gb28181.transmit.event.response.SIPResponseProcessorAbstract;
-import com.genersoft.iot.vmp.service.IPlatformService;
 import com.genersoft.iot.vmp.storager.IRedisCatchStorage;
 import com.genersoft.iot.vmp.storager.IVideoManagerStorage;
-import com.genersoft.iot.vmp.storager.dao.dto.PlatformRegisterInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.sip.InvalidArgumentException;
 import javax.sip.ResponseEvent;
-import javax.sip.SipException;
 import javax.sip.header.CallIdHeader;
 import javax.sip.header.WWWAuthenticateHeader;
 import javax.sip.message.Response;
-import java.text.ParseException;
 
 /**    
  * @description:Register响应处理器
@@ -49,9 +44,6 @@ public class RegisterResponseProcessor extends SIPResponseProcessorAbstract {
 	@Autowired
 	private SubscribeHolder subscribeHolder;
 
-	@Autowired
-	private IPlatformService platformService;
-
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		// 添加消息处理的订阅
@@ -68,43 +60,48 @@ public class RegisterResponseProcessor extends SIPResponseProcessorAbstract {
 		Response response = evt.getResponse();
 		CallIdHeader callIdHeader = (CallIdHeader) response.getHeader(CallIdHeader.NAME);
 		String callId = callIdHeader.getCallId();
-		PlatformRegisterInfo platformRegisterInfo = redisCatchStorage.queryPlatformRegisterInfo(callId);
-		if (platformRegisterInfo == null) {
-			logger.info(String.format("[国标级联]未找到callId： %s 的注册/注销平台id", callId ));
+
+		String platformGBId = redisCatchStorage.queryPlatformRegisterInfo(callId);
+		if (platformGBId == null) {
+			logger.info(String.format("未找到callId： %s 的注册/注销平台id", callId ));
 			return;
 		}
 
-		ParentPlatformCatch parentPlatformCatch = redisCatchStorage.queryPlatformCatchInfo(platformRegisterInfo.getPlatformId());
+		ParentPlatformCatch parentPlatformCatch = redisCatchStorage.queryPlatformCatchInfo(platformGBId);
 		if (parentPlatformCatch == null) {
-			logger.warn(String.format("[国标级联]收到注册/注销%S请求，平台：%s，但是平台缓存信息未查询到!!!", response.getStatusCode(),platformRegisterInfo.getPlatformId()));
+			logger.warn(String.format("[收到注册/注销%S请求]平台：%s，但是平台缓存信息未查询到!!!", response.getStatusCode(),platformGBId));
 			return;
 		}
-
-		String action = platformRegisterInfo.isRegister() ? "注册" : "注销";
-		logger.info(String.format("[国标级联]%s %S响应,%s ", action, response.getStatusCode(), platformRegisterInfo.getPlatformId() ));
+		String action = parentPlatformCatch.getParentPlatform().getExpires().equals("0") ? "注销" : "注册";
+		logger.info(String.format("[%s %S响应]%s ", action, response.getStatusCode(), platformGBId ));
 		ParentPlatform parentPlatform = parentPlatformCatch.getParentPlatform();
 		if (parentPlatform == null) {
-			logger.warn(String.format("[国标级联]收到 %s %s的%S请求, 但是平台信息未查询到!!!", platformRegisterInfo.getPlatformId(), action, response.getStatusCode()));
+			logger.warn(String.format("收到 %s %s的%S请求, 但是平台信息未查询到!!!", platformGBId, action, response.getStatusCode()));
 			return;
 		}
 
-		if (response.getStatusCode() == Response.UNAUTHORIZED) {
+		if (response.getStatusCode() == 401) {
 			WWWAuthenticateHeader www = (WWWAuthenticateHeader)response.getHeader(WWWAuthenticateHeader.NAME);
-			try {
-				sipCommanderForPlatform.register(parentPlatform, callId, www, null, null, true, platformRegisterInfo.isRegister());
-			} catch (SipException | InvalidArgumentException | ParseException e) {
-				logger.error("[命令发送失败] 国标级联 再次注册: {}", e.getMessage());
-			}
-		}else if (response.getStatusCode() == Response.OK){
-
-			if (platformRegisterInfo.isRegister()) {
-				platformService.online(parentPlatform);
-			}else {
-				platformService.offline(parentPlatform);
-			}
-
-			// 注册/注销成功移除缓存的信息
+			sipCommanderForPlatform.register(parentPlatform, callId, www, null, null, true);
+		}else if (response.getStatusCode() == 200){
+			// 注册/注销成功
+			logger.info(String.format("%s %s成功", platformGBId, action));
 			redisCatchStorage.delPlatformRegisterInfo(callId);
+			redisCatchStorage.delPlatformCatchInfo(platformGBId);
+			// 取回Expires设置，避免注销过程中被置为0
+			ParentPlatform parentPlatformTmp = storager.queryParentPlatByServerGBId(platformGBId);
+			if (parentPlatformTmp != null) {
+				parentPlatformTmp.setStatus("注册".equals(action));
+				redisCatchStorage.updatePlatformRegister(parentPlatformTmp);
+				redisCatchStorage.updatePlatformKeepalive(parentPlatformTmp);
+				parentPlatformCatch.setParentPlatform(parentPlatformTmp);
+			}
+			redisCatchStorage.updatePlatformCatchInfo(parentPlatformCatch);
+			storager.updateParentPlatformStatus(platformGBId, "注册".equals(action));
+			if ("注销".equals(action)) {
+				subscribeHolder.removeCatalogSubscribe(platformGBId);
+				subscribeHolder.removeMobilePositionSubscribe(platformGBId);
+			}
 		}
 	}
 

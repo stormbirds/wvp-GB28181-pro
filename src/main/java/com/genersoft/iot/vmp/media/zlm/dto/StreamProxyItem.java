@@ -3,9 +3,6 @@ package com.genersoft.iot.vmp.media.zlm.dto;
 import com.genersoft.iot.vmp.gb28181.bean.GbStream;
 import io.swagger.v3.oas.annotations.media.Schema;
 
-/**
- * @author lin
- */
 @Schema(description = "拉流代理的信息")
 public class StreamProxyItem extends GbStream {
 
@@ -37,9 +34,6 @@ public class StreamProxyItem extends GbStream {
     private boolean enable_mp4;
     @Schema(description = "是否 无人观看时删除")
     private boolean enable_remove_none_reader;
-
-    @Schema(description = "是否 无人观看时自动停用")
-    private boolean enable_disable_none_reader;
     @Schema(description = "上级平台国标ID")
     private String platformGbId;
     @Schema(description = "创建时间")
@@ -180,11 +174,4 @@ public class StreamProxyItem extends GbStream {
         this.enable_remove_none_reader = enable_remove_none_reader;
     }
 
-    public boolean isEnable_disable_none_reader() {
-        return enable_disable_none_reader;
-    }
-
-    public void setEnable_disable_none_reader(boolean enable_disable_none_reader) {
-        this.enable_disable_none_reader = enable_disable_none_reader;
-    }
 }

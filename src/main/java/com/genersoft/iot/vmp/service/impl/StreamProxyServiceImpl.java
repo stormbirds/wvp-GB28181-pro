@@ -26,7 +26,6 @@ import com.genersoft.iot.vmp.storager.dao.StreamProxyMapper;
 import com.genersoft.iot.vmp.service.IStreamProxyService;
 import com.genersoft.iot.vmp.utils.DateUtil;
 import com.genersoft.iot.vmp.vmanager.bean.ErrorCode;
-import com.genersoft.iot.vmp.vmanager.bean.ResourceBaceInfo;
 import com.genersoft.iot.vmp.vmanager.bean.WVPResult;
 import com.github.pagehelper.PageInfo;
 import org.slf4j.Logger;
@@ -99,7 +98,7 @@ public class StreamProxyServiceImpl implements IStreamProxyService {
     @Override
     public StreamInfo save(StreamProxyItem param) {
         MediaServerItem mediaInfo;
-        if (ObjectUtils.isEmpty(param.getMediaServerId()) || "auto".equals(param.getMediaServerId())){
+        if (param.getMediaServerId() == null || "auto".equals(param.getMediaServerId())){
             mediaInfo = mediaServerService.getMediaServerForMinimumLoad();
         }else {
             mediaInfo = mediaServerService.getOne(param.getMediaServerId());
@@ -297,7 +296,7 @@ public class StreamProxyServiceImpl implements IStreamProxyService {
     public boolean start(String app, String stream) {
         boolean result = false;
         StreamProxyItem streamProxy = videoManagerStorager.queryStreamProxy(app, stream);
-        if (streamProxy != null && !streamProxy.isEnable() ) {
+        if (!streamProxy.isEnable() ) {
             JSONObject jsonObject = addStreamProxyToZlm(streamProxy);
             if (jsonObject == null) {
                 return false;
@@ -454,10 +453,5 @@ public class StreamProxyServiceImpl implements IStreamProxyService {
 
         }
 
-    }
-
-    @Override
-    public ResourceBaceInfo getOverview() {
-        return streamProxyMapper.getOverview();
     }
 }

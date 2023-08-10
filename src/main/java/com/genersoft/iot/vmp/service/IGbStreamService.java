@@ -53,6 +53,4 @@ public interface IGbStreamService {
      * @return
      */
     int updateGbIdOrName(List<StreamPushItem> streamPushItemForUpdate);
-
-    DeviceChannel getDeviceChannelListByStreamWithStatus(GbStream gbStream, String catalogId, ParentPlatform platform);
 }

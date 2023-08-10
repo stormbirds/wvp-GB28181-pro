@@ -6,10 +6,6 @@ import com.genersoft.iot.vmp.media.zlm.dto.MediaServerItem;
 
 import java.util.EventObject;
 
-
-/**
- * @author lin
- */
 public class PlayBackResult<T> {
     private int code;
 

@@ -44,7 +44,7 @@ public interface PlatformChannelMapper {
             "DELETE FROM platform_gb_channel WHERE deviceChannelId in " +
             "( select  temp.deviceChannelId from " +
             "(select pgc.deviceChannelId from platform_gb_channel pgc " +
-            "left join device_channel dc on dc.id = pgc.deviceChannelId where dc.deviceId  =#{deviceId} " +
+            "left join device_channel dc on dc.id = pgc.deviceChannelId where dc.device_id  =#{deviceId} " +
             ") temp)" +
             "</script>")
     int delChannelForDeviceId(String deviceId);
@@ -54,7 +54,7 @@ public interface PlatformChannelMapper {
             "</script>")
     int cleanChannelForGB(String platformId);
 
-    @Select("SELECT dc.* FROM platform_gb_channel pgc left join device_channel dc on dc.id = pgc.deviceChannelId WHERE dc.channelId='${channelId}' and pgc.platformId='${platformId}'")
+    @Select("SELECT dc.* FROM platform_gb_channel pgc left join device_channel dc on dc.id = pgc.deviceChannelId WHERE dc.channel_id='${channelId}' and pgc.platformId='${platformId}'")
     List<DeviceChannel> queryChannelInParentPlatform(String platformId, String channelId);
 
     @Select(" select dc.channelId as id, dc.name as name, pgc.platformId as platformId, pgc.catalogId as parentId, 0 as childrenCount, 1 as type " +
@@ -65,8 +65,8 @@ public interface PlatformChannelMapper {
     @Select("select d.*\n" +
             "from platform_gb_channel pgc\n" +
             "         left join device_channel dc on dc.id = pgc.deviceChannelId\n" +
-            "         left join device d on dc.deviceId = d.deviceId\n" +
-            "where dc.channelId = #{channelId} and pgc.platformId=#{platformId}")
+            "         left join device d on dc.device_id = d.deviceId\n" +
+            "where dc.channel_id = #{channelId} and pgc.platformId=#{platformId}")
     List<Device> queryVideoDeviceByPlatformIdAndChannelId(String platformId, String channelId);
 
     @Delete("<script> "+
@@ -89,7 +89,7 @@ public interface PlatformChannelMapper {
             "left join device_channel dc on " +
             "dc.id = pgc.deviceChannelId " +
             "WHERE " +
-            "dc.channelId = #{channelId} and pp.status = true " +
+            "dc.channel_id = #{channelId} and pp.status = true " +
             "AND pp.serverGBId IN" +
             "<foreach collection='platforms'  item='item'  open='(' separator=',' close=')' > #{item}</foreach>" +
             "</script> ")

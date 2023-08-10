@@ -96,7 +96,7 @@ public class MediaController {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
-                logger.error("[线程休眠失败]， {}", e.getMessage());
+                e.printStackTrace();
             }
             if (useSourceIpAsStreamIp != null && useSourceIpAsStreamIp) {
                 String host = request.getHeader("Host");

@@ -13,7 +13,6 @@ import com.genersoft.iot.vmp.gb28181.transmit.event.request.impl.message.respons
 import com.genersoft.iot.vmp.service.IDeviceService;
 import com.genersoft.iot.vmp.storager.IRedisCatchStorage;
 import com.genersoft.iot.vmp.storager.IVideoManagerStorage;
-import gov.nist.javax.sip.message.SIPRequest;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.slf4j.Logger;
@@ -22,6 +21,7 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 
 import javax.sip.InvalidArgumentException;
 import javax.sip.RequestEvent;
@@ -44,8 +44,19 @@ public class DeviceInfoResponseMessageHandler extends SIPRequestProcessorParent 
     private ResponseMessageHandler responseMessageHandler;
 
     @Autowired
+    private IVideoManagerStorage storager;
+
+    @Autowired
+    private IRedisCatchStorage redisCatchStorage;
+
+    @Autowired
     private DeferredResultHolder deferredResultHolder;
 
+    @Autowired
+    private SipConfig config;
+
+    @Autowired
+    private EventPublisher publisher;
 
     @Autowired
     private IDeviceService deviceService;
@@ -63,17 +74,11 @@ public class DeviceInfoResponseMessageHandler extends SIPRequestProcessorParent 
             logger.warn("[接收到DeviceInfo应答消息,但是设备已经离线]：" + (device != null ? device.getDeviceId():"" ));
             return;
         }
-        SIPRequest request = (SIPRequest) evt.getRequest();
         try {
             rootElement = getRootElement(evt, device.getCharset());
-
             if (rootElement == null) {
                 logger.warn("[ 接收到DeviceInfo应答消息 ] content cannot be null, {}", evt.getRequest());
-                try {
-                    responseAck((SIPRequest) evt.getRequest(), Response.BAD_REQUEST);
-                } catch (SipException | InvalidArgumentException | ParseException e) {
-                    logger.error("[命令发送失败] DeviceInfo应答消息 BAD_REQUEST: {}", e.getMessage());
-                }
+                responseAck(evt, Response.BAD_REQUEST);
                 return;
             }
             Element deviceIdElement = rootElement.element("DeviceID");
@@ -93,16 +98,17 @@ public class DeviceInfoResponseMessageHandler extends SIPRequestProcessorParent 
             msg.setKey(key);
             msg.setData(device);
             deferredResultHolder.invokeAllResult(msg);
-        } catch (DocumentException e) {
-            throw new RuntimeException(e);
-        }
-        try {
             // 回复200 OK
-            responseAck(request, Response.OK);
-        } catch (SipException | InvalidArgumentException | ParseException e) {
-            logger.error("[命令发送失败] DeviceInfo应答消息 200: {}", e.getMessage());
+            responseAck(evt, Response.OK);
+        } catch (DocumentException e) {
+            e.printStackTrace();
+        } catch (InvalidArgumentException e) {
+            e.printStackTrace();
+        } catch (ParseException e) {
+            e.printStackTrace();
+        } catch (SipException e) {
+            e.printStackTrace();
         }
-
     }
 
     @Override

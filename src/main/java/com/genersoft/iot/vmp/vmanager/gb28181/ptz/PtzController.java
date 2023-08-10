@@ -1,8 +1,6 @@
 package com.genersoft.iot.vmp.vmanager.gb28181.ptz;
 
 
-import com.genersoft.iot.vmp.conf.exception.ControllerException;
-import com.genersoft.iot.vmp.vmanager.bean.ErrorCode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -20,9 +18,6 @@ import com.genersoft.iot.vmp.gb28181.transmit.callback.RequestMessage;
 import com.genersoft.iot.vmp.gb28181.transmit.cmd.impl.SIPCommander;
 import com.genersoft.iot.vmp.storager.IVideoManagerStorage;
 
-import javax.sip.InvalidArgumentException;
-import javax.sip.SipException;
-import java.text.ParseException;
 import java.util.UUID;
 
 @Tag(name  = "云台控制")
@@ -103,12 +98,7 @@ public class PtzController {
 			default:
 				break;
 		}
-		try {
-			cmder.frontEndCmd(device, channelId, cmdCode, horizonSpeed, verticalSpeed, zoomSpeed);
-		} catch (SipException | InvalidArgumentException | ParseException e) {
-			logger.error("[命令发送失败] 云台控制: {}", e.getMessage());
-			throw new ControllerException(ErrorCode.ERROR100.getCode(), "命令发送失败: " + e.getMessage());
-		}
+		cmder.frontEndCmd(device, channelId, cmdCode, horizonSpeed, verticalSpeed, zoomSpeed);
 	}
 
 
@@ -127,12 +117,7 @@ public class PtzController {
 		}
 		Device device = storager.queryVideoDevice(deviceId);
 
-		try {
-			cmder.frontEndCmd(device, channelId, cmdCode, parameter1, parameter2, combindCode2);
-		} catch (SipException | InvalidArgumentException | ParseException e) {
-			logger.error("[命令发送失败] 前端控制: {}", e.getMessage());
-			throw new ControllerException(ErrorCode.ERROR100.getCode(), "命令发送失败: " + e.getMessage());
-		}
+		cmder.frontEndCmd(device, channelId, cmdCode, parameter1, parameter2, combindCode2);
 	}
 
 
@@ -161,18 +146,13 @@ public class PtzController {
 			return result;
 		}
 		resultHolder.put(key, uuid, result);
-		try {
-			cmder.presetQuery(device, channelId, event -> {
-				RequestMessage msg = new RequestMessage();
-				msg.setId(uuid);
-				msg.setKey(key);
-				msg.setData(String.format("获取设备预置位失败，错误码： %s, %s", event.statusCode, event.msg));
-				resultHolder.invokeResult(msg);
-			});
-		} catch (InvalidArgumentException | SipException | ParseException e) {
-			logger.error("[命令发送失败] 获取设备预置位: {}", e.getMessage());
-			throw new ControllerException(ErrorCode.ERROR100.getCode(), "命令发送失败: " + e.getMessage());
-		}
+		cmder.presetQuery(device, channelId, event -> {
+			RequestMessage msg = new RequestMessage();
+			msg.setId(uuid);
+			msg.setKey(key);
+			msg.setData(String.format("获取设备预置位失败，错误码： %s, %s", event.statusCode, event.msg));
+			resultHolder.invokeResult(msg);
+		});
 		return result;
 	}
 }

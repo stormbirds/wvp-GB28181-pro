@@ -6,7 +6,6 @@ import com.genersoft.iot.vmp.gb28181.bean.DeviceAlarm;
 import com.genersoft.iot.vmp.gb28181.bean.ParentPlatform;
 import com.genersoft.iot.vmp.gb28181.transmit.cmd.ISIPCommander;
 import com.genersoft.iot.vmp.gb28181.transmit.cmd.ISIPCommanderForPlatform;
-import com.genersoft.iot.vmp.media.zlm.ZLMHttpHookListener;
 import com.genersoft.iot.vmp.service.IDeviceAlarmService;
 import com.genersoft.iot.vmp.storager.IVideoManagerStorage;
 import com.genersoft.iot.vmp.utils.DateUtil;
@@ -17,8 +16,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,9 +23,6 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
-import javax.sip.InvalidArgumentException;
-import javax.sip.SipException;
-import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -38,8 +32,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/alarm")
 public class AlarmController {
-
-    private final static Logger logger = LoggerFactory.getLogger(AlarmController.class);
 
     @Autowired
     private IDeviceAlarmService deviceAlarmService;
@@ -116,19 +108,9 @@ public class AlarmController {
         deviceAlarm.setLatitude(39.33333);
 
         if (device != null && platform == null) {
-
-            try {
-                commander.sendAlarmMessage(device, deviceAlarm);
-            } catch (InvalidArgumentException | SipException | ParseException e) {
-
-            }
+            commander.sendAlarmMessage(device, deviceAlarm);
         }else if (device == null && platform != null){
-            try {
-                commanderForPlatform.sendAlarmMessage(platform, deviceAlarm);
-            } catch (SipException | InvalidArgumentException | ParseException e) {
-                logger.error("[命令发送失败] 国标级联 发送BYE: {}", e.getMessage());
-                throw new ControllerException(ErrorCode.ERROR100.getCode(), "命令发送失败: " +  e.getMessage());
-            }
+            commanderForPlatform.sendAlarmMessage(platform, deviceAlarm);
         }else {
             throw new ControllerException(ErrorCode.ERROR100.getCode(),"无法确定" + deviceId + "是平台还是设备");
         }

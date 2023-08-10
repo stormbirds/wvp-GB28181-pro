@@ -8,6 +8,7 @@ import com.genersoft.iot.vmp.conf.MediaConfig;
 import com.genersoft.iot.vmp.gb28181.event.EventPublisher;
 import com.genersoft.iot.vmp.media.zlm.dto.HookSubscribeFactory;
 import com.genersoft.iot.vmp.media.zlm.dto.HookSubscribeForServerStarted;
+import com.genersoft.iot.vmp.media.zlm.dto.HookSubscribeForStreamChange;
 import com.genersoft.iot.vmp.media.zlm.dto.MediaServerItem;
 import com.genersoft.iot.vmp.service.IMediaServerService;
 import org.slf4j.Logger;
@@ -18,7 +19,9 @@ import org.springframework.core.annotation.Order;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 @Component
 @Order(value=1)
@@ -32,7 +35,7 @@ public class ZLMRunner implements CommandLineRunner {
     private ZLMRESTfulUtils zlmresTfulUtils;
 
     @Autowired
-    private ZlmHttpHookSubscribe hookSubscribe;
+    private ZLMHttpHookSubscribe hookSubscribe;
 
     @Autowired
     private EventPublisher publisher;
@@ -59,6 +62,8 @@ public class ZLMRunner implements CommandLineRunner {
         }
         mediaServerService.syncCatchFromDatabase();
         HookSubscribeForServerStarted hookSubscribeForServerStarted = HookSubscribeFactory.on_server_started();
+//        Instant expiresInstant = Instant.now().plusSeconds(TimeUnit.SECONDS.toSeconds(60));
+//        hookSubscribeForStreamChange.setExpires(expiresInstant);
         // 订阅 zlm启动事件, 新的zlm也会从这里进入系统
         hookSubscribe.addSubscribe(hookSubscribeForServerStarted,
                 (MediaServerItem mediaServerItem, JSONObject response)->{
@@ -80,7 +85,6 @@ public class ZLMRunner implements CommandLineRunner {
 
         // 获取所有的zlm， 并开启主动连接
         List<MediaServerItem> all = mediaServerService.getAllFromDatabase();
-        Map<String, MediaServerItem> allMap = new HashMap<>();
         mediaServerService.updateVmServer(all);
         if (all.size() == 0) {
             all.add(mediaConfig.getMediaSerItem());
@@ -91,7 +95,6 @@ public class ZLMRunner implements CommandLineRunner {
             }
             startGetMedia.put(mediaServerItem.getId(), true);
             connectZlmServer(mediaServerItem);
-            allMap.put(mediaServerItem.getId(), mediaServerItem);
         }
         String taskKey = "zlm-connect-timeout";
         dynamicTask.startDelay(taskKey, ()->{
@@ -102,17 +105,11 @@ public class ZLMRunner implements CommandLineRunner {
                 }
                 startGetMedia = null;
             }
-            // 获取redis中所有的zlm
-            List<MediaServerItem> allInRedis = mediaServerService.getAll();
-            for (MediaServerItem mediaServerItem : allInRedis) {
-                if (!allMap.containsKey(mediaServerItem.getId())) {
-                    mediaServerService.delete(mediaServerItem.getId());
-                }
-            }
+        //  TODO 清理数据库中与redis不匹配的zlm
         }, 60 * 1000 );
     }
 
-    @Async("taskExecutor")
+    @Async
     public void connectZlmServer(MediaServerItem mediaServerItem){
         String connectZlmServerTaskKey = "connect-zlm-" + mediaServerItem.getId();
         ZLMServerConfig zlmServerConfigFirst = getMediaServerConfig(mediaServerItem);

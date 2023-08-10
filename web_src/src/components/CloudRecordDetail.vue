@@ -1,9 +1,7 @@
 <template>
 	<div id="recordDetail">
 		<el-container>
-
       <el-aside width="300px">
-
         <div class="record-list-box-box">
           <el-date-picker size="mini" v-model="chooseDate" :picker-options="pickerOptions" type="date" value-format="yyyy-MM-dd" placeholder="日期" @change="dateChange()"></el-date-picker>
           <div class="record-list-box" :style="recordListStyle">
@@ -425,9 +423,6 @@
         }).catch(function (error) {
           console.log(error);
         });
-      },
-      goBack(){
-        this.$router.push('/cloudRecord');
       }
 		}
 	};
